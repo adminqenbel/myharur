@@ -1,0 +1,21 @@
+# Python / Backend
+backend/venv/
+backend/.env
+backend/render_env.txt
+backend/__pycache__/
+backend/.pytest_cache/
+*.pyc
+
+# Flutter / Frontend
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub-cache/
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
