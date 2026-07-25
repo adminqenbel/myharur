@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) context.go('/home');
       }
     } catch (e) {
-      _showError('Google Sign-In Failed. Ensure SHA-1 is registered in GCP. Or try Guest Mode.');
+      _showError('Sign-In Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

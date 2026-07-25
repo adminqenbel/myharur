@@ -20,6 +20,10 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "db_server": settings.POSTGRES_SERVER, "project": settings.PROJECT_NAME}
+
 import os
 # Create static dir if it doesn't exist
 os.makedirs("static", exist_ok=True)
