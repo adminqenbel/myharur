@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final googleSignIn = GoogleSignIn(
-        serverClientId: '976428818123-abv9j8joclbmdr9i26vh0vgk0bj285js.apps.googleusercontent.com',
+        serverClientId: '976428818123-neqkk6i6n7akahbjdcfnf568dk9lku0k.apps.googleusercontent.com',
       );
       final account = await googleSignIn.signIn();
       if (account != null) {
