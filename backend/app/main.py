@@ -17,8 +17,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "detail": str(exc), "traceback": traceback.format_exc()},
+    )
 
 @app.get("/health")
 def health_check():
