@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Harur Town"
+    PROJECT_NAME: str = "MyHarur"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "YOUR_SUPER_SECRET_KEY_FOR_JWT_HERE"
     ALGORITHM: str = "HS256"

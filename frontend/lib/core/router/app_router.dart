@@ -11,6 +11,7 @@ import '../../features/shops/presentation/shops_screen.dart';
 import '../../features/emergency/presentation/emergency_screen.dart';
 import '../../features/emergency/presentation/custom_emergency_screen.dart';
 import '../../features/admin/presentation/admin_dashboard.dart';
+import '../network/api_client.dart';
 
 // Placeholders for other screens
 class SplashScreen extends StatelessWidget {
@@ -34,36 +35,105 @@ class HomeScreen extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text('Harur Town Map (10km Radius)'),
+          child: Text('MyHarur Map (10km Radius)'),
         ),
-        const Expanded(child: HarurMapWidget()),
+        const Expanded(child: MyHarurMapWidget()),
       ],
     )
   );
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late Future<Map<String, dynamic>> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _fetchProfile();
+  }
+
+  Future<Map<String, dynamic>> _fetchProfile() async {
+    // If not logged in (e.g. Guest mode), ApiClient headers won't have Authorization.
+    // In that case, this will throw 401, which we catch.
+    final response = await ApiClient.dio.get('/users/me');
+    return response.data;
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text("Profile")), 
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text("User Profile"),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => context.push('/admin'),
-            child: const Text('Admin Dashboard'),
+    appBar: AppBar(title: const Text("My Profile")), 
+    body: FutureBuilder<Map<String, dynamic>>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final user = snapshot.data;
+        
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (user != null && user['profile'] != null && user['profile']['avatar_url'] != null)
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: NetworkImage(user['profile']['avatar_url']),
+                )
+              else
+                const CircleAvatar(
+                  radius: 50,
+                  child: Icon(Icons.person, size: 50),
+                ),
+              const SizedBox(height: 20),
+              if (user != null) ...[
+                Text(
+                  '${user['profile']?['first_name'] ?? ''} ${user['profile']?['last_name'] ?? ''}'.trim(),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(user['email'] ?? '', style: Theme.of(context).textTheme.bodyLarge),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    user['role']?['name'] ?? 'User',
+                    style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ] else ...[
+                const Text("Guest User", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text("Please log in to view your profile.", style: TextStyle(color: Colors.grey)),
+              ],
+              const SizedBox(height: 40),
+              if (user != null && user['role'] != null && user['role']['name'] != 'User')
+                ElevatedButton(
+                  onPressed: () => context.push('/admin'),
+                  child: const Text('Admin Dashboard'),
+                ),
+              const SizedBox(height: 20),
+              OutlinedButton(
+                onPressed: () {
+                  ApiClient.dio.options.headers.remove('Authorization');
+                  context.go('/login');
+                },
+                child: Text(user != null ? 'Logout' : 'Log In'),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          OutlinedButton(
-            onPressed: () => context.go('/login'),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
+        );
+      }
     ),
   );
 }

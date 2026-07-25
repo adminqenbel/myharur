@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-class HarurMapWidget extends StatelessWidget {
-  const HarurMapWidget({super.key});
+class MyHarurMapWidget extends StatelessWidget {
+  const MyHarurMapWidget({super.key});
 
-  // Approximate coordinates for Harur, Tamil Nadu
+  // Approximate coordinates for MyHarur, Tamil Nadu
   static const double harurLat = 12.0645;
   static const double harurLng = 78.4901;
   static final LatLng harurCenter = LatLng(harurLat, harurLng);

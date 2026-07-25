@@ -7,7 +7,7 @@ class ProfileBase(BaseModel):
     last_name: Optional[str] = None
     phone: Optional[str] = None
     bio: Optional[str] = None
-    town: str = "Harur"
+    town: str = "MyHarur"
     avatar_url: Optional[str] = None
     cover_url: Optional[str] = None
 
@@ -20,6 +20,13 @@ class ProfileUpdate(ProfileBase):
 class Profile(ProfileBase):
     id: int
     user_id: int
+
+    class Config:
+        orm_mode = True
+
+class Role(BaseModel):
+    id: int
+    name: str
 
     class Config:
         orm_mode = True
@@ -41,6 +48,7 @@ class User(UserBase):
     created_at: datetime
     updated_at: Optional[datetime]
     profile: Optional[Profile] = None
+    role: Optional[Role] = None
 
     class Config:
         orm_mode = True

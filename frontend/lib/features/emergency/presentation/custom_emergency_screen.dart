@@ -13,7 +13,7 @@ class CustomEmergencyScreen extends StatefulWidget {
 class _CustomEmergencyScreenState extends State<CustomEmergencyScreen> {
   String _selectedType = 'Medical';
   final _descriptionController = TextEditingController();
-  final LatLng _initialCenter = const LatLng(12.0645, 78.4901); // Harur
+  final LatLng _initialCenter = const LatLng(12.0645, 78.4901); // MyHarur
 
   void _submitEmergency() {
     ScaffoldMessenger.of(context).showSnackBar(

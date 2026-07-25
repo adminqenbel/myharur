@@ -31,7 +31,7 @@ class Profile(Base):
     last_name = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     bio = Column(String, nullable=True)
-    town = Column(String, default="Harur")
+    town = Column(String, default="MyHarur")
     avatar_url = Column(String, nullable=True)
     cover_url = Column(String, nullable=True)
 

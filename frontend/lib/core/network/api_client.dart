@@ -1,4 +1,4 @@
-import 'package:dio/dio.dio';
+import 'package:dio/dio.dart';
 
 class ApiClient {
   static final Dio dio = Dio(

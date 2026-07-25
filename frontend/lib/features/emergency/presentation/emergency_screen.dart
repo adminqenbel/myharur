@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-
 import 'package:go_router/go_router.dart';
+import '../../../core/network/api_client.dart';
 
-class EmergencyScreen extends StatelessWidget {
+class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
+
+  @override
+  State<EmergencyScreen> createState() => _EmergencyScreenState();
+}
+
+class _EmergencyScreenState extends State<EmergencyScreen> {
+  late Future<List<dynamic>> _emergencyFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _emergencyFuture = _fetchEmergencies();
+  }
+
+  Future<List<dynamic>> _fetchEmergencies() async {
+    final response = await ApiClient.dio.get('/emergency/');
+    return response.data;
+  }
 
   void _showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
@@ -67,13 +85,36 @@ class EmergencyScreen extends StatelessWidget {
                 children: [
                   Text('Nearby Emergencies', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.warning, color: AppTheme.warning),
-                      title: const Text('Medical Assistance Needed'),
-                      subtitle: const Text('1.2 km away - Near Main Market'),
-                      trailing: TextButton(onPressed: () => _showSnackbar(context, 'Navigating to help...'), child: const Text('HELP')),
-                    ),
+                  FutureBuilder<List<dynamic>>(
+                    future: _emergencyFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      final emergencies = snapshot.data ?? [];
+                      if (emergencies.isEmpty) {
+                        return const Center(child: Text('No active emergencies nearby.'));
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: emergencies.length,
+                        itemBuilder: (context, index) {
+                          final em = emergencies[index];
+                          return Card(
+                            child: ListTile(
+                              leading: const Icon(Icons.warning, color: AppTheme.warning),
+                              title: Text(em['type'] ?? 'Emergency'),
+                              subtitle: Text(em['description'] ?? 'Help needed'),
+                              trailing: TextButton(onPressed: () => _showSnackbar(context, 'Navigating to help...'), child: const Text('HELP')),
+                            ),
+                          );
+                        },
+                      );
+                    }
                   ),
                 ],
               ),

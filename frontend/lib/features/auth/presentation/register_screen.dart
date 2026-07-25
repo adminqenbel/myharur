@@ -18,7 +18,7 @@ class RegisterScreen extends StatelessWidget {
               const Icon(Icons.person_add, size: 80, color: AppTheme.primary),
               const SizedBox(height: 24),
               Text(
-                'Join Harur Town',
+                'Join MyHarur',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/network/api_client.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -20,7 +20,7 @@ class LoginScreen extends StatelessWidget {
               Image.asset('assets/logo.png', height: 120),
               const SizedBox(height: 24),
               Text(
-                'Welcome to Harur Town',
+                'Welcome to MyHarur',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -59,8 +59,20 @@ class LoginScreen extends StatelessWidget {
                     serverClientId: '976428818123-abv9j8joclbmdr9i26vh0vgk0bj285js.apps.googleusercontent.com',
                   );
                   try {
-                    await googleSignIn.signIn();
-                    if (context.mounted) context.go('/home');
+                    final GoogleSignInAccount? account = await googleSignIn.signIn();
+                    if (account != null) {
+                      // Send to backend
+                      final response = await ApiClient.dio.post('/auth/google', data: {
+                        'email': account.email,
+                        'first_name': account.displayName?.split(' ').first ?? 'User',
+                        'last_name': account.displayName?.split(' ').skip(1).join(' ') ?? '',
+                        'photo_url': account.photoUrl,
+                      });
+                      final token = response.data['access_token'];
+                      // In a real app, save token to SharedPreferences here.
+                      ApiClient.dio.options.headers['Authorization'] = 'Bearer $token';
+                      if (context.mounted) context.go('/home');
+                    }
                   } catch (error) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign in failed: $error')));
@@ -81,6 +93,13 @@ class LoginScreen extends StatelessWidget {
                   context.push('/register');
                 },
                 child: const Text('Don\'t have an account? Register here.'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  context.go('/home');
+                },
+                child: const Text('Skip Login (Guest Mode)', style: TextStyle(color: Colors.grey)),
               )
             ],
           ),

@@ -42,7 +42,7 @@ def init_db():
             user_id=new_user.id,
             first_name="Qenbel",
             last_name="Admin",
-            bio="Harur Town Super Administrator"
+            bio="MyHarur Super Administrator"
         )
         db.add(new_profile)
         db.commit()
