@@ -10,3 +10,4 @@ passlib[bcrypt]
 python-multipart
 redis
 celery
+email-validator
