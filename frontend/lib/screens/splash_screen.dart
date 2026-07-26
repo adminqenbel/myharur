@@ -21,20 +21,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _boot() async {
-    // 1. Check version
     try {
       final response = await ApiClient.dio.get('/config/');
       final minVersion = response.data['min_version'] as String;
       final updateUrl = response.data['update_url'] as String;
       final packageInfo = await PackageInfo.fromPlatform();
-      if (_isUpdateRequired(packageInfo.version, minVersion)) {
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => UpdateScreen(updateUrl: updateUrl)),
-          );
-          return;
-        }
-      }
+      
+      // Removed hard-redirect. 
+      // UpdateManager in MainLayout handles popup logic.
     } catch (_) {}
 
     // 2. Try auto-login

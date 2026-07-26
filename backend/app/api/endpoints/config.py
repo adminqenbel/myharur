@@ -15,6 +15,6 @@ def get_config():
     """
     return AppConfig(
         min_version="2.0.0",
-        latest_version="2.0.0",
+        latest_version="2.1.0",
         update_url="https://myharur.onrender.com"
     )

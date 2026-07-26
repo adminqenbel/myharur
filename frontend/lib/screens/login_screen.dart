@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dio/dio.dart';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
+import '../utils/update_manager.dart';
 import '../theme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateManager.checkUpdate(context);
+    });
+  }
 
   @override
   void dispose() {
