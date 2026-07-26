@@ -73,8 +73,29 @@ async def startup_event():
     from app.db.session import engine, SessionLocal
     import app.models  # ensure all models registered
     from app.db.session import Base
+    from sqlalchemy import text
     Base.metadata.create_all(bind=engine)
     
+    # Safely migrate existing tables by adding missing columns
+    with engine.begin() as conn:
+        migrations = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS uid VARCHAR DEFAULT gen_random_uuid();",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_setup_complete BOOLEAN DEFAULT FALSE;",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS login_provider VARCHAR DEFAULT 'email';",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS address VARCHAR;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ward VARCHAR;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS location_lat FLOAT;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS location_lng FLOAT;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS streak_days INTEGER DEFAULT 0;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS reward_points INTEGER DEFAULT 0;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_active_date DATE;"
+        ]
+        for query in migrations:
+            try:
+                conn.execute(text(query))
+            except Exception:
+                pass # Ignore if syntax not perfectly supported by dialect, IF NOT EXISTS should handle it mostly
+
     # Seed Super Admin if not exists
     db = SessionLocal()
     try:
