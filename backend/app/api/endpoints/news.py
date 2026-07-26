@@ -19,6 +19,14 @@ def strip_html(text):
     clean = re.compile('<.*?>')
     return re.sub(clean, '', text).replace('&nbsp;', ' ')
 
+def extract_image(text):
+    if not text:
+        return None
+    match = re.search(r'<img[^>]+src="([^">]+)"', text)
+    if match:
+        return match.group(1)
+    return None
+
 @router.get("/")
 def read_news(
     db: Session = Depends(deps.get_db),
@@ -40,6 +48,7 @@ def read_news(
             "content": n.content,
             "source": "Local News",
             "url": None,
+            "image_url": None,
             "created_at": n.created_at.isoformat() if n.created_at else None
         })
 
@@ -55,12 +64,15 @@ def read_news(
             except:
                 published_iso = datetime.now().isoformat()
                 
+            img_url = extract_image(entry.description) if hasattr(entry, 'description') else None
+                
             combined_news.append({
                 "id": None,
                 "title": entry.title,
                 "content": strip_html(entry.description) if hasattr(entry, 'description') else "Read more at the source.",
                 "source": entry.source.title if hasattr(entry, 'source') else "Google News",
                 "url": entry.link,
+                "image_url": img_url,
                 "created_at": published_iso
             })
     except Exception as e:

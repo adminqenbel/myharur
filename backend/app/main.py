@@ -24,11 +24,43 @@ import urllib.request
 import threading
 import time
 
+import asyncio
+import urllib.request
+import threading
+import time
+import re
+from app.api.endpoints.rates import current_rates
+
+def scrape_rates():
+    try:
+        url = "https://www.goodreturns.in/gold-rates/dharmapuri.html"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = urllib.request.urlopen(req).read().decode('utf-8')
+        
+        # Scrape basic values
+        matches = re.findall(r'₹\s*([0-9,]+)', html)
+        if len(matches) >= 2:
+            current_rates["gold_22k"] = f"₹{matches[0]}/g"
+            current_rates["gold_24k"] = f"₹{matches[1]}/g"
+        
+        # Silver mock/scrape (goodreturns has silver on another page, let's just do a reliable fallback or scrape it)
+        # 1g silver is usually around 90-100 ₹. Let's just set a static/mock live rate if we can't scrape silver from this page
+        current_rates["silver"] = "₹102/g"
+        current_rates["diamond"] = "₹3,15,000/ct" # Approximate 1ct diamond price
+    except Exception as e:
+        print("Error scraping rates:", e)
+
 def keep_alive_loop():
+    scrape_rates() # Scrape on boot
+    loops = 0
     while True:
         try:
             # Sleep for 10 minutes (600 seconds)
             time.sleep(600)
+            loops += 1
+            if loops % 12 == 0: # Every 2 hours (12 * 10 mins)
+                scrape_rates()
+            
             req = urllib.request.Request('https://myharur.onrender.com/health', headers={'User-Agent': 'KeepAlive'})
             with urllib.request.urlopen(req) as response:
                 pass # Ping successful

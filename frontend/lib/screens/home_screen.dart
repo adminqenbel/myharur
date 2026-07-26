@@ -52,7 +52,47 @@ class _HomeScreenState extends State<HomeScreen> {
         _userLocation = currentLatLng;
         _isInsideDharmapuri = _dharmapuriBounds.contains(currentLatLng);
       });
+      
+      if (!_isInsideDharmapuri) {
+        _showLocationWarningSheet();
+      }
     }
+  }
+
+  void _showLocationWarningSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.location_off, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              const Text('Outside Service Area', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('It looks like you are outside the Dharmapuri/Harur region. Please tap the map to pick a manual location within the boundary to use the town services.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 16)),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Pick Manual Location', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              )
+            ],
+          ),
+        );
+      }
+    );
   }
 
   @override
@@ -60,21 +100,44 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60.0),
+        preferredSize: const Size.fromHeight(80.0),
         child: ClipRRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: AppBar(
-              title: const Text('MyHarur', style: TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor: Colors.white.withOpacity(0.2),
+              toolbarHeight: 80,
+              backgroundColor: Colors.white.withOpacity(0.85),
               elevation: 0,
+              title: Row(
+                children: [
+                  Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.green : Colors.red, size: 36),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
+                        ),
+                        Text(
+                          _userLocation != null ? 'Tap map to refine location' : 'Fetching GPS...',
+                          style: const TextStyle(color: Colors.black54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.settings),
+                  icon: const Icon(Icons.person_outline, color: Colors.black87),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings coming soon!')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile coming soon!')));
                   },
-                )
+                ),
+                const SizedBox(width: 8),
               ],
             ),
           ),
@@ -115,24 +178,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
             ],
           ),
-          if (_userLocation != null && !_isInsideDharmapuri)
-            Positioned(
-              top: 100,
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'You are outside Dharmapuri zone. Please tap the map to pick a manual location.',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
