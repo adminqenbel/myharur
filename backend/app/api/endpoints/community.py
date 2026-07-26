@@ -171,6 +171,12 @@ def _get_name(db: Session, user_id: int) -> str:
         return f"{profile.first_name or ''} {profile.last_name or ''}".strip() or "Anonymous"
     return "Anonymous"
 
+def _get_role(db: Session, user_id: int) -> str:
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if user and user.role:
+        return user.role.name
+    return "User"
+
 
 @router.get("/questions", response_model=List[QuestionOut])
 def get_questions(db: Session = Depends(deps.get_db), skip: int = 0, limit: int = 50) -> Any:
@@ -179,8 +185,8 @@ def get_questions(db: Session = Depends(deps.get_db), skip: int = 0, limit: int 
     for q in questions:
         answers = []
         for a in q.answers:
-            answers.append({**a.__dict__, "author_name": _get_name(db, a.author_id)})
-        result.append({**q.__dict__, "author_name": _get_name(db, q.author_id), "answers": answers})
+            answers.append({**a.__dict__, "author_name": _get_name(db, a.author_id), "author_role": _get_role(db, a.author_id)})
+        result.append({**q.__dict__, "author_name": _get_name(db, q.author_id), "author_role": _get_role(db, q.author_id), "answers": answers})
     return result
 
 
@@ -194,7 +200,7 @@ def create_question(
     db.add(q)
     db.commit()
     db.refresh(q)
-    return {**q.__dict__, "author_name": _get_name(db, q.author_id), "answers": []}
+    return {**q.__dict__, "author_name": _get_name(db, q.author_id), "author_role": _get_role(db, q.author_id), "answers": []}
 
 
 @router.post("/questions/{question_id}/answers", response_model=AnswerOut)
@@ -208,7 +214,7 @@ def answer_question(
     db.add(a)
     db.commit()
     db.refresh(a)
-    return {**a.__dict__, "author_name": _get_name(db, a.author_id)}
+    return {**a.__dict__, "author_name": _get_name(db, a.author_id), "author_role": _get_role(db, a.author_id)}
 
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
@@ -253,6 +259,7 @@ def get_messages(
         result.append({
             **m.__dict__,
             "sender_name": _get_name(db, m.sender_id),
+            "sender_role": _get_role(db, m.sender_id),
             "sender_avatar": profile.avatar_url if profile else None,
         })
     return result
@@ -272,5 +279,6 @@ def send_message(
     return {
         **msg.__dict__,
         "sender_name": _get_name(db, current_user.id),
+        "sender_role": _get_role(db, current_user.id),
         "sender_avatar": current_user.profile.avatar_url if current_user.profile else None,
     }

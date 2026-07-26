@@ -121,6 +121,7 @@ class AnswerOut(BaseModel):
     is_accepted: bool
     created_at: datetime
     author_name: Optional[str] = None
+    author_role: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -132,6 +133,7 @@ class QuestionOut(BaseModel):
     created_at: datetime
     answers: List[AnswerOut] = []
     author_name: Optional[str] = None
+    author_role: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -147,6 +149,7 @@ class ChatMessageOut(BaseModel):
     content: str
     created_at: datetime
     sender_name: Optional[str] = None
+    sender_role: Optional[str] = None
     sender_avatar: Optional[str] = None
     class Config:
         from_attributes = True
