@@ -10,7 +10,14 @@ class UpdateManager {
       final minVersion = response.data['min_version'] as String;
       final latestVersion = response.data['latest_version'] as String;
       final updateUrl = response.data['update_url'] as String;
+      final isMaintenance = response.data['maintenance_mode'] as bool? ?? false;
       
+      if (isMaintenance) {
+        if (!context.mounted) return;
+        _showMaintenanceDialog(context);
+        return;
+      }
+
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
@@ -76,6 +83,29 @@ class UpdateManager {
               child: const Text('Download Update'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  static void _showMaintenanceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.build_circle, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 8),
+              const Text('Maintenance Mode'),
+            ],
+          ),
+          content: const Text(
+            'MyHarur is currently down for scheduled maintenance. We are making things better for you! Please check back later.',
+          ),
         ),
       ),
     );

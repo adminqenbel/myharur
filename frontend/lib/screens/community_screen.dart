@@ -311,12 +311,28 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                 child: Text('Q', style: TextStyle(color: Colors.purple.shade900, fontWeight: FontWeight.bold)),
               ),
               title: Text(q['text'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('${q['author_name'] ?? 'Anonymous'} ${q['author_role'] != null && q['author_role'] != 'User' ? '• ${q['author_role']}' : ''} \n${answers.length} answers', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(q['author_name'] ?? 'Anonymous', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 13)),
+                  if (q['author_role'] != null && q['author_role'] != 'User')
+                    Text(q['author_role'], style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                  const SizedBox(height: 4),
+                  Text('${answers.length} answers', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
               children: [
                 ...answers.map<Widget>((a) => ListTile(
                   leading: const CircleAvatar(backgroundColor: Colors.green, child: Text('A', style: TextStyle(color: Colors.white))),
                   title: Text(a['text'] ?? ''),
-                  subtitle: Text('${a['author_name'] ?? ''} ${a['author_role'] != null && a['author_role'] != 'User' ? '• ${a['author_role']}' : ''}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a['author_name'] ?? 'Anonymous', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 12)),
+                      if (a['author_role'] != null && a['author_role'] != 'User')
+                        Text(a['author_role'], style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                    ],
+                  ),
                 )),
                 ListTile(
                   leading: const Icon(Icons.reply, color: Colors.blue),
@@ -630,7 +646,12 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!isMe) Text('${msg['sender_name'] ?? ''} ${msg['sender_role'] != null && msg['sender_role'] != 'User' ? '• ${msg['sender_role']}' : ''}', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 11)),
+                if (!isMe) ...[
+                  Text(msg['sender_name'] ?? '', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 12)),
+                  if (msg['sender_role'] != null && msg['sender_role'] != 'User')
+                    Text(msg['sender_role'], style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                  const SizedBox(height: 2),
+                ],
                 Text(msg['content'] ?? '', style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
                 Text(
                   msg['created_at']?.toString().substring(11, 16) ?? '',

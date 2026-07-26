@@ -13,6 +13,7 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   List<dynamic> _users = [];
   bool _isLoading = true;
+  bool _isMaintenanceMode = false;
 
   @override
   void initState() {
@@ -23,8 +24,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Future<void> _fetchUsers() async {
     setState(() => _isLoading = true);
     try {
+      final configRes = await ApiClient.dio.get('/config/');
       final r = await ApiClient.dio.get('/admin/users');
-      setState(() => _users = r.data);
+      setState(() {
+        _isMaintenanceMode = configRes.data['maintenance_mode'] as bool? ?? false;
+        _users = r.data;
+      });
     } catch (_) {} finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -64,14 +69,44 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     );
   }
 
+  Future<void> _toggleMaintenance(bool value) async {
+    setState(() => _isLoading = true);
+    try {
+      await ApiClient.dio.post('/config/maintenance', data: {'maintenance_mode': value});
+      setState(() => _isMaintenanceMode = value);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value ? 'Maintenance Mode Enabled' : 'Maintenance Mode Disabled')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Dashboard')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _users.length,
+          : Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Maintenance Mode', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  subtitle: const Text('Block access for all non-admin users'),
+                  value: _isMaintenanceMode,
+                  onChanged: _toggleMaintenance,
+                  activeColor: Colors.red,
+                ),
+                const Divider(),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _users.length,
               itemBuilder: (ctx, i) {
                 final u = _users[i];
                 final roleName = u['role']?['name'] ?? 'User';
@@ -85,6 +120,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 );
               },
             ),
+          ),
+        ],
+      ),
     );
   }
 }
