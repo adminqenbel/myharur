@@ -19,6 +19,26 @@ app.add_middleware(
 )
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+import asyncio
+import urllib.request
+import threading
+import time
+
+def keep_alive_loop():
+    while True:
+        try:
+            # Sleep for 10 minutes (600 seconds)
+            time.sleep(600)
+            req = urllib.request.Request('https://myharur.onrender.com/health', headers={'User-Agent': 'KeepAlive'})
+            with urllib.request.urlopen(req) as response:
+                pass # Ping successful
+        except Exception:
+            pass
+
+@app.on_event("startup")
+async def startup_event():
+    # Start the keep-alive background thread
+    threading.Thread(target=keep_alive_loop, daemon=True).start()
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

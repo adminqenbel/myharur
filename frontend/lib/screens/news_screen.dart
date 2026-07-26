@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -83,25 +84,36 @@ class _NewsScreenState extends State<NewsScreen> {
             itemCount: news.length,
             itemBuilder: (context, index) {
               final post = news[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(post['title'] ?? 'News Update', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Text(post['content'] ?? '...', style: Theme.of(context).textTheme.bodyMedium),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(post['created_at'] != null ? post['created_at'].toString().substring(0, 10) : '', style: const TextStyle(color: Colors.grey)),
-                          const Icon(Icons.share, size: 20, color: Colors.grey),
-                        ],
-                      )
-                    ],
+              return GestureDetector(
+                onTap: () async {
+                  if (post['url'] != null) {
+                    final Uri url = Uri.parse(post['url']);
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  }
+                },
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: post['url'] != null ? 3 : 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(post['title'] ?? 'News Update', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Text(post['content'] ?? '...', style: Theme.of(context).textTheme.bodyMedium),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(post['source'] ?? 'Local News', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                            Text(post['created_at'] != null ? post['created_at'].toString().substring(0, 10) : '', style: const TextStyle(color: Colors.grey)),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -57,31 +58,87 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('MyHarur Map')),
-      body: FlutterMap(
-        options: MapOptions(
-          initialCenter: _isInsideDharmapuri && _userLocation != null ? _userLocation! : _defaultCenter,
-          initialZoom: 12.0,
-          cameraConstraint: CameraConstraint.contain(bounds: _dharmapuriBounds),
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.adminqenbel.myharur',
-            retinaMode: true,
-          ),
-          if (_isInsideDharmapuri && _userLocation != null)
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: _userLocation!,
-                  width: 80,
-                  height: 80,
-                  child: const Icon(Icons.my_location, color: Colors.blue, size: 40),
-                ),
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60.0),
+        child: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: AppBar(
+              title: const Text('MyHarur', style: TextStyle(fontWeight: FontWeight.bold)),
+              backgroundColor: Colors.white.withOpacity(0.2),
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings coming soon!')));
+                  },
+                )
               ],
             ),
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: _userLocation != null ? _userLocation! : _defaultCenter,
+              initialZoom: 12.0,
+              cameraConstraint: CameraConstraint.contain(bounds: _dharmapuriBounds),
+              onTap: (tapPosition, point) {
+                if (mounted) {
+                  setState(() {
+                    _userLocation = point;
+                    _isInsideDharmapuri = _dharmapuriBounds.contains(point);
+                  });
+                }
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.adminqenbel.myharur',
+                retinaMode: true,
+              ),
+              if (_userLocation != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _userLocation!,
+                      width: 80,
+                      height: 80,
+                      child: Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.blue : Colors.red, size: 40),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          if (_userLocation != null && !_isInsideDharmapuri)
+            Positioned(
+              top: 100,
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'You are outside Dharmapuri zone. Please tap the map to pick a manual location.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _determinePosition,
+        backgroundColor: Colors.white,
+        child: const Icon(Icons.my_location, color: Colors.blue),
       ),
     );
   }

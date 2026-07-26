@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -45,7 +46,35 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             Center(
               child: GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('SOS Signal Sent to Authorities!')));
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Emergency Assistance'),
+                      content: const Text('Who do you need to contact?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            final Uri url = Uri(scheme: 'tel', path: '100');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url);
+                            }
+                          },
+                          child: const Text('Police (100)', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            final Uri url = Uri(scheme: 'tel', path: '108');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url);
+                            }
+                          },
+                          child: const Text('Medical (108)', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  );
                 },
                 child: Container(
                   width: 200,
