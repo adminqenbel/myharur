@@ -32,7 +32,7 @@ class Profile(ProfileBase):
     reward_points: int = 0
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class SetupProfile(BaseModel):
@@ -50,7 +50,7 @@ class Role(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserBase(BaseModel):
@@ -79,7 +79,7 @@ class User(UserBase):
     role: Optional[Role] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Token(BaseModel):
@@ -112,4 +112,4 @@ class AdminUserList(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

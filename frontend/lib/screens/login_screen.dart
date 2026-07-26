@@ -66,7 +66,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await _handleSuccess(response.data);
       }
     } catch (e) {
-      _showError('Sign-In failed: $e');
+      if (e is DioException && e.response != null && e.response?.data != null) {
+        _showError('Server Error: ${e.response?.data['detail'] ?? e.response?.data}');
+      } else {
+        _showError('Sign-In failed: $e');
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -88,7 +92,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       await _handleSuccess(response.data);
     } catch (e) {
-      _showError('Login failed. Check your credentials.');
+      if (e is DioException && e.response != null && e.response?.data != null) {
+        _showError('Login failed: ${e.response?.data['detail'] ?? e.response?.data}');
+      } else {
+        _showError('Login failed. Check your credentials.');
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

@@ -31,7 +31,7 @@ class Listing(ListingBase):
     is_active: bool
     created_at: datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ── Jobs ─────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ class JobPosting(JobPostingBase):
     is_active: bool
     created_at: datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ── Events ───────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ class Event(EventBase):
     is_approved: bool
     created_at: datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ── Polls ────────────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ class PollOptionOut(BaseModel):
     text: str
     vote_count: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PollOut(BaseModel):
     id: int
@@ -101,7 +101,7 @@ class PollOut(BaseModel):
     options: List[PollOptionOut] = []
     user_voted_option_id: Optional[int] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class VoteIn(BaseModel):
     option_id: int
@@ -122,7 +122,7 @@ class AnswerOut(BaseModel):
     created_at: datetime
     author_name: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class QuestionOut(BaseModel):
     id: int
@@ -133,7 +133,7 @@ class QuestionOut(BaseModel):
     answers: List[AnswerOut] = []
     author_name: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ── Chat ─────────────────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ class ChatMessageOut(BaseModel):
     sender_name: Optional[str] = None
     sender_avatar: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ChatRoomOut(BaseModel):
     id: int
@@ -157,4 +157,4 @@ class ChatRoomOut(BaseModel):
     description: Optional[str]
     icon: Optional[str]
     class Config:
-        orm_mode = True
+        from_attributes = True
