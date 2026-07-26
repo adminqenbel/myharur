@@ -11,6 +11,13 @@ router = APIRouter()
 
 import feedparser
 from datetime import datetime
+import re
+
+def strip_html(text):
+    if not text:
+        return text
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text).replace('&nbsp;', ' ')
 
 @router.get("/")
 def read_news(
@@ -51,7 +58,7 @@ def read_news(
             combined_news.append({
                 "id": None,
                 "title": entry.title,
-                "content": entry.description if hasattr(entry, 'description') else "Read more at the source.",
+                "content": strip_html(entry.description) if hasattr(entry, 'description') else "Read more at the source.",
                 "source": entry.source.title if hasattr(entry, 'source') else "Google News",
                 "url": entry.link,
                 "created_at": published_iso

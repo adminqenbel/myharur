@@ -100,6 +100,66 @@ def populate():
             "cover_url": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=500&q=80",
             "is_approved": True,
             "owner_id": admin_user.id
+        },
+        {
+            "name": "Vasantham Furniture",
+            "description": "Premium wood and plastic furniture for home and office.",
+            "category_id": cat_map["Electronics"], # Closest category
+            "phone": "9876543215",
+            "address": "Salem By-pass, Harur",
+            "location_lat": 12.0660,
+            "location_lng": 78.4840,
+            "cover_url": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=500&q=80",
+            "is_approved": True,
+            "owner_id": admin_user.id
+        },
+        {
+            "name": "Arun Ice Creams",
+            "description": "Cool down with delicious ice creams, shakes, and falooda.",
+            "category_id": cat_map["Bakery"],
+            "phone": "9876543216",
+            "address": "Gandhi Road, Harur",
+            "location_lat": 12.0615,
+            "location_lng": 78.4905,
+            "cover_url": "https://images.unsplash.com/photo-1558500222-1d371ba21cba?w=500&q=80",
+            "is_approved": True,
+            "owner_id": admin_user.id
+        },
+        {
+            "name": "Kannan Departmental Store",
+            "description": "Wholesale and retail grocery store with fresh stocks daily.",
+            "category_id": cat_map["Grocery"],
+            "phone": "9876543217",
+            "address": "Dharmapuri Road, Harur",
+            "location_lat": 12.0600,
+            "location_lng": 78.4920,
+            "cover_url": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500&q=80",
+            "is_approved": True,
+            "owner_id": admin_user.id
+        },
+        {
+            "name": "Bharath Pharmacy",
+            "description": "Reliable medical store with surgicals and baby care products.",
+            "category_id": cat_map["Medical"],
+            "phone": "9876543218",
+            "address": "Near Govt Hospital, Harur",
+            "location_lat": 12.0645,
+            "location_lng": 78.4860,
+            "cover_url": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=500&q=80",
+            "is_approved": True,
+            "owner_id": admin_user.id
+        },
+        {
+            "name": "Fashion Hub",
+            "description": "Trendy clothes for teenagers and kids. New arrivals every week.",
+            "category_id": cat_map["Clothing"],
+            "phone": "9876543219",
+            "address": "Bazaar Street, Harur",
+            "location_lat": 12.0635,
+            "location_lng": 78.4885,
+            "cover_url": "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500&q=80",
+            "is_approved": True,
+            "owner_id": admin_user.id
         }
     ]
 
