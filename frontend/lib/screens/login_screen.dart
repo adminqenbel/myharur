@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:dio/dio.dart';
 import '../api_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,6 +13,17 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
+  bool _isAdminMode = false;
+  
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   void _showError(String message) {
     if (!mounted) return;
@@ -44,6 +56,30 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleAdminLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please enter email and password');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    try {
+      final response = await ApiClient.dio.post(
+        '/auth/login',
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+        data: {'username': email, 'password': password},
+      );
+      ApiClient.dio.options.headers['Authorization'] = 'Bearer ${response.data['access_token']}';
+      if (mounted) context.go('/home');
+    } catch (e) {
+      _showError('Admin Login Failed. Check credentials.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 48),
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
-              else ...[
+              else if (!_isAdminMode) ...[
                 OutlinedButton.icon(
                   onPressed: _handleGoogleSignIn,
                   icon: const Icon(Icons.g_mobiledata, size: 32),
@@ -83,6 +119,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     context.go('/home');
                   },
                   child: const Text('Skip & Enter as Guest'),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _isAdminMode = true),
+                  child: const Text('Admin Login', style: TextStyle(color: Colors.grey)),
+                ),
+              ] else ...[
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Admin Email', border: OutlineInputBorder()),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _handleAdminLogin,
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  child: const Text('Login as Admin'),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _isAdminMode = false),
+                  child: const Text('Back to User Login'),
                 ),
               ],
             ],
