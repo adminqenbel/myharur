@@ -53,9 +53,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      final googleSignIn = GoogleSignIn(
-        serverClientId: '976428818123-neqkk6i6n7akahbjdcfnf568dk9lku0k.apps.googleusercontent.com',
-      );
+      final googleSignIn = GoogleSignIn();
       await googleSignIn.signOut(); // force account picker
       final account = await googleSignIn.signIn();
       if (account != null && mounted) {
@@ -68,7 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await _handleSuccess(response.data);
       }
     } catch (e) {
-      _showError('Sign-In failed. Please try again.');
+      _showError('Sign-In failed: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

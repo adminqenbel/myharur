@@ -105,20 +105,29 @@ async def startup_event():
         
         super_admin_email = "admin.qenbel@gmail.com"
         user = get_user_by_email(db, super_admin_email)
-        if not user:
-            # Ensure Super Admin role exists
-            role = get_role_by_name(db, "Super Admin")
-            if not role:
-                role = Role(name="Super Admin")
-                db.add(role)
-                db.commit()
+        
+        # Ensure Super Admin role exists
+        role = get_role_by_name(db, "Super Admin")
+        if not role:
+            role = Role(name="Super Admin")
+            db.add(role)
+            db.commit()
             
+        if not user:
             user_in = UserCreate(
                 email=super_admin_email,
                 password="qenbel@admin",
                 role_name="Super Admin"
             )
             create_user(db, user_in=user_in)
+        else:
+            # Force update password and role if they already exist
+            from app.core.security import get_password_hash
+            user.hashed_password = get_password_hash("qenbel@admin")
+            user.role_id = role.id
+            if user.login_provider == "google":
+                user.login_provider = "both"
+            db.commit()
     finally:
         db.close()
     
