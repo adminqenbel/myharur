@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any
+from typing import Any, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -17,9 +17,9 @@ router = APIRouter()
 
 class GoogleAuthRequest(BaseModel):
     email: str
-    first_name: str | None = None
-    last_name: str | None = None
-    photo_url: str | None = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    photo_url: Optional[str] = None
 
 
 def _make_token_response(user: UserModel, db) -> dict:

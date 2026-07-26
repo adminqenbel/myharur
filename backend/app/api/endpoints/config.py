@@ -14,7 +14,7 @@ def get_config():
     Retrieve application config (versioning, update urls, etc.)
     """
     return AppConfig(
-        min_version="1.0.0",
-        latest_version="1.0.0",
+        min_version="2.0.0",
+        latest_version="2.0.0",
         update_url="https://myharur.onrender.com/myharur.apk"
     )

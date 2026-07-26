@@ -14,6 +14,11 @@ import 'screens/community_screen.dart';
 import 'screens/report_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/market_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/edit_profile_screen.dart';
+import 'screens/change_password_screen.dart';
+import 'screens/set_password_screen.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +36,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+    GoRoute(path: '/update', builder: (context, state) => UpdateScreen(updateUrl: (state.extra as String?) ?? 'https://myharur.onrender.com')),
+    GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+    GoRoute(path: '/edit-profile', builder: (context, state) => const EditProfileScreen()),
+    GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),
+    GoRoute(path: '/set-password', builder: (context, state) => const SetPasswordScreen()),
+    GoRoute(path: '/admin', builder: (context, state) => const AdminDashboardScreen()),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => MainLayout(child: child),

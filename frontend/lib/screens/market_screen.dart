@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
+import '../theme.dart';
 
 class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
@@ -12,8 +13,7 @@ class MarketScreen extends ConsumerStatefulWidget {
   ConsumerState<MarketScreen> createState() => _MarketScreenState();
 }
 
-class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _MarketScreenState extends ConsumerState<MarketScreen> {
   List<dynamic> _listings = [];
   List<dynamic> _jobs = [];
   bool _loadingListings = true;
@@ -22,7 +22,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _fetchAll();
   }
 
@@ -194,30 +193,39 @@ class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l(ref, 'Marketplace')),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.handshake), text: 'Buy & Sell'),
-            Tab(icon: Icon(Icons.work), text: 'Jobs'),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppTheme.bg,
+        appBar: AppBar(
+          title: Text(l(ref, 'Marketplace')),
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.handshake_outlined, size: 18), text: 'Buy & Sell'),
+              Tab(icon: Icon(Icons.work_outline, size: 18), text: 'Jobs'),
+            ],
+          ),
+        ),
+        floatingActionButton: auth.isLoggedIn
+            ? Builder(
+                builder: (ctx) {
+                  final tab = DefaultTabController.of(ctx);
+                  return FloatingActionButton.extended(
+                    onPressed: () => tab.index == 0 ? _showCreateListingDialog() : _showCreateJobDialog(),
+                    backgroundColor: AppTheme.accent,
+                    foregroundColor: AppTheme.primary,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Post', style: TextStyle(fontWeight: FontWeight.w700)),
+                  );
+                },
+              )
+            : null,
+        body: TabBarView(
+          children: [
+            _buildListings(),
+            _buildJobs(),
           ],
         ),
-      ),
-      floatingActionButton: auth.isLoggedIn
-          ? FloatingActionButton.extended(
-              onPressed: () => _tabController.index == 0 ? _showCreateListingDialog() : _showCreateJobDialog(),
-              icon: const Icon(Icons.add),
-              label: Text(_tabController.index == 0 ? 'Sell Item' : 'Post Job'),
-            )
-          : null,
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildListings(),
-          _buildJobs(),
-        ],
       ),
     );
   }

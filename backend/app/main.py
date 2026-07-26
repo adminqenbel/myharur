@@ -70,10 +70,36 @@ def keep_alive_loop():
 @app.on_event("startup")
 async def startup_event():
     # Auto-create any new DB tables (safe, non-destructive)
-    from app.db.session import engine
+    from app.db.session import engine, SessionLocal
     import app.models  # ensure all models registered
     from app.db.session import Base
     Base.metadata.create_all(bind=engine)
+    
+    # Seed Super Admin if not exists
+    db = SessionLocal()
+    try:
+        from app.crud.crud_user import get_user_by_email, create_user, get_role_by_name
+        from app.schemas.user import UserCreate
+        from app.models.user import Role
+        
+        super_admin_email = "admin.qenbel@gmail.com"
+        user = get_user_by_email(db, super_admin_email)
+        if not user:
+            # Ensure Super Admin role exists
+            role = get_role_by_name(db, "Super Admin")
+            if not role:
+                role = Role(name="Super Admin")
+                db.add(role)
+                db.commit()
+            
+            user_in = UserCreate(
+                email=super_admin_email,
+                password="qenbel@admin",
+                role_name="Super Admin"
+            )
+            create_user(db, user_in=user_in)
+    finally:
+        db.close()
     
     # Start the keep-alive background thread
     threading.Thread(target=keep_alive_loop, daemon=True).start()
