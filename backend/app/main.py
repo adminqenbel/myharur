@@ -69,6 +69,12 @@ def keep_alive_loop():
 
 @app.on_event("startup")
 async def startup_event():
+    # Auto-create any new DB tables (safe, non-destructive)
+    from app.db.session import engine
+    import app.models  # ensure all models registered
+    from app.db.session import Base
+    Base.metadata.create_all(bind=engine)
+    
     # Start the keep-alive background thread
     threading.Thread(target=keep_alive_loop, daemon=True).start()
 

@@ -4,3 +4,9 @@ from app.models.shop import Shop, ShopCategory, ShopOffer, Product, ShopImage
 from app.models.news import News, NewsCategory, NewsImage, Comment, Like
 from app.models.emergency import EmergencyRequest, NearbyHelp
 from app.models.system import SystemSetting, Advertisement, Report
+from app.models.community import (
+    Listing, JobPosting, Event,
+    Poll, PollOption, PollVote,
+    Question, Answer,
+    ChatRoom, ChatMessage
+)

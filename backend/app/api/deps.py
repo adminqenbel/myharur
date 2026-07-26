@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -50,3 +50,18 @@ def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def get_optional_current_user(
+    db: Session = Depends(get_db),
+    token: str = Depends(OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/login", auto_error=False)),
+) -> Optional[User]:
+    """Returns user if token valid, else None (for public endpoints)."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        token_data = TokenPayload(**payload)
+    except (JWTError, ValidationError):
+        return None
+    return get_user(db, user_id=int(token_data.sub))

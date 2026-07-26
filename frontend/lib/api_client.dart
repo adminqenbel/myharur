@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 
 class ApiClient {
-  static final Dio dio = _createDio();
+  static late Dio dio;
 
-  static Dio _createDio() {
-    var dio = Dio(BaseOptions(
+  static void init() {
+    dio = Dio(BaseOptions(
       baseUrl: 'https://myharur.onrender.com/api/v1',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
@@ -13,11 +13,16 @@ class ApiClient {
 
     dio.interceptors.add(InterceptorsWrapper(
       onError: (DioException e, handler) {
-        // We will just pass the error along and handle it safely in the UI
         return handler.next(e);
       },
     ));
-    
-    return dio;
+  }
+
+  static void setToken(String token) {
+    dio.options.headers['Authorization'] = 'Bearer $token';
+  }
+
+  static void clearToken() {
+    dio.options.headers.remove('Authorization');
   }
 }
