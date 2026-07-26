@@ -482,8 +482,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final myId = auth.user?['id'] as int?;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.room['name'] ?? 'Chat'),
-        subtitle: Text(widget.room['description'] ?? ''),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.room['name'] ?? 'Chat', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            if (widget.room['description'] != null)
+              Text(widget.room['description'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+          ],
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchMessages),
         ],
