@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/translations.dart';
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends ConsumerWidget {
   final Widget child;
   const MainLayout({super.key, required this.child});
 
   static int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/shops')) return 1;
-    if (location.startsWith('/news')) return 2;
-    if (location.startsWith('/emergency')) return 3;
+    if (location.startsWith('/market')) return 1;
+    if (location.startsWith('/community')) return 2;
+    if (location.startsWith('/report')) return 3;
     if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
@@ -24,18 +26,18 @@ class MainLayout extends StatelessWidget {
         onDestinationSelected: (int index) {
           switch (index) {
             case 0: context.go('/home'); break;
-            case 1: context.go('/shops'); break;
-            case 2: context.go('/news'); break;
-            case 3: context.go('/emergency'); break;
+            case 1: context.go('/market'); break;
+            case 2: context.go('/community'); break;
+            case 3: context.go('/report'); break;
             case 4: context.go('/profile'); break;
           }
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront), label: 'Shops'),
-          NavigationDestination(icon: Icon(Icons.article_outlined), selectedIcon: Icon(Icons.article), label: 'News'),
-          NavigationDestination(icon: Icon(Icons.emergency_outlined), selectedIcon: Icon(Icons.emergency), label: 'Emergency'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.explore_outlined), selectedIcon: const Icon(Icons.explore), label: l(ref, 'Home')),
+          NavigationDestination(icon: const Icon(Icons.local_mall_outlined), selectedIcon: const Icon(Icons.local_mall), label: l(ref, 'Market')),
+          NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: const Icon(Icons.groups), label: l(ref, 'Community')),
+          NavigationDestination(icon: const Icon(Icons.campaign_outlined), selectedIcon: const Icon(Icons.campaign), label: l(ref, 'Report')),
+          NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: const Icon(Icons.person), label: l(ref, 'Profile')),
         ],
       ),
     );

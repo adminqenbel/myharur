@@ -1,27 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/translations.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  LatLng? _userLocation;
-  bool _isInsideDharmapuri = false;
-  
-  // Dharmapuri Bounds (Approximate bounding box)
-  final LatLngBounds _dharmapuriBounds = LatLngBounds(
-    const LatLng(11.7500, 77.4500), // South West
-    const LatLng(12.3500, 78.7500), // North East
-  );
-  
-  final LatLng _defaultCenter = const LatLng(12.0621, 78.4891); // Harur center
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isInsideDharmapuri = true;
+  String _locationName = 'Fetching GPS...';
 
   @override
   void initState() {
@@ -30,32 +23,37 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) setState(() => _locationName = 'Location Disabled');
+      return;
+    }
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
-
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      if (permission == LocationPermission.denied) {
+        if (mounted) setState(() => _locationName = 'Permission Denied');
+        return;
+      }
     }
-    
-    if (permission == LocationPermission.deniedForever) return;
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) setState(() => _locationName = 'Permission Denied');
+      return;
+    }
 
     Position position = await Geolocator.getCurrentPosition();
-    LatLng currentLatLng = LatLng(position.latitude, position.longitude);
-    
+    // Simplified boundary check logic
+    bool inBounds = position.latitude >= 11.75 && position.latitude <= 12.35 &&
+                    position.longitude >= 77.45 && position.longitude <= 78.75;
+
     if (mounted) {
       setState(() {
-        _userLocation = currentLatLng;
-        _isInsideDharmapuri = _dharmapuriBounds.contains(currentLatLng);
+        _isInsideDharmapuri = inBounds;
+        _locationName = inBounds ? 'Dharmapuri Region' : 'Outside Service Area';
       });
-      
-      if (!_isInsideDharmapuri) {
-        _showLocationWarningSheet();
-      }
+      if (!inBounds) _showLocationWarningSheet();
     }
   }
 
@@ -72,9 +70,9 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const Icon(Icons.location_off, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              const Text('Outside Service Area', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(l(ref, 'Outside Service Area'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text('It looks like you are outside the Dharmapuri/Harur region. Please tap the map to pick a manual location within the boundary to use the town services.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 16)),
+              const Text('It looks like you are outside the Dharmapuri/Harur region. Some local services may be restricted.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 16)),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -85,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Pick Manual Location', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text('Continue Anyway', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               )
             ],
@@ -95,95 +93,163 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildServiceIcon(IconData icon, String label, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 28),
+        ),
+        const SizedBox(height: 8),
+        Text(l(ref, label), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80.0),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: AppBar(
-              toolbarHeight: 80,
-              backgroundColor: Colors.white.withOpacity(0.85),
-              elevation: 0,
-              title: Row(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        toolbarHeight: 70,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        title: Row(
+          children: [
+            Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.green : Colors.red, size: 32),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.green : Colors.red, size: 36),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
-                        ),
-                        Text(
-                          _userLocation != null ? 'Tap map to refine location' : 'Fetching GPS...',
-                          style: const TextStyle(color: Colors.black54, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                  Text(
+                    l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                  ),
+                  Text(
+                    _locationName,
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
                   ),
                 ],
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.person_outline, color: Colors.black87),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile coming soon!')));
-                  },
-                ),
-                const SizedBox(width: 8),
-              ],
             ),
-          ),
+          ],
         ),
-      ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            options: MapOptions(
-              initialCenter: _userLocation != null ? _userLocation! : _defaultCenter,
-              initialZoom: 12.0,
-              cameraConstraint: CameraConstraint.contain(bounds: _dharmapuriBounds),
-              onTap: (tapPosition, point) {
-                if (mounted) {
-                  setState(() {
-                    _userLocation = point;
-                    _isInsideDharmapuri = _dharmapuriBounds.contains(point);
-                  });
-                }
+        actions: [
+          // Tamil/English Toggle
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ChoiceChip(
+              label: Text(ref.watch(isEnglishProvider) ? 'அ' : 'A', style: const TextStyle(fontWeight: FontWeight.bold)),
+              selected: true,
+              selectedColor: Colors.blue.shade50,
+              onSelected: (_) {
+                ref.read(isEnglishProvider.notifier).state = !ref.read(isEnglishProvider.notifier).state;
               },
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.adminqenbel.myharur',
-                retinaMode: true,
-              ),
-              if (_userLocation != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _userLocation!,
-                      width: 80,
-                      height: 80,
-                      child: Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.blue : Colors.red, size: 40),
-                    ),
-                  ],
-                ),
-            ],
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _determinePosition,
-        backgroundColor: Colors.white,
-        child: const Icon(Icons.my_location, color: Colors.blue),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Banner
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(colors: [Colors.blue, Colors.indigo]),
+              ),
+              child: const Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Rain Alert', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                        SizedBox(height: 4),
+                        Text('Heavy rain expected in Harur at 5 PM', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.cloudy_snowing, color: Colors.white, size: 48),
+                ],
+              ),
+            ),
+            
+            // Services Grid
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: GridView.count(
+                crossAxisCount: 4,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 8,
+                children: [
+                  _buildServiceIcon(Icons.local_offer, 'Daily Deals', Colors.orange),
+                  _buildServiceIcon(Icons.work, 'Jobs Nearby', Colors.blue),
+                  _buildServiceIcon(Icons.handshake, 'Buy/Sell', Colors.green),
+                  _buildServiceIcon(Icons.festival, 'Events', Colors.purple),
+                  _buildServiceIcon(Icons.how_to_vote, 'Polls', Colors.teal),
+                  _buildServiceIcon(Icons.handyman, 'Services', Colors.brown),
+                  _buildServiceIcon(Icons.emoji_events, 'Leaderboard', Colors.amber),
+                  _buildServiceIcon(Icons.map, 'Town Map', Colors.indigo),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Hyperlocal Feed Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                l(ref, 'Town Feed'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Mock Feed
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(backgroundColor: Colors.blue.shade100, child: const Icon(Icons.warning, color: Colors.blue)),
+                            const SizedBox(width: 12),
+                            const Expanded(child: Text('Road Closure Alert', style: TextStyle(fontWeight: FontWeight.bold))),
+                            const Text('2h ago', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Salem By-pass road is temporarily closed due to construction work. Please take alternate routes.'),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
   }

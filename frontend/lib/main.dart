@@ -6,14 +6,16 @@ import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_layout.dart';
 import 'screens/home_screen.dart';
-import 'screens/shops_screen.dart';
-import 'screens/news_screen.dart';
-import 'screens/emergency_screen.dart';
+import 'screens/community_screen.dart';
+import 'screens/report_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/market_screen.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyHarurApp());
+  runApp(const ProviderScope(child: MyHarurApp()));
 }
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -40,16 +42,16 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
-          path: '/shops',
-          builder: (context, state) => const ShopsScreen(),
+          path: '/market',
+          builder: (context, state) => const MarketScreen(),
         ),
         GoRoute(
-          path: '/news',
-          builder: (context, state) => const NewsScreen(),
+          path: '/community',
+          builder: (context, state) => const CommunityScreen(),
         ),
         GoRoute(
-          path: '/emergency',
-          builder: (context, state) => const EmergencyScreen(),
+          path: '/report',
+          builder: (context, state) => const ReportScreen(),
         ),
         GoRoute(
           path: '/profile',
