@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
@@ -442,11 +443,46 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _scrollCtrl = ScrollController();
   List<dynamic> _messages = [];
   bool _loading = true;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchMessages();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _pollMessages());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _msgCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _pollMessages() async {
+    try {
+      final r = await ApiClient.dio.get('/community/chat/rooms/${widget.room['id']}/messages');
+      if (mounted) {
+        final newMessages = r.data as List<dynamic>;
+        if (newMessages.length != _messages.length) {
+          setState(() => _messages = newMessages);
+          _scrollToBottom();
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchMessages() async {
@@ -456,9 +492,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         _messages = r.data;
         _loading = false;
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
-      });
+      _scrollToBottom();
     } catch (_) {
       setState(() => _loading = false);
     }
@@ -468,6 +502,23 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
     _msgCtrl.clear();
+    
+    final auth = ref.read(authProvider);
+    final myId = auth.user?['id'];
+    
+    // Optimistic UI Update
+    final tempMsg = {
+      'id': -1,
+      'sender_id': myId,
+      'content': text,
+      'created_at': DateTime.now().toIso8601String(),
+      'sender_name': 'You',
+      'sender_role': null,
+      'sender_avatar': null,
+    };
+    setState(() => _messages.add(tempMsg));
+    _scrollToBottom();
+
     try {
       await ApiClient.dio.post('/community/chat/rooms/${widget.room['id']}/messages', data: {'content': text});
       await _fetchMessages();
