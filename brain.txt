@@ -1,0 +1,58 @@
+# MyHarur Super-App - Project Overview
+
+## Project Architecture
+This is a full-stack monorepo for the "MyHarur" super-app, consisting of a Python backend and a Flutter frontend.
+
+### 1. Backend (`/backend`)
+- **Framework**: FastAPI (Python)
+- **Database**: PostgreSQL (via SQLAlchemy ORM & Alembic for migrations)
+- **Real-time Messaging**: python-socketio with Redis for multi-server scaling
+- **Authentication**: JWT (python-jose), bcrypt
+- **Background Tasks**: Celery
+- **Deployment**: Dockerized, with configuration for Render (`render.yaml` and `render_env.txt`).
+- **Key Modules**: 
+  - Real-time chat & WebSocket endpoints.
+  - Moderated news system.
+  - Image uploads for marketplace.
+  - Database management scripts (`populate_shops.py`, `create_superadmin.py`).
+
+### 2. Frontend (`/frontend`)
+- **Framework**: Flutter (Dart)
+- **Target Platforms**: Android, iOS, Web, Desktop (Windows, macOS, Linux).
+- **Key Features**:
+  - `UpdateManager`: Robust in-app update management for handling forced/optional version updates seamlessly.
+  - WhatsApp-style chat UI with role-based displays and synchronized low-latency messaging.
+  - `@support` chatbot integration for real-time engagement.
+  - Marketplace listings with image upload functionality.
+  - Localization & Internationalization (`lib/l10n/translations.dart`).
+- **Security:** Global exception handler blocks stack traces in production (returns JSON 500); bcrypt rounds set to 12.
+
+## Current Status / Blockers
+*   **Resolved Duplicate Listings:** Added missing state variables (`isSubmitting`) in all frontend forms (market, events, polls, etc.) to prevent users from rapidly clicking submit and creating multiple DB rows.
+*   **Resolved Location Permission Spam:** Home screen now uses a memory-based session check (`_hasAskedLocation`) to prompt the user once per full app session rather than using persistent storage, making the UI less annoying when returning from background.
+*   **Resolved WebSocket Delay (Messaging):** Database saves in the backend `_save_message_to_db` and `_auto_reply_support` are now executed in an async threadpool (`loop.run_in_executor`), completely eliminating event-loop blocking which was causing severe delays (multiple seconds) in message delivery.
+*   **Resolved News Latency:** Removed the memory-based RSS cache and replaced it with a background crawler that writes directly to the `news` DB table. The `/news` endpoint now queries exclusively from the DB (combining local and RSS news) eliminating external network latency during fetch.
+
+## Development Tasks / Checklist
+[x] Define robust schema with MID (Human-readable string) and UUID (Binary/Hex).
+[x] Refactor DB schemas and endpoints to resolve by UID/username/MID.
+[x] Implement mandatory Username onboarding flow for existing accounts.
+[x] Re-architect WebSocket latency to sub-500ms (Emit immediately -> DB Async Save).
+[x] Remove redundant database queries for messaging polling.
+[x] Stabilize UI elements (duplicate buy/sell listings, events, polls, Q&A).
+[x] Offload background DB writes in WebSocket handlers to threadpool to eliminate delays.
+[x] Automate 2-hour News updates by storing them into the DB in the background.
+[x] Add global 500 error catcher and enforce bcrypt cost >= 12.
+[x] Fix location out-of-service region flow.
+
+### 3. Other Directories
+- `/releases/`: Storage for generated release APKs.
+- `/assest/`: General project assets.
+
+## Recent Milestones & Capabilities
+- Finalized multi-server scaling via Redis and Socket.IO for the real-time chat module.
+- Implemented a moderated news system with an admin dashboard.
+- Integrated an in-app `UpdateManager` to handle app version updates without user friction.
+- Ensured consistent UI across all screens and refined the chat message rendering for low-latency synchronization.
+- Verified production readiness of the backend with automated tests (`test_api.py`, `/tests` directory).
+- Prepared zero-downtime deployment configurations and robust cloud deployment workflows.

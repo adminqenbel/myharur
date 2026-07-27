@@ -20,6 +20,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  static bool _hasAskedLocation = false;
   bool _isInsideDharmapuri = true;
   String _locationName = 'Fetching GPS...';
   List<dynamic> _latestNews = [];
@@ -98,9 +99,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _checkWarning() async {
-    final shown = await LocationPrefs.wasWarningShown();
-    if (!shown && mounted) {
-      await LocationPrefs.markWarningShown();
+    if (!_hasAskedLocation && mounted) {
+      _hasAskedLocation = true;
       _showLocationWarningSheet();
     }
   }

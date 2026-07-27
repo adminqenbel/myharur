@@ -76,7 +76,6 @@ class UsernameSet(BaseModel):
 
 class User(UserBase):
     id: int
-    uid: Optional[str] = None
     mid: Optional[str] = None
     username: Optional[str] = None
     display_name: Optional[str] = None
@@ -136,7 +135,6 @@ class AdminUserList(BaseModel):
 
 class UserSearchResult(BaseModel):
     id: int
-    uid: Optional[str] = None
     mid: Optional[str] = None
     username: Optional[str] = None
     display_name: Optional[str] = None

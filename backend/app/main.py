@@ -262,72 +262,92 @@ async def _notify_mentions(mentions: list, msg_data: dict):
 async def _auto_reply_support(room_id: int, original_msg_data: dict):
     """Keyword matching auto-reply bot for @support mentions."""
     await asyncio.sleep(1.5)  # Simulate typing delay
-    from app.db.session import SessionLocal
-    from app.models.user import User as UserModel
-    from app.models.community import ChatMessage
-    db = SessionLocal()
-    try:
-        support_user = db.query(UserModel).filter(UserModel.username == "support").first()
-        if not support_user:
-            return
-            
-        content = original_msg_data.get('content', '').lower()
-        reply_text = "I'm the MyHarur support bot. I've noted your message and a human moderator will assist you shortly."
-        
-        if any(w in content for w in ["password", "login", "account", "locked"]):
-            reply_text = "Having trouble with your account? An admin can reset your password or update your details. We've notified them."
-        elif any(w in content for w in ["bug", "error", "issue", "crash", "not working"]):
-            reply_text = "Thank you for reporting this issue! I've flagged it for our development team to investigate."
-        elif any(w in content for w in ["hello", "hi", "help"]):
-            reply_text = "Hello! I am the automated support assistant. Please describe your issue in detail and an admin will get back to you."
 
-        msg = ChatMessage(room_id=room_id, sender_id=support_user.id, content=reply_text)
-        db.add(msg)
-        db.commit()
-        db.refresh(msg)
+    def _sync_reply():
+        from app.db.session import SessionLocal
+        from app.models.user import User as UserModel
+        from app.models.community import ChatMessage
+        db = SessionLocal()
+        try:
+            support_user = db.query(UserModel).filter(UserModel.username == "support").first()
+            if not support_user:
+                return None
+                
+            content = original_msg_data.get('content', '').lower()
+            reply_text = "I'm the MyHarur support bot. I've noted your message and a human moderator will assist you shortly."
+            
+            if any(w in content for w in ["password", "login", "account", "locked"]):
+                reply_text = "Having trouble with your account? An admin can reset your password or update your details. We've notified them."
+            elif any(w in content for w in ["bug", "error", "issue", "crash", "not working"]):
+                reply_text = "Thank you for reporting this issue! I've flagged it for our development team to investigate."
+            elif any(w in content for w in ["hello", "hi", "help"]):
+                reply_text = "Hello! I am the automated support assistant. Please describe your issue in detail and an admin will get back to you."
+
+            msg = ChatMessage(room_id=room_id, sender_id=support_user.id, content=reply_text)
+            db.add(msg)
+            db.commit()
+            db.refresh(msg)
+            return (support_user.id, msg.id, reply_text)
+        except Exception as e:
+            print(f"[Socket.IO] Autobot error: {e}")
+            return None
+        finally:
+            db.close()
+
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _sync_reply)
+    if not result:
+        return
+    
+    support_user_id, msg_id, reply_text = result
         
-        reply_data = {
-            'id': msg.id,
-            'room_id': room_id,
-            'sender_id': support_user.id,
-            'username': "support",
-            'display_name': "MyHarur Support",
-            'sender_name': "MyHarur Support",
-            'sender_role': "Moderator",
-            'sender_avatar': None,
-            'content': reply_text,
-            'mentions': [original_msg_data.get('username')],
-            'created_at': datetime.utcnow().isoformat(),
-            'client_msg_id': f"sys_{msg.id}",
-        }
-        await sio.emit('new_message', reply_data, room=f'chat_room_{room_id}')
-    except Exception as e:
-        print(f"[Socket.IO] Autobot error: {e}")
-    finally:
-        db.close()
+    reply_data = {
+        'id': msg_id,
+        'room_id': room_id,
+        'sender_id': support_user_id,
+        'username': "support",
+        'display_name': "MyHarur Support",
+        'sender_name': "MyHarur Support",
+        'sender_role': "Moderator",
+        'sender_avatar': None,
+        'content': reply_text,
+        'mentions': [original_msg_data.get('username')],
+        'created_at': datetime.utcnow().isoformat(),
+        'client_msg_id': f"sys_{msg_id}",
+    }
+    await sio.emit('new_message', reply_data, room=f'chat_room_{room_id}')
 
 
 async def _save_message_to_db(user_id: int, room_id: int, content: str, temp_id: str):
     """Background task: persist message and emit real ID back."""
-    from app.db.session import SessionLocal
-    from app.models.community import ChatMessage
-    db = SessionLocal()
-    try:
-        msg = ChatMessage(room_id=room_id, sender_id=user_id, content=content)
-        db.add(msg)
-        db.commit()
-        db.refresh(msg)
+    def _sync_save():
+        from app.db.session import SessionLocal
+        from app.models.community import ChatMessage
+        db = SessionLocal()
+        try:
+            msg = ChatMessage(room_id=room_id, sender_id=user_id, content=content)
+            db.add(msg)
+            db.commit()
+            db.refresh(msg)
+            return msg.id
+        except Exception as e:
+            print(f"[Socket.IO] DB save error: {e}")
+            return None
+        finally:
+            db.close()
+            
+    loop = asyncio.get_running_loop()
+    real_id = await loop.run_in_executor(None, _sync_save)
+    
+    if real_id:
         # Emit real ID so clients can replace temp ID
         await sio.emit('message_confirmed', {
             'temp_id': temp_id,
-            'real_id': msg.id,
+            'real_id': real_id,
             'room_id': room_id,
         }, room=f'chat_room_{room_id}')
-    except Exception as e:
-        print(f"[Socket.IO] DB save error: {e}")
+    else:
         await sio.emit('message_failed', {'temp_id': temp_id}, room=f'user_{user_id}')
-    finally:
-        db.close()
 
 
 @sio.event
@@ -378,6 +398,12 @@ def scrape_rates():
 
 def keep_alive_loop():
     scrape_rates()
+    try:
+        from app.api.endpoints.news import bg_fetch_news
+        bg_fetch_news()
+    except Exception as e:
+        print(f"[News] Background fetch error: {e}")
+        
     loops = 0
     while True:
         try:
@@ -385,6 +411,12 @@ def keep_alive_loop():
             loops += 1
             if loops % 12 == 0:  # Every 2 hours
                 scrape_rates()
+                try:
+                    from app.api.endpoints.news import bg_fetch_news
+                    bg_fetch_news()
+                except Exception:
+                    pass
+
             # Keep-alive ping
             req = urllib.request.Request('https://myharur.onrender.com/health', headers={'User-Agent': 'KeepAlive'})
             with urllib.request.urlopen(req, timeout=10):

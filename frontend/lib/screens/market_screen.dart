@@ -60,6 +60,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     String selectedCondition = 'Used';
     String? imageUrl;
     bool isUploadingImage = false;
+    bool isSubmitting = false;
     final categories = ['Electronics', 'Furniture', 'Bikes', 'Vehicles', 'Clothing', 'Books', 'Pets', 'Other'];
     final conditions = ['New', 'Like New', 'Used'];
 
@@ -134,8 +135,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Contact Phone', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone)), keyboardType: TextInputType.phone),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () async {
+                onPressed: isSubmitting ? null : () async {
                   if (titleCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
+                  setMBS(() => isSubmitting = true);
                   try {
                     await ApiClient.dio.post('/community/listings', data: {
                       'title': titleCtrl.text,
@@ -146,14 +148,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                       'contact_phone': phoneCtrl.text,
                       'image_urls': imageUrl != null ? [imageUrl] : [],
                     });
-                    Navigator.pop(ctx);
+                    if (ctx.mounted) Navigator.pop(ctx);
                     _fetchListings();
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    setMBS(() => isSubmitting = false);
                   }
                 },
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: const Text('Post Listing', style: TextStyle(fontSize: 16)),
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Listing', style: TextStyle(fontSize: 16)),
               ),
             ]),
           ),
@@ -169,6 +172,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final salaryCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     String selectedType = 'Full-time';
+    bool isSubmitting = false;
     final types = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
 
     showModalBottomSheet(
@@ -202,8 +206,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Contact Phone *', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () async {
+                onPressed: isSubmitting ? null : () async {
                   if (titleCtrl.text.isEmpty) return;
+                  setMBS(() => isSubmitting = true);
                   try {
                     await ApiClient.dio.post('/community/jobs', data: {
                       'title': titleCtrl.text,
@@ -213,14 +218,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                       'salary_range': salaryCtrl.text,
                       'contact_phone': phoneCtrl.text,
                     });
-                    Navigator.pop(ctx);
+                    if (ctx.mounted) Navigator.pop(ctx);
                     _fetchJobs();
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    setMBS(() => isSubmitting = false);
                   }
                 },
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: const Text('Post Job', style: TextStyle(fontSize: 16)),
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Job', style: TextStyle(fontSize: 16)),
               ),
             ]),
           ),

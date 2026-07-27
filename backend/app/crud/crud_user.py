@@ -9,13 +9,18 @@ from app.schemas.user import UserCreate, UserUpdate, SetupProfile
 from app.core.security import get_password_hash, verify_password
 
 
-# ── Reserved usernames ─────────────────────────────────────────────────────
 RESERVED_USERNAMES = {
     "system", "support", "news", "moderator", "admin", "security",
     "notifications", "maintenance", "mid", "root", "superadmin",
     "super_admin", "api", "bot", "official", "staff", "help",
     "info", "contact", "mail", "email", "noreply", "no_reply",
     "myharur", "harur", "anonymous", "guest",
+}
+
+ABUSIVE_WORDS = {
+    "fuck", "shit", "bitch", "asshole", "cunt", "dick", "pussy",
+    "cock", "slut", "whore", "bastard", "nigger", "faggot",
+    "porn", "sex", "rape", "murder", "kill", "nazi",
 }
 
 USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{3,30}$')
@@ -25,8 +30,15 @@ def validate_username(username: str) -> Optional[str]:
     """Returns error string or None if valid."""
     if not USERNAME_REGEX.match(username):
         return "Username must be 3-30 characters, letters/numbers/underscore only."
-    if username.lower() in RESERVED_USERNAMES:
+    
+    lower_uname = username.lower()
+    if lower_uname in RESERVED_USERNAMES:
         return f"'{username}' is a reserved username."
+        
+    for word in ABUSIVE_WORDS:
+        if word in lower_uname:
+            return "Username contains inappropriate language."
+            
     return None
 
 
@@ -203,6 +215,12 @@ def set_username(db: Session, user: User, username: str) -> tuple[User, Optional
 
 
 def complete_setup(db: Session, user: User, setup_in: SetupProfile) -> User:
+    for word in ABUSIVE_WORDS:
+        if setup_in.first_name and word in setup_in.first_name.lower():
+            raise ValueError("First name contains inappropriate language.")
+        if setup_in.last_name and word in setup_in.last_name.lower():
+            raise ValueError("Last name contains inappropriate language.")
+
     profile = user.profile
     if not profile:
         profile = Profile(user_id=user.id)

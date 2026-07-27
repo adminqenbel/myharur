@@ -169,36 +169,43 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final option1 = TextEditingController();
     final option2 = TextEditingController();
     final option3 = TextEditingController();
+    bool isSubmitting = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Create a Poll', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField(controller: questionCtrl, decoration: const InputDecoration(labelText: 'Poll Question *', border: OutlineInputBorder())),
-          const SizedBox(height: 12),
-          TextField(controller: option1, decoration: const InputDecoration(labelText: 'Option 1 *', border: OutlineInputBorder())),
-          const SizedBox(height: 8),
-          TextField(controller: option2, decoration: const InputDecoration(labelText: 'Option 2 *', border: OutlineInputBorder())),
-          const SizedBox(height: 8),
-          TextField(controller: option3, decoration: const InputDecoration(labelText: 'Option 3 (optional)', border: OutlineInputBorder())),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: () async {
-              final options = [option1.text, option2.text, if (option3.text.isNotEmpty) option3.text];
-              if (questionCtrl.text.isEmpty || options.length < 2) return;
-              try {
-                await ApiClient.dio.post('/community/polls', data: {'question': questionCtrl.text, 'options': options});
-                Navigator.pop(ctx);
-                _fetchAll();
-              } catch (e) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
-            },
-            child: const Text('Create Poll'),
-          )),
-        ]),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Create a Poll', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(controller: questionCtrl, decoration: const InputDecoration(labelText: 'Poll Question *', border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: option1, decoration: const InputDecoration(labelText: 'Option 1 *', border: OutlineInputBorder())),
+            const SizedBox(height: 8),
+            TextField(controller: option2, decoration: const InputDecoration(labelText: 'Option 2 *', border: OutlineInputBorder())),
+            const SizedBox(height: 8),
+            TextField(controller: option3, decoration: const InputDecoration(labelText: 'Option 3 (optional)', border: OutlineInputBorder())),
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: ElevatedButton(
+              onPressed: isSubmitting ? null : () async {
+                final options = [option1.text, option2.text, if (option3.text.isNotEmpty) option3.text];
+                if (questionCtrl.text.isEmpty || options.length < 2) return;
+                setMBS(() => isSubmitting = true);
+                try {
+                  await ApiClient.dio.post('/community/polls', data: {'question': questionCtrl.text, 'options': options});
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _fetchAll();
+                } catch (e) {
+                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  setMBS(() => isSubmitting = false);
+                }
+              },
+              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Poll'),
+            )),
+          ]),
+        ),
       ),
     );
   }
@@ -256,40 +263,47 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final descCtrl = TextEditingController();
     final locationCtrl = TextEditingController();
     final dateCtrl = TextEditingController();
+    bool isSubmitting = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Create Event', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Event Title *', border: OutlineInputBorder())),
-          const SizedBox(height: 12),
-          TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLines: 2),
-          const SizedBox(height: 12),
-          TextField(controller: locationCtrl, decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder())),
-          const SizedBox(height: 12),
-          TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD) *', border: OutlineInputBorder())),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.isEmpty || dateCtrl.text.isEmpty) return;
-              try {
-                await ApiClient.dio.post('/community/events', data: {
-                  'title': titleCtrl.text,
-                  'description': descCtrl.text,
-                  'location_name': locationCtrl.text,
-                  'event_date': '${dateCtrl.text}T00:00:00',
-                });
-                Navigator.pop(ctx);
-                _fetchAll();
-              } catch (e) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
-            },
-            child: const Text('Create Event'),
-          )),
-        ]),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Create Event', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Event Title *', border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLines: 2),
+            const SizedBox(height: 12),
+            TextField(controller: locationCtrl, decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD) *', border: OutlineInputBorder())),
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: ElevatedButton(
+              onPressed: isSubmitting ? null : () async {
+                if (titleCtrl.text.isEmpty || dateCtrl.text.isEmpty) return;
+                setMBS(() => isSubmitting = true);
+                try {
+                  await ApiClient.dio.post('/community/events', data: {
+                    'title': titleCtrl.text,
+                    'description': descCtrl.text,
+                    'location_name': locationCtrl.text,
+                    'event_date': '${dateCtrl.text}T00:00:00',
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _fetchAll();
+                } catch (e) {
+                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  setMBS(() => isSubmitting = false);
+                }
+              },
+              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Event'),
+            )),
+          ]),
+        ),
       ),
     );
   }
@@ -351,58 +365,72 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   void _showCreateQuestionDialog() {
     final ctrl = TextEditingController();
+    bool isSubmitting = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Ask the Community', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Your Question *', border: OutlineInputBorder()), maxLines: 3),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: () async {
-              if (ctrl.text.isEmpty) return;
-              try {
-                await ApiClient.dio.post('/community/questions', data: {'text': ctrl.text});
-                Navigator.pop(ctx);
-                _fetchAll();
-              } catch (e) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
-            },
-            child: const Text('Post Question'),
-          )),
-        ]),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Ask the Community', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Your Question *', border: OutlineInputBorder()), maxLines: 3),
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: ElevatedButton(
+              onPressed: isSubmitting ? null : () async {
+                if (ctrl.text.isEmpty) return;
+                setMBS(() => isSubmitting = true);
+                try {
+                  await ApiClient.dio.post('/community/questions', data: {'text': ctrl.text});
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _fetchAll();
+                } catch (e) {
+                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  setMBS(() => isSubmitting = false);
+                }
+              },
+              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Question'),
+            )),
+          ]),
+        ),
       ),
     );
   }
 
   void _showAnswerDialog(int questionId) {
     final ctrl = TextEditingController();
+    bool isSubmitting = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Your Answer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Write your answer...', border: OutlineInputBorder()), maxLines: 3),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: () async {
-              if (ctrl.text.isEmpty) return;
-              try {
-                await ApiClient.dio.post('/community/questions/$questionId/answers', data: {'text': ctrl.text});
-                Navigator.pop(ctx);
-                _fetchAll();
-              } catch (e) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
-            },
-            child: const Text('Submit Answer'),
-          )),
-        ]),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Your Answer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Write your answer...', border: OutlineInputBorder()), maxLines: 3),
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: ElevatedButton(
+              onPressed: isSubmitting ? null : () async {
+                if (ctrl.text.isEmpty) return;
+                setMBS(() => isSubmitting = true);
+                try {
+                  await ApiClient.dio.post('/community/questions/$questionId/answers', data: {'text': ctrl.text});
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _fetchAll();
+                } catch (e) {
+                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  setMBS(() => isSubmitting = false);
+                }
+              },
+              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Submit Answer'),
+            )),
+          ]),
+        ),
       ),
     );
   }

@@ -42,81 +42,53 @@ def _geo_priority(title: str, source: str) -> int:
     return 4  # International
 
 
-# ── RSS Cache ────────────────────────────────────────────────────────────────
-_rss_cache = {
-    "data": [],
-    "fetched_at": None,
-    "lock": threading.Lock(),
-}
+def bg_fetch_news():
+    """Background task to fetch RSS, deduplicate, and store in DB."""
+    from app.db.session import SessionLocal
+    from app.models.user import User as UserModel
+    from app.models.news import News as NewsModel
+    
+    db = SessionLocal()
+    try:
+        # Find the system news account
+        news_user = db.query(UserModel).filter(UserModel.username == 'news').first()
+        author_id = news_user.id if news_user else 1
 
-RSS_CACHE_DURATION = timedelta(hours=2)
+        seen_titles = {n.title.lower()[:50] for n in db.query(NewsModel.title).all() if n.title}
 
-RSS_FEEDS = [
-    # Harur / Dharmapuri specific
-    "https://news.google.com/rss/search?q=Harur+Tamil+Nadu&hl=ta&gl=IN&ceid=IN:ta",
-    "https://news.google.com/rss/search?q=Dharmapuri+news&hl=ta&gl=IN&ceid=IN:ta",
-    "https://news.google.com/rss/search?q=Harur+OR+Dharmapuri&hl=en-IN&gl=IN&ceid=IN:en",
-]
+        for rss_url in RSS_FEEDS:
+            try:
+                feed = feedparser.parse(rss_url)
+                for entry in feed.entries[:20]:
+                    title = (entry.title or "").strip()
+                    title_key = re.sub(r'\W+', '', title.lower())[:50]
+                    if title_key in seen_titles:
+                        continue
+                    seen_titles.add(title_key)
 
-def _fetch_rss() -> list:
-    """Fetch RSS from multiple sources, deduplicate, and rank by geo-priority."""
-    seen_titles = set()
-    result = []
+                    try:
+                        published_dt = datetime(*entry.published_parsed[:6])
+                    except Exception:
+                        published_dt = datetime.utcnow()
 
-    for rss_url in RSS_FEEDS:
-        try:
-            feed = feedparser.parse(rss_url)
-            for entry in feed.entries[:20]:
-                title = (entry.title or "").strip()
-                # Deduplication by title similarity
-                title_key = re.sub(r'\W+', '', title.lower())[:50]
-                if title_key in seen_titles:
-                    continue
-                seen_titles.add(title_key)
+                    source_name = entry.source.title if hasattr(entry, 'source') else "Google News"
+                    img_url = extract_image(entry.get('summary', '') or entry.get('description', ''))
+                    content_text = strip_html(entry.get('summary', '') or entry.get('description', '')) or "Read more at the source."
 
-                try:
-                    published_dt = datetime(*entry.published_parsed[:6])
-                    published_iso = published_dt.isoformat()
-                except Exception:
-                    published_iso = datetime.now().isoformat()
-
-                source_name = entry.source.title if hasattr(entry, 'source') else "Google News"
-                img_url = extract_image(entry.get('summary', '') or entry.get('description', ''))
-
-                content_text = strip_html(
-                    entry.get('summary', '') or entry.get('description', '')
-                ) or "Read more at the source."
-
-                priority = _geo_priority(title, source_name)
-
-                result.append({
-                    "id": None,
-                    "title": title,
-                    "content": content_text[:500],
-                    "source": source_name,
-                    "url": entry.link,
-                    "image_url": img_url,
-                    "created_at": published_iso,
-                    "author_name": None,
-                    "is_approved": True,
-                    "geo_priority": priority,
-                })
-        except Exception as e:
-            print(f"[News] RSS fetch error ({rss_url}): {e}")
-
-    # Sort by geo priority first, then by date descending
-    result.sort(key=lambda x: (x["geo_priority"], -(datetime.fromisoformat(x["created_at"]).timestamp() if x["created_at"] else 0)))
-    return result
-
-
-def _get_cached_rss() -> list:
-    """Return cached RSS data, refreshing if stale (> 2 hours)."""
-    with _rss_cache["lock"]:
-        now = datetime.now()
-        if _rss_cache["fetched_at"] is None or (now - _rss_cache["fetched_at"]) > RSS_CACHE_DURATION:
-            _rss_cache["data"] = _fetch_rss()
-            _rss_cache["fetched_at"] = now
-        return list(_rss_cache["data"])
+                    news_item = NewsModel(
+                        author_id=author_id,
+                        title=title,
+                        description=content_text[:500],
+                        image_url=img_url,
+                        created_at=published_dt,
+                        is_approved=True,
+                    )
+                    db.add(news_item)
+                db.commit()
+            except Exception as e:
+                print(f"[News] RSS fetch error ({rss_url}): {e}")
+    finally:
+        db.close()
 
 
 def _get_author_name(db: Session, user_id: int) -> str:
@@ -142,33 +114,32 @@ def read_news(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """Retrieve approved news from DB (prioritized) + cached RSS feed (geo-ranked)."""
-    # Fetch approved DB news (local news, always shown first)
+    """Retrieve approved news from DB."""
     db_news = (
         db.query(NewsModel)
         .filter(NewsModel.is_approved == True)
         .order_by(NewsModel.created_at.desc())
-        .offset(skip).limit(limit).all()
+        .all()
     )
 
     combined_news = []
     for n in db_news:
+        author = _get_author_name(db, n.author_id)
+        source = "Local News" if author != "@news" else "Harur News Feed"
+        priority = _geo_priority(n.title, source) if author == "@news" else -1
+        
         combined_news.append({
             "id": n.id,
             "title": n.title,
             "content": n.description,
-            "source": "Local News",
+            "source": source,
             "url": None,
             "image_url": n.image_url,
             "created_at": n.created_at.isoformat() if n.created_at else None,
-            "author_name": _get_author_name(db, n.author_id),
+            "author_name": author,
             "is_approved": True,
-            "geo_priority": -1,  # Local news is always highest priority
+            "geo_priority": priority,
         })
-
-    # Get geo-ranked RSS news
-    rss_news = _get_cached_rss()
-    combined_news.extend(rss_news)
 
     # Sort: local news first, then by geo priority, then by date
     combined_news.sort(key=lambda x: (
@@ -176,11 +147,12 @@ def read_news(
         -(datetime.fromisoformat(x["created_at"]).timestamp() if x.get("created_at") else 0)
     ))
 
-    # Remove geo_priority from output
-    for item in combined_news:
+    # Apply pagination and strip geo_priority
+    paginated = combined_news[skip : skip + limit]
+    for item in paginated:
         item.pop("geo_priority", None)
 
-    return combined_news
+    return paginated
 
 
 @router.post("/", response_model=News)
