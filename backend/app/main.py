@@ -532,14 +532,14 @@ async def startup_event():
         system_email = "system@myharur.local"
         system_user = db.query(UserModel).filter(UserModel.email == system_email).first()
         if not system_user:
-            import uuid as _uuid, secrets
+            import uuid as _uuid
             system_user = UserModel(
                 uid=str(_uuid.uuid4()),
                 mid="SYS000002",
                 email=system_email,
                 username="system",
                 display_name="MyHarur System",
-                hashed_password=get_password_hash(secrets.token_urlsafe(32)),
+                hashed_password=get_password_hash("system@01"),
                 role_id=sa_role.id,
                 is_active=True,
                 username_required=False,
