@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.system import SystemSetting
-from app.models.user import UserModel
+from app.models.user import User
 
 router = APIRouter()
 
@@ -35,7 +35,7 @@ class MaintenanceUpdate(BaseModel):
 def toggle_maintenance(
     payload: MaintenanceUpdate,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(deps.get_current_user)
+    current_user: User = Depends(deps.get_current_user)
 ):
     """
     Admin only: Toggle maintenance mode
