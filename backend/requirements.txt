@@ -13,3 +13,4 @@ redis
 celery
 email-validator
 feedparser
+python-socketio

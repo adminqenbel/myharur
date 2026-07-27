@@ -5,6 +5,7 @@ import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
 import '../theme.dart';
+import '../utils/image_upload_helper.dart';
 
 class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
@@ -57,6 +58,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final phoneCtrl = TextEditingController();
     String selectedCategory = 'Electronics';
     String selectedCondition = 'Used';
+    String? imageUrl;
+    bool isUploadingImage = false;
     final categories = ['Electronics', 'Furniture', 'Bikes', 'Vehicles', 'Clothing', 'Books', 'Pets', 'Other'];
     final conditions = ['New', 'Like New', 'Used'];
 
@@ -73,6 +76,41 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
             child: ListView(controller: sc, children: [
               const Text('Post a Listing', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
+              
+              // Image Upload Section
+              GestureDetector(
+                onTap: () async {
+                  if (isUploadingImage) return;
+                  setMBS(() => isUploadingImage = true);
+                  final url = await ImageUploadHelper.pickAndUpload();
+                  setMBS(() {
+                    if (url != null) imageUrl = url;
+                    isUploadingImage = false;
+                  });
+                },
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                    image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover) : null,
+                  ),
+                  child: isUploadingImage
+                      ? const Center(child: CircularProgressIndicator())
+                      : imageUrl == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Add Photo', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                              ],
+                            )
+                          : const SizedBox(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title *', border: OutlineInputBorder())),
               const SizedBox(height: 12),
               TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLines: 3),
@@ -106,6 +144,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                       'category': selectedCategory,
                       'condition': selectedCondition,
                       'contact_phone': phoneCtrl.text,
+                      'image_urls': imageUrl != null ? [imageUrl] : [],
                     });
                     Navigator.pop(ctx);
                     _fetchListings();
@@ -242,6 +281,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         itemBuilder: (ctx, i) {
           final item = _listings[i];
           final isSold = item['is_sold'] == true;
+          final List? imageUrls = item['image_urls'] as List?;
+          final String? imageUrl = (imageUrls != null && imageUrls.isNotEmpty) ? imageUrls[0] : null;
+
           return Card(
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -251,8 +293,11 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 children: [
                   Container(
                     height: 110,
+                    width: double.infinity,
                     color: Colors.blue.shade50,
-                    child: Center(child: Icon(Icons.image, size: 40, color: Colors.blue.shade200)),
+                    child: imageUrl != null
+                        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.image, size: 40, color: Colors.blue.shade200)))
+                        : Center(child: Icon(Icons.image, size: 40, color: Colors.blue.shade200)),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8),

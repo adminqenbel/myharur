@@ -31,6 +31,132 @@ import time
 import re
 from app.api.endpoints.rates import current_rates
 
+# ── Socket.IO Setup ─────────────────────────────────────────────────────────
+import socketio
+from jose import jwt, JWTError
+
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+
+# User session tracking: sid -> {user_id, user_name, room_ids}
+_socket_sessions = {}
+
+
+@sio.event
+async def connect(sid, environ, auth):
+    """Authenticate WebSocket connection via JWT."""
+    token = None
+    if auth and isinstance(auth, dict):
+        token = auth.get('token')
+    if not token:
+        # Try from query string
+        from urllib.parse import parse_qs
+        qs = environ.get('QUERY_STRING', '')
+        params = parse_qs(qs)
+        if 'token' in params:
+            token = params['token'][0]
+    if not token:
+        return False  # Reject connection
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = int(payload.get('sub', 0))
+        if not user_id:
+            return False
+        _socket_sessions[sid] = {'user_id': user_id, 'rooms': set()}
+        print(f"[Socket.IO] User {user_id} connected (sid={sid})")
+        return True
+    except (JWTError, Exception) as e:
+        print(f"[Socket.IO] Auth failed: {e}")
+        return False
+
+
+@sio.event
+async def join_room(sid, data):
+    """Join a chat room for real-time messages."""
+    room_id = data.get('room_id') if isinstance(data, dict) else data
+    room_name = f'chat_room_{room_id}'
+    sio.enter_room(sid, room_name)
+    if sid in _socket_sessions:
+        _socket_sessions[sid]['rooms'].add(room_name)
+    print(f"[Socket.IO] sid={sid} joined {room_name}")
+
+
+@sio.event
+async def leave_room(sid, data):
+    """Leave a chat room."""
+    room_id = data.get('room_id') if isinstance(data, dict) else data
+    room_name = f'chat_room_{room_id}'
+    sio.leave_room(sid, room_name)
+    if sid in _socket_sessions:
+        _socket_sessions[sid]['rooms'].discard(room_name)
+
+
+@sio.event
+async def send_message(sid, data):
+    """Receive a message via Socket.IO, save to DB, broadcast to room."""
+    session = _socket_sessions.get(sid)
+    if not session:
+        return
+
+    user_id = session['user_id']
+    room_id = data.get('room_id')
+    content = data.get('content', '').strip()
+    if not room_id or not content:
+        return
+
+    # Save to database
+    from app.db.session import SessionLocal
+    from app.models.community import ChatMessage
+    from app.models.user import Profile as ProfileModel
+
+    db = SessionLocal()
+    try:
+        msg = ChatMessage(room_id=room_id, sender_id=user_id, content=content)
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+
+        # Get sender info
+        profile = db.query(ProfileModel).filter(ProfileModel.user_id == user_id).first()
+        sender_name = "Anonymous"
+        sender_avatar = None
+        if profile:
+            name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+            sender_name = name or "Anonymous"
+            sender_avatar = profile.avatar_url
+
+        from app.api.endpoints.community import _get_role
+        sender_role = _get_role(db, user_id)
+
+        msg_data = {
+            'id': msg.id,
+            'room_id': msg.room_id,
+            'sender_id': msg.sender_id,
+            'content': msg.content,
+            'created_at': msg.created_at.isoformat() if msg.created_at else None,
+            'sender_name': sender_name,
+            'sender_role': sender_role,
+            'sender_avatar': sender_avatar,
+        }
+
+        # Broadcast to everyone in the room
+        await sio.emit('new_message', msg_data, room=f'chat_room_{room_id}')
+    finally:
+        db.close()
+
+
+@sio.event
+async def disconnect(sid):
+    """Clean up on disconnect."""
+    session = _socket_sessions.pop(sid, None)
+    if session:
+        print(f"[Socket.IO] User {session['user_id']} disconnected (sid={sid})")
+
+
+# ── Wrap FastAPI with Socket.IO ASGI app ─────────────────────────────────────
+socket_app = socketio.ASGIApp(sio, app)
+
+
 def scrape_rates():
     try:
         url = "https://www.goodreturns.in/gold-rates/dharmapuri.html"
@@ -98,7 +224,16 @@ async def startup_event():
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cover_url VARCHAR;",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS streak_days INTEGER DEFAULT 0;",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS reward_points INTEGER DEFAULT 0;",
-            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_active_date DATE;"
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_active_date DATE;",
+            # News table new columns
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS image_url VARCHAR;",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS content TEXT;",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS verified_by INTEGER;",
+            "ALTER TABLE news ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;",
+            # Make category_id nullable
+            "ALTER TABLE news ALTER COLUMN category_id DROP NOT NULL;",
+            # Listings image_urls column
+            "ALTER TABLE listings ADD COLUMN IF NOT EXISTS image_urls JSONB DEFAULT '[]';",
         ]
         for query in migrations:
             try:
@@ -141,6 +276,10 @@ async def startup_event():
     finally:
         db.close()
     
+    # Create uploads directory
+    import os
+    os.makedirs("static/uploads", exist_ok=True)
+    
     # Start the keep-alive background thread
     threading.Thread(target=keep_alive_loop, daemon=True).start()
 
@@ -161,8 +300,10 @@ def health_check():
 import os
 # Create static dir if it doesn't exist
 os.makedirs("static", exist_ok=True)
+os.makedirs("static/uploads", exist_ok=True)
 # Mount static files (serves index.html at root and app-release.apk)
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    # Run socket_app (which wraps FastAPI) for Socket.IO support
+    uvicorn.run("app.main:socket_app", host="0.0.0.0", port=8000, reload=True)

@@ -4,6 +4,7 @@ import 'dart:async';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
+import '../services/socket_service.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -459,33 +460,57 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _scrollCtrl = ScrollController();
   List<dynamic> _messages = [];
   bool _loading = true;
-  Timer? _pollTimer;
+  StreamSubscription? _socketSub;
+  Timer? _fallbackTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchMessages();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _pollMessages());
+    _connectSocket();
+  }
+
+  void _connectSocket() {
+    final auth = ref.read(authProvider);
+    if (!auth.isLoggedIn || auth.token == null) {
+      // Fallback to polling for non-logged-in users (read-only)
+      _fallbackTimer = Timer.periodic(const Duration(seconds: 5), (_) => _pollMessages());
+      return;
+    }
+
+    final socket = SocketService();
+    socket.connect(auth.token!);
+
+    // Join this room
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      socket.joinRoom(widget.room['id'] as int);
+    });
+
+    // Listen for new messages via Socket.IO
+    _socketSub = socket.onNewMessage.listen((msgData) {
+      if (msgData['room_id'] == widget.room['id'] && mounted) {
+        // Avoid duplicates (from optimistic UI)
+        final exists = _messages.any((m) => m['id'] == msgData['id'] && m['id'] != -1);
+        if (!exists) {
+          // Remove optimistic placeholder if it matches
+          setState(() {
+            _messages.removeWhere((m) => m['id'] == -1 && m['content'] == msgData['content']);
+            _messages.add(msgData);
+          });
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
+    _socketSub?.cancel();
+    _fallbackTimer?.cancel();
+    final socket = SocketService();
+    socket.leaveRoom(widget.room['id'] as int);
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 
   Future<void> _pollMessages() async {
@@ -495,7 +520,6 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         final newMessages = r.data as List<dynamic>;
         if (newMessages.length != _messages.length) {
           setState(() => _messages = newMessages);
-          _scrollToBottom();
         }
       }
     } catch (_) {}
@@ -508,7 +532,6 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         _messages = r.data;
         _loading = false;
       });
-      _scrollToBottom();
     } catch (_) {
       setState(() => _loading = false);
     }
@@ -518,28 +541,38 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
     _msgCtrl.clear();
-    
+
     final auth = ref.read(authProvider);
     final myId = auth.user?['id'];
-    
-    // Optimistic UI Update
+    final roomId = widget.room['id'] as int;
+
+    // Optimistic UI: add temp message immediately
     final tempMsg = {
       'id': -1,
       'sender_id': myId,
       'content': text,
+      'room_id': roomId,
       'created_at': DateTime.now().toIso8601String(),
       'sender_name': 'You',
       'sender_role': null,
       'sender_avatar': null,
     };
     setState(() => _messages.add(tempMsg));
-    _scrollToBottom();
 
-    try {
-      await ApiClient.dio.post('/community/chat/rooms/${widget.room['id']}/messages', data: {'content': text});
-      await _fetchMessages();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    // Send via Socket.IO (fast path) with REST fallback
+    final socket = SocketService();
+    if (socket.isConnected) {
+      socket.sendMessage(roomId, text);
+    } else {
+      // Fallback to REST
+      try {
+        await ApiClient.dio.post('/community/chat/rooms/$roomId/messages', data: {'content': text});
+        await _fetchMessages();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
+      }
     }
   }
 
@@ -547,7 +580,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final myId = auth.user?['id'] as int?;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,38 +604,44 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     controller: _scrollCtrl,
+                    reverse: true, // WhatsApp-style: newest at bottom, pins to bottom on keyboard
                     padding: const EdgeInsets.all(12),
                     itemCount: _messages.length,
                     itemBuilder: (ctx, i) {
-                      final msg = _messages[i];
+                      // reverse: true inverts index, so newest (last) is at position 0
+                      final msg = _messages[_messages.length - 1 - i];
                       final isMe = msg['sender_id'] == myId;
                       return _buildBubble(msg, isMe);
                     },
                   ),
           ),
           if (auth.isLoggedIn)
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _msgCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            SafeArea(
+              top: false,
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.only(left: 12, right: 12, top: 8, bottom: bottomInset > 0 ? 8 : 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _msgCtrl,
+                        decoration: InputDecoration(
+                          hintText: 'Type a message...',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _send(),
                       ),
-                      onSubmitted: (_) => _send(),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton.small(
-                    onPressed: _send,
-                    child: const Icon(Icons.send),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    FloatingActionButton.small(
+                      onPressed: _send,
+                      child: const Icon(Icons.send),
+                    ),
+                  ],
+                ),
               ),
             )
           else
@@ -654,7 +696,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 ],
                 Text(msg['content'] ?? '', style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
                 Text(
-                  msg['created_at']?.toString().substring(11, 16) ?? '',
+                  msg['created_at']?.toString().length != null && msg['created_at'].toString().length >= 16
+                      ? msg['created_at'].toString().substring(11, 16)
+                      : '',
                   style: TextStyle(color: isMe ? Colors.white70 : Colors.grey, fontSize: 10),
                 ),
               ],

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/auth_provider.dart';
+import '../utils/image_upload_helper.dart';
 
-class NewsScreen extends StatefulWidget {
+class NewsScreen extends ConsumerStatefulWidget {
   const NewsScreen({super.key});
 
   @override
-  State<NewsScreen> createState() => _NewsScreenState();
+  ConsumerState<NewsScreen> createState() => _NewsScreenState();
 }
 
-class _NewsScreenState extends State<NewsScreen> {
+class _NewsScreenState extends ConsumerState<NewsScreen> {
   late Future<List<dynamic>> _newsFuture;
   late Future<Map<String, dynamic>> _ratesFuture;
 
@@ -38,8 +41,94 @@ class _NewsScreenState extends State<NewsScreen> {
     }
   }
 
+  void _showSubmitNewsDialog() {
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    String? imageUrl;
+    bool isUploadingImage = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.85,
+          builder: (_, sc) => Padding(
+            padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+            child: ListView(controller: sc, children: [
+              const Text('Submit News', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('Share local news or updates. It will be public after moderation.', style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              
+              // Image Upload Section
+              GestureDetector(
+                onTap: () async {
+                  if (isUploadingImage) return;
+                  setMBS(() => isUploadingImage = true);
+                  final url = await ImageUploadHelper.pickAndUpload();
+                  setMBS(() {
+                    if (url != null) imageUrl = url;
+                    isUploadingImage = false;
+                  });
+                },
+                child: Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                    image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover) : null,
+                  ),
+                  child: isUploadingImage
+                      ? const Center(child: CircularProgressIndicator())
+                      : imageUrl == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                                SizedBox(height: 8),
+                                Text('Add Photo', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                              ],
+                            )
+                          : const SizedBox(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'News Headline *', border: OutlineInputBorder())),
+              const SizedBox(height: 12),
+              TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Details / Content *', border: OutlineInputBorder()), maxLines: 5),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  if (titleCtrl.text.isEmpty || descCtrl.text.isEmpty) return;
+                  try {
+                    await ApiClient.dio.post('/news/', data: {
+                      'title': titleCtrl.text,
+                      'description': descCtrl.text,
+                      'image_url': imageUrl,
+                    });
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('News submitted for moderation.')));
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                },
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                child: const Text('Submit for Review', style: TextStyle(fontSize: 16)),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('MyHarur News'),
@@ -54,6 +143,13 @@ class _NewsScreenState extends State<NewsScreen> {
           )
         ],
       ),
+      floatingActionButton: auth.isLoggedIn
+          ? FloatingActionButton.extended(
+              onPressed: _showSubmitNewsDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('Submit News'),
+            )
+          : null,
       body: Column(
         children: [
           // Rates Widget

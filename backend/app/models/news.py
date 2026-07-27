@@ -12,9 +12,11 @@ class News(Base):
     __tablename__ = "news"
     id = Column(Integer, primary_key=True, index=True)
     author_id = Column(Integer, ForeignKey("users.id"))
-    category_id = Column(Integer, ForeignKey("news_categories.id"))
+    category_id = Column(Integer, ForeignKey("news_categories.id"), nullable=True)
     title = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=False)
+    content = Column(Text, nullable=True)  # Extended content / body
+    image_url = Column(String, nullable=True)  # Single hero image URL
     location_name = Column(String, nullable=True)
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)
@@ -22,6 +24,8 @@ class News(Base):
     is_pinned = Column(Boolean, default=False)
     is_trending = Column(Boolean, default=False)
     is_breaking = Column(Boolean, default=False)
+    verified_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    verified_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     images = relationship("NewsImage", back_populates="news")

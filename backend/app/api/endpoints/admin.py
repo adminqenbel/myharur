@@ -2,10 +2,12 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from datetime import datetime
 
 from app.api import deps
 from app.schemas.user import AdminUserList
-from app.models.user import User as UserModel, Role as RoleModel
+from app.models.user import User as UserModel, Role as RoleModel, Profile as ProfileModel
+from app.models.news import News as NewsModel
 
 router = APIRouter()
 
@@ -21,12 +23,22 @@ def _require_admin(current_user: UserModel = Depends(deps.get_current_user)) -> 
     return current_user
 
 
+def _require_moderator(current_user: UserModel = Depends(deps.get_current_user)) -> UserModel:
+    """Require at least Moderator role."""
+    role = getattr(current_user.role, "name", None)
+    if role not in ("Moderator", "Admin", "Super Admin"):
+        raise HTTPException(status_code=403, detail="Moderators/Admins only")
+    return current_user
+
+
 def _require_superadmin(current_user: UserModel = Depends(deps.get_current_user)) -> UserModel:
     role = getattr(current_user.role, "name", None)
     if role != "Super Admin":
         raise HTTPException(status_code=403, detail="Super Admins only")
     return current_user
 
+
+# ── User Management ──────────────────────────────────────────────────────────
 
 @router.get("/users", response_model=List[AdminUserList])
 def list_all_users(
@@ -79,3 +91,73 @@ def toggle_user_active(
     user.is_active = not user.is_active
     db.commit()
     return {"message": "User status updated", "is_active": user.is_active}
+
+
+# ── News Moderation ──────────────────────────────────────────────────────────
+
+def _get_author_name(db: Session, user_id: int) -> str:
+    profile = db.query(ProfileModel).filter(ProfileModel.user_id == user_id).first()
+    if profile:
+        name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+        return name or "Anonymous"
+    return "Anonymous"
+
+
+@router.get("/news/pending")
+def list_pending_news(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(_require_moderator),
+) -> Any:
+    """List all news awaiting approval."""
+    pending = (
+        db.query(NewsModel)
+        .filter(NewsModel.is_approved == False)
+        .order_by(NewsModel.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": n.id,
+            "title": n.title,
+            "description": n.description,
+            "image_url": n.image_url,
+            "created_at": n.created_at.isoformat() if n.created_at else None,
+            "author_name": _get_author_name(db, n.author_id),
+            "is_approved": n.is_approved,
+        }
+        for n in pending
+    ]
+
+
+@router.put("/news/{news_id}/approve")
+def approve_news(
+    news_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(_require_moderator),
+) -> Any:
+    """Approve a pending news post."""
+    news = db.query(NewsModel).filter(NewsModel.id == news_id).first()
+    if not news:
+        raise HTTPException(status_code=404, detail="News not found")
+
+    news.is_approved = True
+    news.verified_by = current_user.id
+    news.verified_at = datetime.utcnow()
+    db.commit()
+    return {"message": "News approved", "id": news_id}
+
+
+@router.put("/news/{news_id}/reject")
+def reject_news(
+    news_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(_require_moderator),
+) -> Any:
+    """Reject and delete a pending news post."""
+    news = db.query(NewsModel).filter(NewsModel.id == news_id).first()
+    if not news:
+        raise HTTPException(status_code=404, detail="News not found")
+
+    db.delete(news)
+    db.commit()
+    return {"message": "News rejected and removed", "id": news_id}
