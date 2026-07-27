@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Float
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Float, Text, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.session import Base
@@ -19,13 +19,23 @@ class Role(Base):
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    uid = Column(String, unique=True, index=True, default=generate_uid)
+    uid = Column(String, unique=True, index=True, default=generate_uid)          # UUID — internal
+    mid = Column(String, unique=True, index=True, nullable=True)                  # MID — human-readable permanent ID
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+
+    # Identity
+    username = Column(String, unique=True, index=True, nullable=True)             # Globally unique, case-insensitive stored lowercase
+    display_name = Column(String, nullable=True)                                  # Editable, max 60 chars, Unicode
+    username_required = Column(Boolean, default=False)                            # True → force username screen on next login
+
     is_active = Column(Boolean, default=True)
+    is_banned = Column(Boolean, default=False)
+    ban_reason = Column(String, nullable=True)
     is_setup_complete = Column(Boolean, default=False)
     login_provider = Column(String, default="email")  # "email", "google", "both"
     role_id = Column(Integer, ForeignKey("roles.id"))
+    last_login = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -40,7 +50,7 @@ class Profile(Base):
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-    bio = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
     address = Column(String, nullable=True)
     ward = Column(String, nullable=True)
     city = Column(String, default="Harur")

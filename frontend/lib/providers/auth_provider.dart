@@ -14,7 +14,12 @@ class AuthState {
   bool get isSetupComplete => user?['is_setup_complete'] == true;
   bool get isAdmin => ['Admin', 'Super Admin'].contains(user?['role']?['name']);
   bool get isSuperAdmin => user?['role']?['name'] == 'Super Admin';
+  bool get isModerator => ['Moderator', 'Admin', 'Super Admin'].contains(user?['role']?['name']);
+  bool get usernameRequired => user?['username_required'] == true;
   String? get uid => user?['uid'];
+  String? get mid => user?['mid'];
+  String? get username => user?['username'];
+  String? get displayName => user?['display_name'];
   String? get email => user?['email'];
   String? get loginProvider => user?['login_provider'];
 
@@ -64,6 +69,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await ApiClient.dio.get('/users/me');
       state = state.copyWith(user: response.data);
     } catch (_) {}
+  }
+
+  /// Called after set-username to update token + user in place
+  Future<void> setAuth(String token, Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+    ApiClient.setToken(token);
+    state = AuthState(token: token, user: user);
   }
 
   Future<void> logout() async {

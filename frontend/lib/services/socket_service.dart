@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-/// Singleton service for real-time Socket.IO messaging.
-/// Replaces the 3-second HTTP polling approach with ~50-100ms delivery.
+/// Singleton Socket.IO service.
+/// Architecture: Emit-first (optimistic) → DB async save → confirm real ID.
 class SocketService {
   static final SocketService _instance = SocketService._internal();
   factory SocketService() => _instance;
@@ -12,45 +12,67 @@ class SocketService {
   bool _isConnected = false;
   String? _currentToken;
 
-  // Stream controllers for incoming messages
-  final _messageController = StreamController<Map<String, dynamic>>.broadcast();
-  Stream<Map<String, dynamic>> get onNewMessage => _messageController.stream;
+  // Stream controllers
+  final _messageCtrl = StreamController<Map<String, dynamic>>.broadcast();
+  final _typingCtrl = StreamController<Map<String, dynamic>>.broadcast();
+  final _presenceCtrl = StreamController<Map<String, dynamic>>.broadcast();
+  final _mentionCtrl = StreamController<Map<String, dynamic>>.broadcast();
+  final _confirmCtrl = StreamController<Map<String, dynamic>>.broadcast();
+
+  Stream<Map<String, dynamic>> get onNewMessage => _messageCtrl.stream;
+  Stream<Map<String, dynamic>> get onTyping => _typingCtrl.stream;
+  Stream<Map<String, dynamic>> get onPresence => _presenceCtrl.stream;
+  Stream<Map<String, dynamic>> get onMention => _mentionCtrl.stream;
+  Stream<Map<String, dynamic>> get onMessageConfirmed => _confirmCtrl.stream;
 
   bool get isConnected => _isConnected;
 
-  /// Base URL for the Socket.IO server (same as API but without /api/v1)
   static const String _baseUrl = 'https://myharur.onrender.com';
 
-  /// Connect to Socket.IO server with JWT auth.
   void connect(String token) {
     if (_isConnected && _currentToken == token) return;
-
-    // Disconnect previous connection if any
     disconnect();
     _currentToken = token;
 
-    _socket = IO.io(_baseUrl, IO.OptionBuilder()
-      .setTransports(['websocket', 'polling'])
-      .setAuth({'token': token})
-      .setQuery({'token': token})
-      .enableAutoConnect()
-      .enableReconnection()
-      .setReconnectionDelay(1000)
-      .setReconnectionAttempts(10)
-      .build(),
+    _socket = IO.io(
+      _baseUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket']) // Force WebSocket (not polling)
+          .setAuth({'token': token})
+          .setQuery({'token': token})
+          .enableAutoConnect()
+          .enableReconnection()
+          .setReconnectionDelay(1000)
+          .setReconnectionDelayMax(5000)
+          .setReconnectionAttempts(20)
+          .setTimeout(5000)
+          .build(),
     );
 
     _socket!.onConnect((_) {
       _isConnected = true;
-      print('[SocketService] Connected');
+      print('[SocketService] Connected via WebSocket');
     });
 
     _socket!.on('new_message', (data) {
-      if (data is Map<String, dynamic>) {
-        _messageController.add(data);
-      } else if (data is Map) {
-        _messageController.add(Map<String, dynamic>.from(data));
-      }
+      _messageCtrl.add(_toMap(data));
+    });
+
+    _socket!.on('typing', (data) {
+      _typingCtrl.add(_toMap(data));
+    });
+
+    _socket!.on('presence', (data) {
+      _presenceCtrl.add(_toMap(data));
+    });
+
+    _socket!.on('mention', (data) {
+      _mentionCtrl.add(_toMap(data));
+    });
+
+    _socket!.on('message_confirmed', (data) {
+      // Server confirmed real DB ID → replace temp ID in UI
+      _confirmCtrl.add(_toMap(data));
     });
 
     _socket!.onDisconnect((_) {
@@ -69,25 +91,28 @@ class SocketService {
     });
   }
 
-  /// Join a specific chat room for real-time updates.
   void joinRoom(int roomId) {
     _socket?.emit('join_room', {'room_id': roomId});
   }
 
-  /// Leave a chat room.
   void leaveRoom(int roomId) {
     _socket?.emit('leave_room', {'room_id': roomId});
   }
 
-  /// Send a message via Socket.IO (bypasses REST for speed).
-  void sendMessage(int roomId, String content) {
+  /// Send message - server emits to room BEFORE saving to DB.
+  /// clientMsgId: local temp ID for deduplication with server confirmation.
+  void sendMessage(int roomId, String content, {String? clientMsgId}) {
     _socket?.emit('send_message', {
       'room_id': roomId,
       'content': content,
+      'client_msg_id': clientMsgId,
     });
   }
 
-  /// Disconnect and clean up.
+  void sendTyping(int roomId, bool isTyping) {
+    _socket?.emit('typing', {'room_id': roomId, 'is_typing': isTyping});
+  }
+
   void disconnect() {
     _socket?.disconnect();
     _socket?.dispose();
@@ -96,9 +121,18 @@ class SocketService {
     _currentToken = null;
   }
 
-  /// Dispose stream controllers (call on app shutdown).
   void dispose() {
     disconnect();
-    _messageController.close();
+    _messageCtrl.close();
+    _typingCtrl.close();
+    _presenceCtrl.close();
+    _mentionCtrl.close();
+    _confirmCtrl.close();
+  }
+
+  static Map<String, dynamic> _toMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return {};
   }
 }

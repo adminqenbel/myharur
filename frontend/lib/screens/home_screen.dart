@@ -7,6 +7,7 @@ import '../providers/locale_provider.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
 import '../api_client.dart';
+import '../utils/location_prefs.dart';
 import 'news_screen.dart';
 import 'emergency_screen.dart';
 import 'shops_screen.dart';
@@ -46,9 +47,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _determinePosition() async {
+    final hasManual = await LocationPrefs.hasManualLocation();
+    if (hasManual) {
+      final loc = await LocationPrefs.getManualLocation();
+      if (mounted && loc != null) {
+        setState(() {
+          _isInsideDharmapuri = true;
+          _locationName = loc['name'] as String;
+        });
+      }
+      return;
+    }
+
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (mounted) setState(() => _locationName = 'Location Disabled');
+      _checkWarning();
       return;
     }
 
@@ -57,17 +71,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         if (mounted) setState(() => _locationName = 'Permission Denied');
+        _checkWarning();
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
       if (mounted) setState(() => _locationName = 'Permission Denied');
+      _checkWarning();
       return;
     }
 
     Position position = await Geolocator.getCurrentPosition();
-    // Simplified boundary check logic
     bool inBounds = position.latitude >= 11.75 && position.latitude <= 12.35 &&
                     position.longitude >= 77.45 && position.longitude <= 78.75;
 
@@ -76,7 +91,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _isInsideDharmapuri = inBounds;
         _locationName = inBounds ? 'Dharmapuri Region' : 'Outside Service Area';
       });
-      if (!inBounds) _showLocationWarningSheet();
+      if (!inBounds) {
+        _checkWarning();
+      }
+    }
+  }
+
+  Future<void> _checkWarning() async {
+    final shown = await LocationPrefs.wasWarningShown();
+    if (!shown && mounted) {
+      await LocationPrefs.markWarningShown();
+      _showLocationWarningSheet();
     }
   }
 
@@ -95,19 +120,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 16),
               Text(l(ref, 'Outside Service Area'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text('It looks like you are outside the Dharmapuri/Harur region. Some local services may be restricted.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 16)),
+              const Text('You seem to be outside the Dharmapuri/Harur region. You can continue as a guest or set a manual location to access local services.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.map, color: Colors.white),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showManualLocationPicker();
+                  },
+                  label: const Text('Pick Manual Location', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Continue Anyway', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text('Continue Anyway', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
+              )
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  void _showManualLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Select Region', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.location_city, color: Colors.blue),
+                title: const Text('Harur Town'),
+                subtitle: const Text('Dharmapuri District'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade300)),
+                onTap: () async {
+                  await LocationPrefs.saveManualLocation(12.0620, 78.4975, 'Harur Town');
+                  if (context.mounted) Navigator.pop(context);
+                  _determinePosition();
+                },
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.location_city, color: Colors.green),
+                title: const Text('Dharmapuri City'),
+                subtitle: const Text('Dharmapuri District'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade300)),
+                onTap: () async {
+                  await LocationPrefs.saveManualLocation(12.1211, 78.1582, 'Dharmapuri City');
+                  if (context.mounted) Navigator.pop(context);
+                  _determinePosition();
+                },
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () async {
+                  await LocationPrefs.clearManualLocation();
+                  if (context.mounted) Navigator.pop(context);
+                  _determinePosition();
+                },
+                child: const Text('Clear Manual Location'),
               )
             ],
           ),
@@ -183,27 +276,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         toolbarHeight: 70,
         backgroundColor: Colors.white,
         elevation: 1,
-        title: Row(
-          children: [
-            Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.green : Colors.red, size: 32),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-                  ),
-                  Text(
-                    _locationName,
-                    style: const TextStyle(color: Colors.black54, fontSize: 12),
-                  ),
-                ],
+        title: InkWell(
+          onTap: _showManualLocationPicker,
+          child: Row(
+            children: [
+              Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.green : Colors.red, size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          _locationName,
+                          style: const TextStyle(color: Colors.black54, fontSize: 12),
+                        ),
+                        const Icon(Icons.arrow_drop_down, color: Colors.black54, size: 16),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           // Tamil/English Toggle

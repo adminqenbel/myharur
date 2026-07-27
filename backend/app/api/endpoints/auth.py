@@ -9,7 +9,7 @@ from app.core.security import create_access_token, verify_password
 from app.core.config import settings
 from app.api import deps
 from app.crud import crud_user
-from app.schemas.user import Token, UserCreate, User, PasswordChange, PasswordSet
+from app.schemas.user import Token, UserCreate, User, PasswordChange, PasswordSet, UsernameSet
 from app.models.user import User as UserModel
 
 router = APIRouter()
@@ -23,8 +23,12 @@ class GoogleAuthRequest(BaseModel):
 
 
 def _make_token_response(user: UserModel, db) -> dict:
-    from app.schemas.user import User as UserSchema
     crud_user.update_streak(db, user)
+    # Update last_login
+    from datetime import datetime
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token = create_access_token(user.id, expires_delta=access_token_expires)
     return {
@@ -41,9 +45,11 @@ def login_access_token(
 ) -> Any:
     user = crud_user.authenticate(db, email=form_data.username, password=form_data.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
     if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=403, detail="Account is inactive")
+    if user.is_banned:
+        raise HTTPException(status_code=403, detail=f"Account is banned. Reason: {user.ban_reason or 'Policy violation'}")
     return _make_token_response(user, db)
 
 
@@ -53,9 +59,18 @@ def register_user(
     db: Session = Depends(deps.get_db),
     user_in: UserCreate,
 ) -> Any:
+    # Check username if provided
+    if user_in.username:
+        err = crud_user.validate_username(user_in.username)
+        if err:
+            raise HTTPException(status_code=422, detail=err)
+        existing = crud_user.get_user_by_username(db, user_in.username)
+        if existing:
+            raise HTTPException(status_code=409, detail="Username already taken.")
+
     user = crud_user.get_user_by_email(db, email=user_in.email)
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered.")
+        raise HTTPException(status_code=409, detail="Email already registered.")
     user = crud_user.create_user(db, user_in=user_in)
     return _make_token_response(user, db)
 
@@ -74,6 +89,35 @@ def google_auth(
         photo_url=req.photo_url or "",
     )
     return _make_token_response(user, db)
+
+
+@router.post("/set-username", response_model=Token)
+def set_username(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+    payload: UsernameSet,
+) -> Any:
+    """Set username for users who don't have one yet."""
+    if current_user.username and not current_user.username_required:
+        raise HTTPException(status_code=400, detail="Username already set. Use update-profile to change display name.")
+
+    user, err = crud_user.set_username(db, current_user, payload.username)
+    if err:
+        raise HTTPException(status_code=422, detail=err)
+
+    if payload.display_name:
+        user.display_name = payload.display_name[:60]
+        db.commit()
+        db.refresh(user)
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = create_access_token(user.id, expires_delta=access_token_expires)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user,
+    }
 
 
 @router.post("/change-password")

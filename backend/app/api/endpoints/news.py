@@ -18,7 +18,7 @@ def strip_html(text):
     if not text:
         return text
     clean = re.compile('<.*?>')
-    return re.sub(clean, '', text).replace('&nbsp;', ' ')
+    return re.sub(clean, '', text).replace('&nbsp;', ' ').strip()
 
 def extract_image(text):
     if not text:
@@ -27,6 +27,19 @@ def extract_image(text):
     if match:
         return match.group(1)
     return None
+
+def _geo_priority(title: str, source: str) -> int:
+    """Return sort priority: lower = higher priority."""
+    text = (title + " " + source).lower()
+    if any(k in text for k in ['harur', 'ஹாரூர்']):
+        return 0
+    if any(k in text for k in ['dharmapuri', 'தர்மபுரி']):
+        return 1
+    if any(k in text for k in ['tamil nadu', 'tamilnadu', 'தமிழ்நாடு', 'salem', 'krishnagiri', 'tiruvannamalai']):
+        return 2
+    if any(k in text for k in ['india', 'national']):
+        return 3
+    return 4  # International
 
 
 # ── RSS Cache ────────────────────────────────────────────────────────────────
@@ -38,39 +51,66 @@ _rss_cache = {
 
 RSS_CACHE_DURATION = timedelta(hours=2)
 
+RSS_FEEDS = [
+    # Harur / Dharmapuri specific
+    "https://news.google.com/rss/search?q=Harur+Tamil+Nadu&hl=ta&gl=IN&ceid=IN:ta",
+    "https://news.google.com/rss/search?q=Dharmapuri+news&hl=ta&gl=IN&ceid=IN:ta",
+    "https://news.google.com/rss/search?q=Harur+OR+Dharmapuri&hl=en-IN&gl=IN&ceid=IN:en",
+]
+
 def _fetch_rss() -> list:
-    """Fetch RSS and return list of news dicts."""
+    """Fetch RSS from multiple sources, deduplicate, and rank by geo-priority."""
+    seen_titles = set()
     result = []
-    try:
-        rss_url = "https://news.google.com/rss/search?q=Dharmapuri+OR+Harur&hl=en-IN&gl=IN&ceid=IN:en"
-        feed = feedparser.parse(rss_url)
-        for entry in feed.entries[:15]:
-            try:
-                published_dt = datetime(*entry.published_parsed[:6])
-                published_iso = published_dt.isoformat()
-            except:
-                published_iso = datetime.now().isoformat()
 
-            img_url = extract_image(entry.description) if hasattr(entry, 'description') else None
+    for rss_url in RSS_FEEDS:
+        try:
+            feed = feedparser.parse(rss_url)
+            for entry in feed.entries[:20]:
+                title = (entry.title or "").strip()
+                # Deduplication by title similarity
+                title_key = re.sub(r'\W+', '', title.lower())[:50]
+                if title_key in seen_titles:
+                    continue
+                seen_titles.add(title_key)
 
-            result.append({
-                "id": None,
-                "title": entry.title,
-                "content": strip_html(entry.description) if hasattr(entry, 'description') else "Read more at the source.",
-                "source": entry.source.title if hasattr(entry, 'source') else "Google News",
-                "url": entry.link,
-                "image_url": img_url,
-                "created_at": published_iso,
-                "author_name": None,
-                "is_approved": True,
-            })
-    except Exception as e:
-        print("RSS fetch error:", e)
+                try:
+                    published_dt = datetime(*entry.published_parsed[:6])
+                    published_iso = published_dt.isoformat()
+                except Exception:
+                    published_iso = datetime.now().isoformat()
+
+                source_name = entry.source.title if hasattr(entry, 'source') else "Google News"
+                img_url = extract_image(entry.get('summary', '') or entry.get('description', ''))
+
+                content_text = strip_html(
+                    entry.get('summary', '') or entry.get('description', '')
+                ) or "Read more at the source."
+
+                priority = _geo_priority(title, source_name)
+
+                result.append({
+                    "id": None,
+                    "title": title,
+                    "content": content_text[:500],
+                    "source": source_name,
+                    "url": entry.link,
+                    "image_url": img_url,
+                    "created_at": published_iso,
+                    "author_name": None,
+                    "is_approved": True,
+                    "geo_priority": priority,
+                })
+        except Exception as e:
+            print(f"[News] RSS fetch error ({rss_url}): {e}")
+
+    # Sort by geo priority first, then by date descending
+    result.sort(key=lambda x: (x["geo_priority"], -(datetime.fromisoformat(x["created_at"]).timestamp() if x["created_at"] else 0)))
     return result
 
 
 def _get_cached_rss() -> list:
-    """Return cached RSS data, refreshing if stale (>2 hours)."""
+    """Return cached RSS data, refreshing if stale (> 2 hours)."""
     with _rss_cache["lock"]:
         now = datetime.now()
         if _rss_cache["fetched_at"] is None or (now - _rss_cache["fetched_at"]) > RSS_CACHE_DURATION:
@@ -80,6 +120,13 @@ def _get_cached_rss() -> list:
 
 
 def _get_author_name(db: Session, user_id: int) -> str:
+    from app.models.user import User as UserModel
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if user:
+        if user.display_name:
+            return user.display_name
+        if user.username:
+            return f"@{user.username}"
     profile = db.query(ProfileModel).filter(ProfileModel.user_id == user_id).first()
     if profile:
         name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
@@ -95,11 +142,14 @@ def read_news(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """
-    Retrieve approved news from DB + cached RSS feed.
-    """
-    # Fetch approved DB news
-    db_news = db.query(NewsModel).filter(NewsModel.is_approved == True).order_by(NewsModel.created_at.desc()).offset(skip).limit(limit).all()
+    """Retrieve approved news from DB (prioritized) + cached RSS feed (geo-ranked)."""
+    # Fetch approved DB news (local news, always shown first)
+    db_news = (
+        db.query(NewsModel)
+        .filter(NewsModel.is_approved == True)
+        .order_by(NewsModel.created_at.desc())
+        .offset(skip).limit(limit).all()
+    )
 
     combined_news = []
     for n in db_news:
@@ -113,40 +163,24 @@ def read_news(
             "created_at": n.created_at.isoformat() if n.created_at else None,
             "author_name": _get_author_name(db, n.author_id),
             "is_approved": True,
+            "geo_priority": -1,  # Local news is always highest priority
         })
 
-    # Get cached RSS news
+    # Get geo-ranked RSS news
     rss_news = _get_cached_rss()
     combined_news.extend(rss_news)
 
-    # Sort combined by date descending
-    combined_news.sort(key=lambda x: x["created_at"] or "", reverse=True)
+    # Sort: local news first, then by geo priority, then by date
+    combined_news.sort(key=lambda x: (
+        x.get("geo_priority", 4),
+        -(datetime.fromisoformat(x["created_at"]).timestamp() if x.get("created_at") else 0)
+    ))
+
+    # Remove geo_priority from output
+    for item in combined_news:
+        item.pop("geo_priority", None)
+
     return combined_news
-
-
-@router.get("/pending")
-def get_pending_news(
-    db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(deps.get_current_user),
-) -> Any:
-    """Get news pending approval (Admin/Moderator/Super Admin only)."""
-    role = getattr(current_user.role, "name", None)
-    if role not in ("Admin", "Moderator", "Super Admin"):
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    pending = db.query(NewsModel).filter(NewsModel.is_approved == False).order_by(NewsModel.created_at.desc()).all()
-    result = []
-    for n in pending:
-        result.append({
-            "id": n.id,
-            "title": n.title,
-            "content": n.description,
-            "image_url": n.image_url,
-            "created_at": n.created_at.isoformat() if n.created_at else None,
-            "author_name": _get_author_name(db, n.author_id),
-            "is_approved": n.is_approved,
-        })
-    return result
 
 
 @router.post("/", response_model=News)
@@ -156,10 +190,7 @@ def create_news(
     news_in: NewsCreate,
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
-    """
-    Create a new news post. Defaults to is_approved=False (needs admin review).
-    Admin/Moderator/Super Admin posts are auto-approved.
-    """
+    """Create a new news post. Admins/Moderators are auto-approved."""
     role = getattr(current_user.role, "name", None)
     auto_approve = role in ("Admin", "Moderator", "Super Admin")
 
@@ -182,43 +213,3 @@ def create_news(
     return news
 
 
-@router.put("/{news_id}/approve")
-def approve_news(
-    news_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(deps.get_current_user),
-) -> Any:
-    """Approve a pending news post (Admin/Moderator/Super Admin only)."""
-    role = getattr(current_user.role, "name", None)
-    if role not in ("Admin", "Moderator", "Super Admin"):
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    news = db.query(NewsModel).filter(NewsModel.id == news_id).first()
-    if not news:
-        raise HTTPException(status_code=404, detail="News not found")
-
-    news.is_approved = True
-    news.verified_by = current_user.id
-    news.verified_at = datetime.utcnow()
-    db.commit()
-    return {"message": "News approved", "id": news_id}
-
-
-@router.put("/{news_id}/reject")
-def reject_news(
-    news_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(deps.get_current_user),
-) -> Any:
-    """Reject/delete a pending news post (Admin/Moderator/Super Admin only)."""
-    role = getattr(current_user.role, "name", None)
-    if role not in ("Admin", "Moderator", "Super Admin"):
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    news = db.query(NewsModel).filter(NewsModel.id == news_id).first()
-    if not news:
-        raise HTTPException(status_code=404, detail="News not found")
-
-    db.delete(news)
-    db.commit()
-    return {"message": "News rejected and removed", "id": news_id}

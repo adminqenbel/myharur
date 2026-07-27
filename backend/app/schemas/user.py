@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
 
 
@@ -61,20 +61,33 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     role_name: str = "User"
+    username: Optional[str] = None
+    display_name: Optional[str] = None
 
 
 class UserUpdate(UserBase):
     password: Optional[str] = None
 
 
+class UsernameSet(BaseModel):
+    username: str
+    display_name: Optional[str] = None
+
+
 class User(UserBase):
     id: int
     uid: Optional[str] = None
-    role_id: Optional[int]
+    mid: Optional[str] = None
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    username_required: bool = False
+    role_id: Optional[int] = None
     is_setup_complete: bool = False
+    is_banned: bool = False
     login_provider: Optional[str] = "email"
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
     profile: Optional[Profile] = None
     role: Optional[Role] = None
 
@@ -103,13 +116,32 @@ class PasswordSet(BaseModel):
 
 class AdminUserList(BaseModel):
     id: int
-    uid: Optional[str]
+    uid: Optional[str] = None
+    mid: Optional[str] = None
+    username: Optional[str] = None
+    display_name: Optional[str] = None
     email: str
     is_active: bool
-    login_provider: Optional[str]
+    is_banned: bool = False
+    login_provider: Optional[str] = None
     role: Optional[Role] = None
     profile: Optional[Profile] = None
     created_at: datetime
+    last_login: Optional[datetime] = None
+    username_required: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class UserSearchResult(BaseModel):
+    id: int
+    uid: Optional[str] = None
+    mid: Optional[str] = None
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    role: Optional[Role] = None
 
     class Config:
         from_attributes = True

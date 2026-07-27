@@ -39,6 +39,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     if (!auth.isLoggedIn) {
       context.go('/login');
+    } else if (auth.usernameRequired) {
+      context.go('/username-setup');
     } else if (!auth.isSetupComplete) {
       context.go('/onboarding');
     } else {

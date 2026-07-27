@@ -19,6 +19,8 @@ import 'screens/edit_profile_screen.dart';
 import 'screens/change_password_screen.dart';
 import 'screens/set_password_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/username_setup_screen.dart';
+import 'providers/auth_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),
     GoRoute(path: '/set-password', builder: (context, state) => const SetPasswordScreen()),
     GoRoute(path: '/admin', builder: (context, state) => const AdminDashboardScreen()),
+    GoRoute(path: '/username-setup', builder: (context, state) => const UsernameSetupScreen()),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => MainLayout(child: child),

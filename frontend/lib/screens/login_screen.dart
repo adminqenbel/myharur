@@ -55,8 +55,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final user = data['user'] as Map<String, dynamic>? ?? {};
     await ref.read(authProvider.notifier).loginWithToken(token, user);
     if (!mounted) return;
-    final isSetup = ref.read(authProvider).isSetupComplete;
-    context.go(isSetup ? '/home' : '/onboarding');
+    final auth = ref.read(authProvider);
+    if (auth.usernameRequired) {
+      context.go('/username-setup');
+    } else if (!auth.isSetupComplete) {
+      context.go('/onboarding');
+    } else {
+      context.go('/home');
+    }
   }
 
   Future<void> _handleGoogleSignIn() async {

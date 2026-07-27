@@ -166,9 +166,16 @@ def cast_vote(
 # ── Q&A ───────────────────────────────────────────────────────────────────────
 
 def _get_name(db: Session, user_id: int) -> str:
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if user:
+        if user.display_name:
+            return user.display_name
+        if user.username:
+            return f"@{user.username}"
     profile = db.query(ProfileModel).filter(ProfileModel.user_id == user_id).first()
     if profile:
-        return f"{profile.first_name or ''} {profile.last_name or ''}".strip() or "Anonymous"
+        name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+        return name or "Anonymous"
     return "Anonymous"
 
 def _get_role(db: Session, user_id: int) -> str:
@@ -176,6 +183,13 @@ def _get_role(db: Session, user_id: int) -> str:
     if user and user.role:
         return user.role.name
     return "User"
+
+def _get_user_info(db: Session, user_id: int) -> dict:
+    """Get username and display_name for a user."""
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if user:
+        return {"username": user.username, "display_name": user.display_name}
+    return {"username": None, "display_name": None}
 
 
 @router.get("/questions", response_model=List[QuestionOut])
@@ -256,11 +270,15 @@ def get_messages(
     result = []
     for m in reversed(msgs):
         profile = db.query(ProfileModel).filter(ProfileModel.user_id == m.sender_id).first()
+        user_info = _get_user_info(db, m.sender_id)
         result.append({
             **m.__dict__,
             "sender_name": _get_name(db, m.sender_id),
             "sender_role": _get_role(db, m.sender_id),
             "sender_avatar": profile.avatar_url if profile else None,
+            "username": user_info["username"],
+            "display_name": user_info["display_name"],
+            "mentions": m.mentions or [],
         })
     return result
 
@@ -272,13 +290,24 @@ def send_message(
     db: Session = Depends(deps.get_db),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
-    msg = ChatMessage(room_id=room_id, sender_id=current_user.id, content=msg_in.content)
+    import re as _re
+    mentions = _re.findall(r'@(\w+)', msg_in.content)
+    msg = ChatMessage(
+        room_id=room_id,
+        sender_id=current_user.id,
+        content=msg_in.content,
+        mentions=mentions,
+    )
     db.add(msg)
     db.commit()
     db.refresh(msg)
+    user_info = _get_user_info(db, current_user.id)
     return {
         **msg.__dict__,
         "sender_name": _get_name(db, current_user.id),
         "sender_role": _get_role(db, current_user.id),
         "sender_avatar": current_user.profile.avatar_url if current_user.profile else None,
+        "username": user_info["username"],
+        "display_name": user_info["display_name"],
+        "mentions": mentions,
     }

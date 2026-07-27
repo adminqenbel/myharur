@@ -151,6 +151,9 @@ class ChatMessageOut(BaseModel):
     sender_name: Optional[str] = None
     sender_role: Optional[str] = None
     sender_avatar: Optional[str] = None
+    username: Optional[str] = None        # @username of sender
+    display_name: Optional[str] = None   # Display name of sender
+    mentions: Optional[List[str]] = []   # @mentioned usernames in message
     class Config:
         from_attributes = True
 

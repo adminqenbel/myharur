@@ -137,6 +137,7 @@ class ChatMessage(Base):
     room_id = Column(Integer, ForeignKey("chat_rooms.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
     content = Column(Text, nullable=False)
+    mentions = Column(JSON, default=list)   # List of @mentioned usernames
     is_deleted = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
