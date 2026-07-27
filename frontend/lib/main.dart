@@ -34,6 +34,17 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>()
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/splash',
+  redirect: (context, state) {
+    final container = ProviderScope.containerOf(context, listen: false);
+    final auth = container.read(authProvider);
+    final loc = state.matchedLocation;
+
+    if (loc == '/splash' || loc == '/login') return null;
+    if (!auth.isLoggedIn) return '/login';
+    if (auth.usernameRequired && loc != '/username-setup') return '/username-setup';
+    if (!auth.usernameRequired && loc == '/username-setup') return '/home';
+    return null;
+  },
   routes: [
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),

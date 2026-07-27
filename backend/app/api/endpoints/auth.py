@@ -9,7 +9,7 @@ from app.core.security import create_access_token, verify_password
 from app.core.config import settings
 from app.api import deps
 from app.crud import crud_user
-from app.schemas.user import Token, UserCreate, User, PasswordChange, PasswordSet, UsernameSet
+from app.schemas.user import Token, UserCreate, UserMe, PasswordChange, PasswordSet, UsernameSet, UsernameCheckResult
 from app.models.user import User as UserModel
 
 router = APIRouter()
@@ -23,6 +23,7 @@ class GoogleAuthRequest(BaseModel):
 
 
 def _make_token_response(user: UserModel, db) -> dict:
+    crud_user.ensure_user_identifiers(db, user)
     crud_user.update_streak(db, user)
     # Update last_login
     from datetime import datetime
@@ -67,6 +68,10 @@ def register_user(
         existing = crud_user.get_user_by_username(db, user_in.username)
         if existing:
             raise HTTPException(status_code=409, detail="Username already taken.")
+    if user_in.display_name:
+        dn_err = crud_user.validate_display_name(user_in.display_name)
+        if dn_err:
+            raise HTTPException(status_code=422, detail=dn_err)
 
     user = crud_user.get_user_by_email(db, email=user_in.email)
     if user:
@@ -91,6 +96,17 @@ def google_auth(
     return _make_token_response(user, db)
 
 
+@router.get("/check-username", response_model=UsernameCheckResult)
+def check_username(
+    username: str = Query(..., min_length=3, max_length=30),
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """Check if a username is available and valid."""
+    available, err = crud_user.is_username_available(db, username, exclude_user_id=current_user.id)
+    return {"username": username.lower(), "available": available, "error": err}
+
+
 @router.post("/set-username", response_model=Token)
 def set_username(
     *,
@@ -102,14 +118,14 @@ def set_username(
     if current_user.username and not current_user.username_required:
         raise HTTPException(status_code=400, detail="Username already set. Use update-profile to change display name.")
 
-    user, err = crud_user.set_username(db, current_user, payload.username)
+    user, err = crud_user.set_username(
+        db,
+        current_user,
+        payload.username,
+        display_name=payload.display_name,
+    )
     if err:
         raise HTTPException(status_code=422, detail=err)
-
-    if payload.display_name:
-        user.display_name = payload.display_name[:60]
-        db.commit()
-        db.refresh(user)
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token = create_access_token(user.id, expires_delta=access_token_expires)

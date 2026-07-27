@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
 
+import '../utils/username_validation.dart';
+
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -30,6 +32,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _save() async {
+    final fnErr = validateNameField(_firstNameCtrl.text, 'First name');
+    final lnErr = validateNameField(_lastNameCtrl.text, 'Last name');
+    if (fnErr != null || lnErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(fnErr ?? lnErr!)),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       await ApiClient.dio.put('/users/me/profile', data: {

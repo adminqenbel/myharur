@@ -10,6 +10,12 @@ from app.models.user import User as UserModel, Profile as ProfileModel
 
 router = APIRouter()
 
+RSS_FEEDS = [
+    "https://news.google.com/rss/search?q=Harur+Tamil+Nadu&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=Dharmapuri+district&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=Tamil+Nadu+news&hl=en-IN&gl=IN&ceid=IN:en",
+]
+
 import feedparser
 import re
 import threading
@@ -107,6 +113,14 @@ def _get_author_name(db: Session, user_id: int) -> str:
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
+
+@router.get("/gold-rates")
+def get_gold_rates() -> Any:
+    """Get the latest cached gold and silver rates."""
+    import app.main
+    if not hasattr(app.main, 'current_rates'):
+        return {"error": "Rates not initialized yet"}
+    return app.main.current_rates
 
 @router.get("/")
 def read_news(

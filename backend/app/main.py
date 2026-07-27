@@ -487,17 +487,19 @@ async def startup_event():
     db = SessionLocal()
     try:
         from app.models.user import User as UserModel, Role as RoleModel, Profile as ProfileModel
-        from app.crud.crud_user import generate_mid
+        from app.crud.crud_user import ensure_user_identifiers
 
-        users_no_mid = db.query(UserModel).filter(UserModel.mid == None).all()
-        for u in users_no_mid:
-            if not u.mid:
-                u.mid = generate_mid(db)
-                if not u.username:
-                    u.username_required = True
-        if users_no_mid:
-            db.commit()
-            print(f"[Migration] Generated MIDs for {len(users_no_mid)} existing users")
+        legacy_users = db.query(UserModel).filter(
+            (UserModel.mid == None) | (UserModel.uid == None) | (UserModel.username == None)
+        ).all()
+        migrated = 0
+        for u in legacy_users:
+            before_mid = u.mid
+            ensure_user_identifiers(db, u)
+            if not before_mid and u.mid:
+                migrated += 1
+        if migrated:
+            print(f"[Migration] Backfilled identifiers for {migrated} legacy users")
 
         # ── Seed Super Admin ──
         super_admin_email = "admin.qenbel@gmail.com"

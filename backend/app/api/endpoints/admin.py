@@ -62,8 +62,10 @@ def list_all_users(
         query = query.filter(
             (func.lower(UserModel.username).like(q.lower())) |
             (UserModel.mid == q) |
+            (UserModel.mid.like(f"{q}%")) |
             (func.lower(UserModel.display_name).like(pattern.lower())) |
-            (func.lower(UserModel.email).like(pattern.lower()))
+            (func.lower(UserModel.email).like(pattern.lower())) |
+            (UserModel.uid == q)
         )
     users = query.offset(skip).limit(limit).all()
     return users

@@ -94,6 +94,10 @@ class User(UserBase):
         from_attributes = True
 
 
+class UserMe(User):
+    """Public-facing user profile — UUID is never exposed."""
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -131,6 +135,12 @@ class AdminUserList(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UsernameCheckResult(BaseModel):
+    username: str
+    available: bool
+    error: Optional[str] = None
 
 
 class UserSearchResult(BaseModel):

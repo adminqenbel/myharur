@@ -35,7 +35,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final streak = profile['streak_days'] ?? 0;
     final rewards = profile['reward_points'] ?? 0;
     final roleName = role['name'] ?? 'User';
-    final uid = user['uid'] ?? '—';
+    final mid = user['mid'] ?? '—';
+    final username = user['username'] as String?;
+    final displayName = user['display_name'] as String?;
     final isSetup = user['is_setup_complete'] == true;
     final provider = user['login_provider'] ?? 'email';
 
@@ -69,9 +71,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      fullName.isEmpty ? (isSetup ? email : 'Complete Your Profile') : fullName,
+                      fullName.isEmpty
+                          ? (displayName ?? (username != null ? '@$username' : (isSetup ? email : 'Complete Your Profile')))
+                          : fullName,
                       style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                     ),
+                    if (username != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text('@$username', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                      ),
                     Container(
                       margin: const EdgeInsets.only(top: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -115,7 +124,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _tile(Icons.email_outlined, 'Email', email),
                   _tile(Icons.phone_outlined, 'Phone', phone),
                   _tile(Icons.home_outlined, 'Address', address),
-                  _tile(Icons.fingerprint, 'User ID', uid.length > 8 ? uid.substring(0, 8) + '...' : uid),
+                  _tile(Icons.badge_outlined, 'Member ID (MID)', mid),
                 ]),
                 const SizedBox(height: 12),
 

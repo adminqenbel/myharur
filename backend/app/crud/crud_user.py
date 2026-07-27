@@ -12,9 +12,11 @@ from app.core.security import get_password_hash, verify_password
 RESERVED_USERNAMES = {
     "system", "support", "news", "moderator", "admin", "security",
     "notifications", "maintenance", "mid", "root", "superadmin",
-    "super_admin", "api", "bot", "official", "staff", "help",
+    "super_admin", "systemadmin", "system_admin", "sysadmin", "sys_admin",
+    "api", "bot", "official", "staff", "help", "administrator",
     "info", "contact", "mail", "email", "noreply", "no_reply",
-    "myharur", "harur", "anonymous", "guest",
+    "myharur", "harur", "anonymous", "guest", "null", "undefined",
+    "moderator", "mod", "owner", "webmaster",
 }
 
 ABUSIVE_WORDS = {
@@ -30,15 +32,28 @@ def validate_username(username: str) -> Optional[str]:
     """Returns error string or None if valid."""
     if not USERNAME_REGEX.match(username):
         return "Username must be 3-30 characters, letters/numbers/underscore only."
-    
+
     lower_uname = username.lower()
     if lower_uname in RESERVED_USERNAMES:
         return f"'{username}' is a reserved username."
-        
+
     for word in ABUSIVE_WORDS:
         if word in lower_uname:
             return "Username contains inappropriate language."
-            
+
+    return None
+
+
+def validate_display_name(name: str) -> Optional[str]:
+    """Returns error string or None if valid."""
+    if not name or not name.strip():
+        return "Display name cannot be empty."
+    if len(name.strip()) > 60:
+        return "Display name must be 60 characters or fewer."
+    lower = name.lower()
+    for word in ABUSIVE_WORDS:
+        if word in lower:
+            return "Display name contains inappropriate language."
     return None
 
 
@@ -46,21 +61,52 @@ def generate_mid(db: Session, is_system: bool = False, system_seq: int = 1) -> s
     """
     Generate a unique MID.
     System accounts: SYS000001, SYS000002, etc.
-    Regular users: YYYYMMDDHHMMSS + zero-padded 4-digit sequence
-    Uses DB advisory lock pattern via SELECT FOR UPDATE on a counter.
+    Regular users: YYYYMMDDHHMM + 2-digit sequence (e.g. 20260726163001)
     """
     if is_system:
         return f"SYS{system_seq:06d}"
 
     now = datetime.utcnow()
-    prefix = now.strftime("%Y%m%d%H%M%S")
-    # Find max sequence for this second
+    prefix = now.strftime("%Y%m%d%H%M")
     existing = db.execute(
-        text("SELECT COUNT(*) FROM users WHERE mid LIKE :prefix"),
-        {"prefix": f"{prefix}%"}
+        text("SELECT COUNT(*) FROM users WHERE mid LIKE :prefix AND mid NOT LIKE 'SYS%'"),
+        {"prefix": f"{prefix}%"},
     ).scalar() or 0
     seq = existing + 1
-    return f"{prefix}{seq:04d}"
+    if seq > 99:
+        import secrets
+        return f"{prefix}{secrets.token_hex(1).upper()}"
+    return f"{prefix}{seq:02d}"
+
+
+def ensure_user_identifiers(db: Session, user: User) -> User:
+    """Backfill uid/mid and flag username_required for legacy accounts."""
+    changed = False
+    if not user.uid:
+        user.uid = str(uuid.uuid4())
+        changed = True
+    if not user.mid:
+        user.mid = generate_mid(db)
+        changed = True
+    is_system = (user.mid or "").startswith("SYS") or (user.email or "").endswith("@myharur.local")
+    if not user.username and not is_system and user.username_required is not True:
+        user.username_required = True
+        changed = True
+    if changed:
+        db.commit()
+        db.refresh(user)
+    return user
+
+
+def is_username_available(db: Session, username: str, exclude_user_id: Optional[int] = None) -> tuple[bool, Optional[str]]:
+    """Check username availability. Returns (available, error_message)."""
+    err = validate_username(username)
+    if err:
+        return False, err
+    existing = get_user_by_username(db, username)
+    if existing and (exclude_user_id is None or existing.id != exclude_user_id):
+        return False, "Username already taken."
+    return True, None
 
 
 def get_user(db: Session, user_id: int) -> Optional[User]:
@@ -87,23 +133,30 @@ def get_role_by_name(db: Session, name: str) -> Optional[Role]:
     return db.query(Role).filter(Role.name == name).first()
 
 
-def search_users(db: Session, query: str, limit: int = 20) -> List[User]:
-    """Search by username, MID, display_name, or email."""
+def search_users(
+    db: Session,
+    query: str,
+    limit: int = 20,
+    *,
+    include_email: bool = False,
+    include_uid: bool = False,
+) -> List[User]:
+    """Search by username, MID, display_name; email/uid for admin/internal only."""
     q = query.strip()
     if not q:
         return []
     pattern = f"%{q}%"
-    return (
-        db.query(User)
-        .filter(
-            (func.lower(User.username).like(q.lower())) |
-            (User.mid == q) |
-            (func.lower(User.display_name).like(pattern.lower())) |
-            (func.lower(User.email).like(pattern.lower()))
-        )
-        .limit(limit)
-        .all()
+    filters = (
+        (func.lower(User.username).like(q.lower())) |
+        (User.mid == q) |
+        (User.mid.like(f"{q}%")) |
+        (func.lower(User.display_name).like(pattern.lower()))
     )
+    if include_email:
+        filters = filters | (func.lower(User.email).like(pattern.lower()))
+    if include_uid:
+        filters = filters | (User.uid == q)
+    return db.query(User).filter(filters).limit(limit).all()
 
 
 def create_user(db: Session, user_in: UserCreate) -> User:
@@ -194,20 +247,21 @@ def create_or_link_google_user(db: Session, email: str, first_name: str, last_na
     return user
 
 
-def set_username(db: Session, user: User, username: str) -> tuple[User, Optional[str]]:
+def set_username(db: Session, user: User, username: str, display_name: Optional[str] = None) -> tuple[User, Optional[str]]:
     """Set username for user. Returns (user, error_str)."""
-    err = validate_username(username)
-    if err:
+    ensure_user_identifiers(db, user)
+    available, err = is_username_available(db, username, exclude_user_id=user.id)
+    if not available:
         return user, err
-
-    # Check uniqueness (case-insensitive)
-    existing = get_user_by_username(db, username)
-    if existing and existing.id != user.id:
-        return user, "Username already taken."
 
     user.username = username.lower()
     user.username_required = False
-    if not user.display_name:
+    if display_name:
+        dn_err = validate_display_name(display_name)
+        if dn_err:
+            return user, dn_err
+        user.display_name = display_name.strip()[:60]
+    elif not user.display_name:
         user.display_name = username
     db.commit()
     db.refresh(user)

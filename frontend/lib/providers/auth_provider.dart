@@ -15,7 +15,8 @@ class AuthState {
   bool get isAdmin => ['Admin', 'Super Admin'].contains(user?['role']?['name']);
   bool get isSuperAdmin => user?['role']?['name'] == 'Super Admin';
   bool get isModerator => ['Moderator', 'Admin', 'Super Admin'].contains(user?['role']?['name']);
-  bool get usernameRequired => user?['username_required'] == true;
+  bool get usernameRequired =>
+      user?['username_required'] == true || (user?['username'] == null && user?['mid'] != null);
   String? get uid => user?['uid'];
   String? get mid => user?['mid'];
   String? get username => user?['username'];

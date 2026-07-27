@@ -122,9 +122,13 @@ def _enrich_poll(poll: PollModel, user_id: Optional[int], db: Session) -> dict:
 
 
 @router.get("/polls", response_model=List[PollOut])
-def get_polls(db: Session = Depends(deps.get_db), current_user: Optional[UserModel] = Depends(deps.get_current_user)) -> Any:
+def get_polls(
+    db: Session = Depends(deps.get_db),
+    current_user: Optional[UserModel] = Depends(deps.get_optional_current_user),
+) -> Any:
     polls = db.query(PollModel).filter(PollModel.is_active == True).order_by(PollModel.created_at.desc()).all()
-    return [_enrich_poll(p, current_user.id if current_user else None, db) for p in polls]
+    uid = current_user.id if current_user else None
+    return [_enrich_poll(p, uid, db) for p in polls]
 
 
 @router.post("/polls", response_model=PollOut)

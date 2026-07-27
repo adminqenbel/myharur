@@ -374,7 +374,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 4),
-                          Text('MID: ${u['mid'] ?? 'None'} • Role: $roleName', style: const TextStyle(fontSize: 12)),
+                          Text(
+                            '${u['display_name'] ?? u['email'] ?? 'No Name'} • MID: ${u['mid'] ?? 'None'} • Role: $roleName',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                           if (isBanned && u['ban_reason'] != null)
                             Text('Banned: ${u['ban_reason']}', style: const TextStyle(color: Colors.red, fontSize: 12)),
                         ],
