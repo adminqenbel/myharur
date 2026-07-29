@@ -43,7 +43,7 @@ def get_leaderboard(db: Session = Depends(deps.get_db), limit: int = 50) -> Any:
     return leaderboard
 
 @router.get("/me")
-def get_my_leaderboard_status(db: Session = Depends(deps.get_db), current_user: User = Depends(deps.get_current_active_user)) -> Any:
+def get_my_leaderboard_status(db: Session = Depends(deps.get_db), current_user: User = Depends(deps.get_current_user)) -> Any:
     """Get the current user's leaderboard status and rank."""
     profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
     if not profile:
