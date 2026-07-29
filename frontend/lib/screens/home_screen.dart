@@ -82,8 +82,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
   Widget _buildCustomHeader() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = ref.watch(userProvider);
-    final greeting = _getGreeting();
+    final auth = ref.watch(authProvider);
+    final userDisplayName = auth.displayName;    final greeting = _getGreeting();
     
     return Container(
       height: 120,
@@ -130,7 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                 radius: 20,
                 backgroundColor: AppTheme.primaryYellow,
                 child: Text(
-                  user?.displayName?.substring(0, 1).toUpperCase() ?? 'U',
+                  userDisplayName != null && userDisplayName.isNotEmpty ? userDisplayName.substring(0, 1).toUpperCase() : 'U',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),

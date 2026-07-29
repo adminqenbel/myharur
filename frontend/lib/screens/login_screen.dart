@@ -43,7 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppTheme.danger,
+        backgroundColor: AppTheme.emergency,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -120,7 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -134,7 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  color: AppTheme.surface,
+                  color: Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 4))],
                 ),
@@ -165,9 +165,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: _handleGoogleSignIn,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: AppTheme.divider, width: 1.5),
-                      backgroundColor: AppTheme.surface,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
+                      side: BorderSide(color: AppTheme.dividerColor.withOpacity(0.5), width: 1.5),
+                      backgroundColor: Theme.of(context).cardTheme.color,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.cardRadius)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -195,7 +195,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () => context.go('/home'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: AppTheme.primary,
+                      backgroundColor: AppTheme.primaryYellow,
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('Browse as Guest', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -215,20 +215,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: () => setState(() => _isAdminMode = true),
                   icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
                   label: const Text('Admin / Staff Login'),
-                  style: TextButton.styleFrom(foregroundColor: AppTheme.textSecondary),
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
                 ),
 
               ] else ...[
                 // Admin Login Card
                 Container(
-                  decoration: AppTheme.card(),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+                    boxShadow: AppTheme.softShadow,
+                  ),
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.admin_panel_settings, color: AppTheme.primary),
+                          const Icon(Icons.admin_panel_settings, color: AppTheme.primaryYellow),
                           const SizedBox(width: 8),
                           Text('Admin Login', style: Theme.of(context).textTheme.titleLarge),
                         ],
@@ -273,7 +277,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               const SizedBox(height: 40),
               Text('© 2026 MyHarur • Powered by Qenbel',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
             ],
           ),
         ),
