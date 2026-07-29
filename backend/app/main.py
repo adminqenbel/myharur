@@ -241,15 +241,26 @@ async def send_message(sid, data):
 
 
 async def _notify_mentions(mentions: list, msg_data: dict):
-    """Notify @mentioned users in their personal room."""
+    """Notify @mentioned users in their personal room and trigger AI Router for system commands."""
     from app.db.session import SessionLocal
     from app.models.user import User as UserModel
+    from app.core.ai_router import IntelligentRouter
+    
     db = SessionLocal()
     try:
+        ai_router = IntelligentRouter(db)
+        # Process first using IntelligentRouter if applicable
+        # We need a session_id. We'll use the user's socket session id or room id.
+        session_id = f"room_{msg_data['room_id']}_{msg_data['sender_id']}"
+        is_handled, response = ai_router.process_message(msg_data['sender_id'], msg_data['content'], session_id)
+        
+        if is_handled:
+            # Emit the AI response directly
+            asyncio.create_task(_ai_reply(msg_data['room_id'], msg_data, response))
+        
         for username in mentions:
-            if username.lower() == "support":
-                asyncio.create_task(_auto_reply_support(msg_data['room_id'], msg_data))
-                continue
+            if username.lower() in IntelligentRouter.SUPPORTED_COMMANDS:
+                continue # Already handled by AI router
                 
             user = db.query(UserModel).filter(UserModel.username == username.lower()).first()
             if user:
@@ -258,6 +269,54 @@ async def _notify_mentions(mentions: list, msg_data: dict):
         print(f"[Socket.IO] Mention notify error: {e}")
     finally:
         db.close()
+
+async def _ai_reply(room_id: int, original_msg_data: dict, response_text: str):
+    """Sends AI generated response back to the chat room."""
+    await asyncio.sleep(1.0) # simulate typing
+    
+    def _sync_reply():
+        from app.db.session import SessionLocal
+        from app.models.user import User as UserModel
+        from app.models.community import ChatMessage
+        db = SessionLocal()
+        try:
+            # We use @system or a generic AI bot user for the response
+            system_user = db.query(UserModel).filter(UserModel.username == "system").first()
+            if not system_user: return None
+            
+            msg = ChatMessage(room_id=room_id, sender_id=system_user.id, content=response_text)
+            db.add(msg)
+            db.commit()
+            db.refresh(msg)
+            return (system_user.id, msg.id)
+        except Exception as e:
+            print(f"[Socket.IO] AI reply error: {e}")
+            return None
+        finally:
+            db.close()
+            
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _sync_reply)
+    if not result: return
+    
+    sys_user_id, msg_id = result
+    
+    reply_data = {
+        'id': msg_id,
+        'room_id': room_id,
+        'sender_id': sys_user_id,
+        'username': "system",
+        'display_name': "Intelligent Assistant",
+        'sender_name': "Intelligent Assistant",
+        'sender_role': "AI Bot",
+        'sender_avatar': None,
+        'content': response_text,
+        'mentions': [original_msg_data.get('username')],
+        'created_at': datetime.utcnow().isoformat(),
+        'client_msg_id': f"ai_{msg_id}",
+    }
+    await sio.emit('new_message', reply_data, room=f'chat_room_{room_id}')
+
 
 async def _auto_reply_support(room_id: int, original_msg_data: dict):
     """Keyword matching auto-reply bot for @support mentions."""

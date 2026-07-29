@@ -58,3 +58,24 @@ class Like(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     news = relationship("News", back_populates="likes")
+
+class DuplicateGroup(Base):
+    __tablename__ = "duplicate_groups"
+    id = Column(Integer, primary_key=True, index=True)
+    primary_news_id = Column(Integer, ForeignKey("news.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # The main article that is kept
+    primary_news = relationship("News", foreign_keys=[primary_news_id])
+    # The duplicate articles could just refer to this group
+
+class NewsArchive(Base):
+    __tablename__ = "news_archive"
+    id = Column(Integer, primary_key=True, index=True)
+    original_news_id = Column(Integer, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=True)
+    category_id = Column(Integer, nullable=True)
+    archived_at = Column(DateTime(timezone=True), server_default=func.now())
+    # Add other needed fields or JSON payload for the whole object
+    original_data = Column(Text, nullable=True) # JSON serialized original article

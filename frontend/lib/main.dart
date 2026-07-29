@@ -78,6 +78,8 @@ class MyHarurApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'MyHarur',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
     );

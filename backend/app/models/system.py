@@ -18,6 +18,16 @@ class Advertisement(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class NotificationQueue(Base):
+    __tablename__ = "notification_queue"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # If null, broadcast
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String, default="pending") # pending, sent, failed
+    priority = Column(String, default="normal") # critical, high, normal, low
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    sent_at = Column(DateTime(timezone=True), nullable=True)
 class Report(Base):
     __tablename__ = "reports"
     id = Column(Integer, primary_key=True, index=True)

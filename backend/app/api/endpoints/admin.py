@@ -292,3 +292,45 @@ def get_admin_stats(
         "pending_news": pending_news,
         "approved_news": approved_news,
     }
+
+# ── V2 Intelligence Engine Dashboard ────────────────────────────────────────
+
+@router.get("/intelligence-stats")
+def get_intelligence_stats(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(_require_superadmin),
+) -> Any:
+    """Get V2 Intelligence Engine statistics for SuperAdmins."""
+    from app.models.ingestion import NewsSource, CrawlerLog, RawArticle
+    from app.models.ai import IntentLog
+    
+    total_sources = db.query(NewsSource).count()
+    failed_sources = db.query(NewsSource).filter(NewsSource.failure_count > 0).count()
+    
+    total_raw_articles = db.query(RawArticle).count()
+    processed_articles = db.query(RawArticle).filter(RawArticle.status == "processed").count()
+    
+    total_intents = db.query(IntentLog).count()
+    
+    recent_crawler_logs = db.query(CrawlerLog).order_by(CrawlerLog.created_at.desc()).limit(10).all()
+    
+    return {
+        "scraper_status": {
+            "total_sources": total_sources,
+            "failed_sources": failed_sources,
+            "total_articles_scraped": total_raw_articles,
+            "articles_processed": processed_articles,
+            "recent_logs": [
+                {
+                    "source_id": log.source_id,
+                    "status": log.status,
+                    "articles_found": log.articles_found,
+                    "created_at": log.created_at.isoformat() if log.created_at else None
+                }
+                for log in recent_crawler_logs
+            ]
+        },
+        "ai_status": {
+            "total_ai_intents_processed": total_intents,
+        }
+    }

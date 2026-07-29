@@ -63,6 +63,9 @@ class Profile(Base):
     cover_url = Column(String, nullable=True)
     streak_days = Column(Integer, default=0)
     reward_points = Column(Integer, default=0)
+    volunteer_hours = Column(Integer, default=0)
+    emergency_score = Column(Integer, default=0)
+    news_posted = Column(Integer, default=0)
     last_active_date = Column(Date, nullable=True)
 
     user = relationship("User", back_populates="profile")
