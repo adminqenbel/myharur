@@ -241,7 +241,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: AppTheme.bg,
         appBar: AppBar(
           title: Text(l(ref, 'Marketplace')),
           bottom: const TabBar(
@@ -257,8 +257,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   final tab = DefaultTabController.of(ctx);
                   return FloatingActionButton.extended(
                     onPressed: () => tab.index == 0 ? _showCreateListingDialog() : _showCreateJobDialog(),
-                    backgroundColor: AppTheme.primaryYellow,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.accent,
+                    foregroundColor: AppTheme.primary,
                     icon: const Icon(Icons.add),
                     label: const Text('Post', style: TextStyle(fontWeight: FontWeight.w700)),
                   );
