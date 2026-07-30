@@ -11,6 +11,7 @@ import '../utils/location_prefs.dart';
 import 'news_screen.dart';
 import 'emergency_screen.dart';
 import 'shops_screen.dart';
+import 'leaderboard_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -391,8 +392,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _buildServiceIcon(Icons.festival, 'Events', Colors.purple, () => context.go('/community')),
                     _buildServiceIcon(Icons.how_to_vote, 'Polls', Colors.teal, () => context.go('/community')),
                     _buildServiceIcon(Icons.handyman, 'Services', Colors.brown, () => _navigateTo(const ShopsScreen())),
-                    _buildServiceIcon(Icons.emoji_events, 'Leaderboard', Colors.amber, () {}),
-                    _buildServiceIcon(Icons.map, 'Town Map', Colors.indigo, () {}),
+                    _buildServiceIcon(Icons.emoji_events, 'Leaderboard', Colors.amber, () => _navigateTo(const LeaderboardScreen())),
+                    _buildServiceIcon(Icons.map, 'Town Map', Colors.indigo, () {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Town Map coming soon!')));
+                    }),
                   ],
                 ),
               ),

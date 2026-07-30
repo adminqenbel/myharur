@@ -142,7 +142,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                 _section('Preferences', [
                   _actionTile(Icons.translate, 'Language Settings', Colors.teal, () => context.push('/settings')),
-                  _actionTile(Icons.notifications_outlined, 'Notifications', Colors.indigo, () {}),
+                  _actionTile(Icons.notifications_outlined, 'Notifications', Colors.indigo, () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon!')));
+                  }),
+                  _actionTile(Icons.help_outline, 'Help & Support', Colors.green, () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Help & Support coming soon!')));
+                  }),
                 ]),
                 const SizedBox(height: 12),
 

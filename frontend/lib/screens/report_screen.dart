@@ -55,7 +55,9 @@ class ReportScreen extends ConsumerWidget {
               icon: const Icon(Icons.report_problem),
               label: Text(l(ref, 'Report Issue')),
               style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              onPressed: () {},
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Issue reporting coming soon!')));
+              },
             ),
           ],
         ),
