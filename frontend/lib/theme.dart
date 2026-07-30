@@ -47,7 +47,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: bg,
-      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: const ColorScheme.light(
         primary: primary,
         secondary: accent,
@@ -66,7 +66,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           color: Colors.white,
           fontSize: 17,
           fontWeight: FontWeight.w600,
@@ -82,9 +82,9 @@ class AppTheme {
         indicatorColor: accent.withOpacity(0.2),
         labelTextStyle: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: primary);
+            return GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: primary);
           }
-          return GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: textSecondary);
+          return GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w500, color: textSecondary);
         }),
         iconTheme: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
@@ -112,7 +112,7 @@ class AppTheme {
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
 
@@ -123,7 +123,7 @@ class AppTheme {
           side: const BorderSide(color: divider),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
 
@@ -131,7 +131,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: info,
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 14),
         ),
       ),
 
@@ -163,14 +163,14 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: info, width: 1.5),
         ),
-        labelStyle: GoogleFonts.inter(color: textSecondary, fontSize: 14),
-        hintStyle: GoogleFonts.inter(color: textSecondary, fontSize: 14),
+        labelStyle: GoogleFonts.plusJakartaSans(color: textSecondary, fontSize: 14),
+        hintStyle: GoogleFonts.plusJakartaSans(color: textSecondary, fontSize: 14),
       ),
 
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: bg,
-        labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+        labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600),
         side: const BorderSide(color: divider),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
@@ -186,16 +186,16 @@ class AppTheme {
       dividerTheme: const DividerThemeData(color: divider, thickness: 1, space: 1),
 
       // Text
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimary),
-        headlineLarge: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimary),
-        headlineMedium: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimary),
-        titleLarge: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimary),
-        titleMedium: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary),
-        bodyLarge: GoogleFonts.inter(fontSize: 15, color: textPrimary),
-        bodyMedium: GoogleFonts.inter(fontSize: 14, color: textSecondary),
-        bodySmall: GoogleFonts.inter(fontSize: 12, color: textSecondary),
-        labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
+        displayLarge: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimary),
+        headlineLarge: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimary),
+        headlineMedium: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimary),
+        titleLarge: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimary),
+        titleMedium: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary),
+        bodyLarge: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimary),
+        bodyMedium: GoogleFonts.plusJakartaSans(fontSize: 14, color: textSecondary),
+        bodySmall: GoogleFonts.plusJakartaSans(fontSize: 12, color: textSecondary),
+        labelLarge: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
       ),
     );
   }
