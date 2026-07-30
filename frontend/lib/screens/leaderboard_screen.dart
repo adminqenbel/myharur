@@ -54,9 +54,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
       height: 120,
       padding: const EdgeInsets.only(top: 40, left: 16, right: 24, bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.primaryDark : AppTheme.bgLight,
+        color: isDark ? AppTheme.primary : AppTheme.bg,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
-        boxShadow: AppTheme.softShadow,
+        boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -69,7 +69,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           Text(
             'Leaderboard',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              color: isDark ? Colors.white : AppTheme.primaryDark,
+              color: isDark ? Colors.white : AppTheme.primary,
             ),
           ),
         ],
@@ -81,7 +81,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
     if (rank == 1) return const Color(0xFFFFD700); // Gold
     if (rank == 2) return const Color(0xFFC0C0C0); // Silver
     if (rank == 3) return const Color(0xFFCD7F32); // Bronze
-    return AppTheme.primaryYellow;
+    return AppTheme.accent;
   }
 
   Widget _buildTopThreeNode(Map<String, dynamic> user, int rank) {
@@ -124,7 +124,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
         Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis),
         Text(user['rank_title'] ?? 'Citizen', style: Theme.of(context).textTheme.labelSmall),
         const SizedBox(height: 4),
-        Text('${user['reward_points']} pts', style: TextStyle(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold)),
+        Text('${user['reward_points']} pts', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -157,9 +157,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
-        boxShadow: AppTheme.softShadow,
-        border: Border.all(color: AppTheme.dividerColor.withOpacity(isDark ? 0.1 : 0.5)),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
+        border: Border.all(color: AppTheme.divider.withOpacity(isDark ? 0.1 : 0.5)),
       ),
       child: Row(
         children: [
@@ -167,10 +167,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           const SizedBox(width: 16),
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppTheme.primaryYellow.withOpacity(0.2),
+            backgroundColor: AppTheme.accent.withOpacity(0.2),
             backgroundImage: user['avatar_url'] != null ? NetworkImage(user['avatar_url']) : null,
             child: user['avatar_url'] == null 
-                ? Text(user['display_name']?[0] ?? 'U', style: const TextStyle(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold))
+                ? Text(user['display_name']?[0] ?? 'U', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold))
                 : null,
           ),
           const SizedBox(width: 16),
@@ -186,7 +186,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${user['reward_points']}', style: const TextStyle(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('${user['reward_points']}', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
               Text('pts', style: Theme.of(context).textTheme.labelSmall),
             ],
           )
@@ -203,9 +203,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           _buildCustomHeader(),
           Expanded(
             child: _isLoading 
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryYellow))
+              ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
               : RefreshIndicator(
-                  color: AppTheme.primaryYellow,
+                  color: AppTheme.accent,
                   onRefresh: _fetchLeaderboard,
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
