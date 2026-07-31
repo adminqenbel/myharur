@@ -3,16 +3,26 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // ── Brand Colors ───────────────────────────────────────────────────────────
-  static const Color primary    = Color(0xFF0D1B2A);  // Deep Navy
-  static const Color accent     = Color(0xFFFFB703);  // Golden Amber
-  static const Color accentDark = Color(0xFFFB8500);  // Deep Orange
-  static const Color success    = Color(0xFF06D6A0);  // Emerald
-  static const Color danger     = Color(0xFFEF233C);  // Red
-  static const Color info       = Color(0xFF3A86FF);  // Bright Blue
-  static const Color surface    = Color(0xFFFFFFFF);
-  static const Color bg         = Color(0xFFF4F6F9);
-  static const Color textPrimary   = Color(0xFF0D1B2A);
-  static const Color textSecondary = Color(0xFF64748B);
+  static const Color primary    = Color(0xFF081C2D);  // Dark Navy
+  static const Color secondary  = Color(0xFF102A43);  
+  static const Color surface    = Color(0xFF16324F);  
+  static const Color accent     = Color(0xFFF4B400);  // Yellow Accent
+  static const Color success    = Color(0xFF06D6A0);  
+  static const Color danger     = Color(0xFFEF233C);  
+  static const Color info       = Color(0xFF3A86FF);  
+  
+  static const Color bgLight    = Color(0xFFFFFFFF);
+  static const Color textPrimaryLight = Color(0xFF081C2D);
+  static const Color textSecondaryLight = Color(0xFF64748B);
+  
+  static const Color textPrimaryDark = Color(0xFFFFFFFF);
+  static const Color textSecondaryDark = Color(0xFFB0BEC5);
+
+  // Aliases for compatibility
+  static const Color textSecondary = textSecondaryLight;
+  static const Color bg = bgLight;
+  static const Color accentDark = Color(0xFFD49C00);
+  
   static const Color divider    = Color(0xFFE8EDF2);
 
   // ── Border Radius ──────────────────────────────────────────────────────────
@@ -46,18 +56,18 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: bg,
+      scaffoldBackgroundColor: bgLight,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: const ColorScheme.light(
         primary: primary,
         secondary: accent,
-        surface: surface,
-        background: bg,
+        surface: bgLight,
+        background: bgLight,
         error: danger,
         onPrimary: Colors.white,
         onSecondary: primary,
-        onSurface: textPrimary,
-        onBackground: textPrimary,
+        onSurface: textPrimaryLight,
+        onBackground: textPrimaryLight,
       ),
 
       // AppBar
@@ -187,15 +197,64 @@ class AppTheme {
 
       // Text
       textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
-        displayLarge: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimary),
-        headlineLarge: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimary),
-        headlineMedium: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimary),
-        titleLarge: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimary),
-        titleMedium: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary),
-        bodyLarge: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimary),
-        bodyMedium: GoogleFonts.plusJakartaSans(fontSize: 14, color: textSecondary),
-        bodySmall: GoogleFonts.plusJakartaSans(fontSize: 12, color: textSecondary),
-        labelLarge: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+        displayLarge: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimaryLight),
+        headlineLarge: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimaryLight),
+        headlineMedium: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimaryLight),
+        titleLarge: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimaryLight),
+        titleMedium: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimaryLight),
+        bodyLarge: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimaryLight),
+        bodyMedium: GoogleFonts.plusJakartaSans(fontSize: 14, color: textSecondaryLight),
+        bodySmall: GoogleFonts.plusJakartaSans(fontSize: 12, color: textSecondaryLight),
+        labelLarge: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimaryLight),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: primary,
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      colorScheme: const ColorScheme.dark(
+        primary: primary,
+        secondary: accent,
+        surface: surface,
+        background: primary,
+        error: danger,
+        onPrimary: Colors.white,
+        onSecondary: primary,
+        onSurface: Colors.white,
+        onBackground: Colors.white,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+        margin: EdgeInsets.zero,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: secondary,
+        selectedItemColor: accent,
+        unselectedItemColor: textSecondaryDark,
+      ),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
+        displayLarge: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimaryDark),
+        headlineLarge: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimaryDark),
+        headlineMedium: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimaryDark),
+        titleLarge: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimaryDark),
+        titleMedium: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimaryDark),
+        bodyLarge: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimaryDark),
+        bodyMedium: GoogleFonts.plusJakartaSans(fontSize: 14, color: textSecondaryDark),
+        bodySmall: GoogleFonts.plusJakartaSans(fontSize: 12, color: textSecondaryDark),
+        labelLarge: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimaryDark),
       ),
     );
   }

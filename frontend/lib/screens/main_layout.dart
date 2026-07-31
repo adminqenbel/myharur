@@ -77,7 +77,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
-                  color: isDark ? const Color(0xFF16324F).withOpacity(0.7) : Colors.white.withOpacity(0.85),
+                  color: isDark ? AppTheme.surface.withOpacity(0.7) : Colors.white.withOpacity(0.85),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -100,8 +100,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isDark) {
     final bool isSelected = index == selectedIndex;
-    final Color activeColor = const Color(0xFFF4B400); // Yellow from spec
-    final Color inactiveColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final Color activeColor = AppTheme.accent; // Yellow from spec
+    final Color inactiveColor = isDark ? Colors.white60 : AppTheme.textSecondaryLight;
     
     return GestureDetector(
       onTap: () => _onItemTapped(index),

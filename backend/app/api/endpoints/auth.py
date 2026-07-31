@@ -56,12 +56,17 @@ def _make_token_response(user: UserModel, db, request: Request = None) -> dict:
 
 
 @router.post("/login", response_model=Token)
+@deps.limiter.limit("5/minute")
 def login_access_token(
     request: Request,
     db: Session = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
-    user = crud_user.authenticate(db, email=form_data.username, password=form_data.password)
+    try:
+        user = crud_user.authenticate(db, email=form_data.username, password=form_data.password)
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+        
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if not user.is_active:
@@ -72,6 +77,7 @@ def login_access_token(
 
 
 @router.post("/register", response_model=Token)
+@deps.limiter.limit("3/hour")
 def register_user(
     request: Request,
     *,
@@ -99,6 +105,7 @@ def register_user(
 
 
 @router.post("/google", response_model=Token)
+@deps.limiter.limit("5/minute")
 def google_auth(
     request: Request,
     *,

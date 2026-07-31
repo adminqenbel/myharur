@@ -11,9 +11,14 @@ from app.models.user import User
 from app.schemas.user import TokenPayload
 from app.crud.crud_user import get_user
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
 )
+
+limiter = Limiter(key_func=get_remote_address)
 
 def get_db() -> Generator:
     try:

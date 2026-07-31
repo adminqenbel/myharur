@@ -12,6 +12,7 @@ import 'news_screen.dart';
 import 'emergency_screen.dart';
 import 'shops_screen.dart';
 import 'leaderboard_screen.dart';
+import '../widgets/design_system.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -549,90 +550,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _latestNews.length,
-                      itemBuilder: (context, index) => _buildNewsCard(_latestNews[index]),
+                      itemBuilder: (context, index) => MHNewsCard(
+                        news: _latestNews[index],
+                        onTap: () => _navigateTo(const NewsScreen()),
+                      ),
                     ),
                   const SizedBox(height: 100), // padding for bottom nav
                 ],
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNewsCard(Map<String, dynamic> news) {
-    final hasImage = news['image_url'] != null && (news['image_url'] as String).isNotEmpty;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _navigateTo(const NewsScreen()),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (hasImage)
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: Image.network(
-                    news['image_url'],
-                    width: double.infinity,
-                    height: 180,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox(),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF4F6F9),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            news['source'] ?? 'Local News',
-                            style: const TextStyle(color: Color(0xFF3A86FF), fontWeight: FontWeight.w700, fontSize: 11),
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          news['created_at'] != null ? news['created_at'].toString().substring(0, 10) : '',
-                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      news['title'] ?? 'News Update',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D)),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      news['content'] ?? '',
-                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.4),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

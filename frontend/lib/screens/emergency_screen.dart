@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/design_system.dart';
+import '../theme.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -15,6 +17,10 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 
   @override
   void initState() {
+    super.initState();
+    _fetchEmergencies();
+  }
+
   Future<void> _fetchEmergencies() async {
     setState(() {
       _sosFuture = ApiClient.dio.get('/emergency/', queryParameters: {'type': 'citizen_sos'}).then((r) => r.data);
@@ -22,6 +28,8 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     });
   }
 
+  @override
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -191,40 +199,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
-            final status = item['status'] ?? 'pending';
-            final color = isGovt ? Colors.orange : Colors.red;
-            
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 4))]
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                leading: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(isGovt ? Icons.account_balance_rounded : Icons.warning_rounded, color: color),
-                ),
-                title: Text(item['category']?.toString().toUpperCase() ?? 'REPORT', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    Text(item['description'] ?? 'No description provided.', maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
-                      child: Text(status.toString().toUpperCase(), style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
-                    )
-                  ],
-                ),
-              ),
-            );
+            return MHEmergencyCard(item: item, isGovt: isGovt);
           },
         );
       },

@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
 import '../theme.dart';
 import '../utils/image_upload_helper.dart';
+import '../widgets/design_system.dart';
 
 class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({super.key});
@@ -287,40 +288,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         itemCount: _listings.length,
         itemBuilder: (ctx, i) {
           final item = _listings[i];
-          final isSold = item['is_sold'] == true;
-          final String? imageUrl = item['image_url'] as String?;
-
-          return Card(
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => _showListingDetail(item),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 110,
-                    width: double.infinity,
-                    color: Colors.blue.shade50,
-                    child: imageUrl != null
-                        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.image, size: 40, color: Colors.blue.shade200)))
-                        : Center(child: Icon(Icons.image, size: 40, color: Colors.blue.shade200)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (isSold) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)), child: const Text('SOLD', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
-                        Text(item['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 4),
-                        Text('₹${item['price']}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 15)),
-                        Text(item['condition'] ?? '', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          return MHMarketplaceCard(
+            item: item,
+            onTap: () => _showListingDetail(item),
           );
         },
       ),

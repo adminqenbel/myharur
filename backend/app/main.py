@@ -12,9 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from app.api.deps import limiter
 import json
 import logging
 from app.core.config import settings
@@ -43,16 +42,25 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
+from slowapi import _rate_limit_exceeded_handler
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.middleware("http")
-async def json_logging_middleware(request: Request, call_next):
+async def secure_headers_middleware(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
     
+    # Add Security Headers
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(self), microphone=()"
+
     log_dict = {
         "timestamp": datetime.utcnow().isoformat(),
         "method": request.method,
@@ -526,6 +534,8 @@ async def startup_event():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ;",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_setup_complete BOOLEAN DEFAULT FALSE;",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS login_provider VARCHAR DEFAULT 'email';",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS first_name VARCHAR;",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_name VARCHAR;",
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone VARCHAR;",

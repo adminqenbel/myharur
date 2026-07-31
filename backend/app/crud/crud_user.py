@@ -327,13 +327,32 @@ def update_streak(db: Session, user: User) -> User:
 
 
 def authenticate(db: Session, email: str, password: str) -> Optional[User]:
+    from datetime import datetime, timedelta, timezone
+
     user = get_user_by_email(db, email=email)
     if not user:
         user = get_user_by_username(db, username=email)
     if not user:
         return None
+
+    # Check if account is locked
+    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
+        raise ValueError(f"Account locked due to multiple failed login attempts. Try again later.")
+
     if not verify_password(password, user.hashed_password):
+        # Increment failed attempts
+        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+        if user.failed_login_attempts >= 5:
+            user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+        db.commit()
         return None
+
+    # Successful login, reset failed attempts
+    if user.failed_login_attempts > 0 or user.locked_until:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        db.commit()
+        
     return user
 
 
