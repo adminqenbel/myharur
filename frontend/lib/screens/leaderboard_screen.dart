@@ -15,6 +15,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
   List<dynamic> _leaderboard = [];
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
+  
+  String _category = 'community';
+  String _timeframe = 'all_time';
 
   @override
   void initState() {
@@ -31,8 +34,12 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
   }
 
   Future<void> _fetchLeaderboard() async {
+    setState(() => _isLoading = true);
     try {
-      final response = await ApiClient.dio.get('/leaderboard/');
+      final response = await ApiClient.dio.get('/leaderboard/', queryParameters: {
+        'category': _category,
+        'timeframe': _timeframe
+      });
       if (mounted) {
         setState(() {
           _leaderboard = response.data;
@@ -83,11 +90,42 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
     if (rank == 3) return const Color(0xFFCD7F32); // Bronze
     return AppTheme.accent;
   }
+  
+  Color _getTierColor(String? tier) {
+    switch(tier) {
+      case 'Legend': return const Color(0xFFFF00FF);
+      case 'Elite': return const Color(0xFF000000);
+      case 'Emerald': return const Color(0xFF50C878);
+      case 'Ruby': return const Color(0xFFE0115F);
+      case 'Diamond': return const Color(0xFFB9F2FF);
+      case 'Platinum': return const Color(0xFFE5E4E2);
+      case 'Gold': return const Color(0xFFFFD700);
+      case 'Silver': return const Color(0xFFC0C0C0);
+      default: return const Color(0xFFCD7F32); // Bronze
+    }
+  }
+  
+  Color _getVerificationColor(String? level) {
+    switch(level) {
+      case 'Government':
+      case 'Police':
+        return Colors.red;
+      case 'Business':
+      case 'Hospital':
+        return Colors.green;
+      case 'Verified Citizen':
+      case 'Volunteer':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
 
   Widget _buildTopThreeNode(Map<String, dynamic> user, int rank) {
     final color = _getRankColor(rank);
     final size = rank == 1 ? 100.0 : 70.0;
     
+    final tierColor = _getTierColor(user['tier_badge']);
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -100,9 +138,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color, width: 3),
+                border: Border.all(color: tierColor, width: 3),
                 boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.5), blurRadius: rank <= 3 ? _glowAnimation.value : 0),
+                  BoxShadow(color: tierColor.withOpacity(0.5), blurRadius: rank <= 3 ? _glowAnimation.value : 0),
                 ],
                 image: user['avatar_url'] != null 
                     ? DecorationImage(image: NetworkImage(user['avatar_url']), fit: BoxFit.cover)
@@ -117,14 +155,27 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [color.withOpacity(0.2), color.withOpacity(0.05)]),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.5))
+          ),
           child: Text('#$rank', style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
         ),
         const SizedBox(height: 8),
-        Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis),
-        Text(user['rank_title'] ?? 'Citizen', style: Theme.of(context).textTheme.labelSmall),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis)),
+            if (user['verification_level'] != 'Citizen') ...[
+              const SizedBox(width: 4),
+              Icon(Icons.verified, size: 14, color: _getVerificationColor(user['verification_level'])),
+            ]
+          ],
+        ),
+        Text('${user['tier_badge'] ?? 'Bronze'} Tier', style: TextStyle(color: tierColor, fontSize: 10, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('${user['reward_points']} pts', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),
+        Text('${user['reputation_score']?.toStringAsFixed(0) ?? 0} pts', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -151,7 +202,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
   }
 
   Widget _buildListRank(Map<String, dynamic> user, int index) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tierColor = _getTierColor(user['tier_badge']);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -159,34 +210,51 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
-        border: Border.all(color: AppTheme.divider.withOpacity(isDark ? 0.1 : 0.5)),
+        border: Border.all(color: tierColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          Text('#${index + 1}', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
-          const SizedBox(width: 16),
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: AppTheme.accent.withOpacity(0.2),
-            backgroundImage: user['avatar_url'] != null ? NetworkImage(user['avatar_url']) : null,
-            child: user['avatar_url'] == null 
-                ? Text(user['display_name']?[0] ?? 'U', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold))
-                : null,
+          SizedBox(
+            width: 32,
+            child: Text('#${index + 1}', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: tierColor, width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 22,
+              backgroundColor: tierColor.withOpacity(0.2),
+              backgroundImage: user['avatar_url'] != null ? NetworkImage(user['avatar_url']) : null,
+              child: user['avatar_url'] == null 
+                  ? Text(user['display_name']?[0] ?? 'U', style: TextStyle(color: tierColor, fontWeight: FontWeight.bold))
+                  : null,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium),
-                Text(user['rank_title'] ?? 'Citizen', style: Theme.of(context).textTheme.labelSmall),
+                Row(
+                  children: [
+                    Flexible(child: Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis)),
+                    if (user['verification_level'] != 'Citizen') ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.verified, size: 14, color: _getVerificationColor(user['verification_level'])),
+                    ]
+                  ],
+                ),
+                Text('${user['tier_badge'] ?? 'Bronze'} Tier', style: TextStyle(color: tierColor, fontSize: 11, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${user['reward_points']}', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('${user['reputation_score']?.toStringAsFixed(0) ?? 0}', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
               Text('pts', style: Theme.of(context).textTheme.labelSmall),
             ],
           )
@@ -201,6 +269,26 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
       body: Column(
         children: [
           _buildCustomHeader(),
+          
+          // Filters
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                _buildFilterChip('Community', 'community', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
+                const SizedBox(width: 8),
+                _buildFilterChip('Emergency', 'emergency', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
+                const SizedBox(width: 8),
+                _buildFilterChip('Volunteer', 'volunteer', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
+                const SizedBox(width: 8),
+                _buildFilterChip('Business', 'business', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
+                const SizedBox(width: 8),
+                _buildFilterChip('Government', 'government', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
+              ],
+            ),
+          ),
+          
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
@@ -223,6 +311,16 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           ),
         ],
       ),
+    );
+  }
+  Widget _buildFilterChip(String label, String value, String groupValue, Function(String) onSelected) {
+    final isSelected = value == groupValue;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (s) => onSelected(value),
+      selectedColor: AppTheme.accent.withOpacity(0.2),
+      labelStyle: TextStyle(color: isSelected ? AppTheme.accent : Colors.grey),
     );
   }
 }
