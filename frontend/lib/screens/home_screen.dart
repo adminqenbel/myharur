@@ -26,6 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _locationName = 'Fetching GPS...';
   List<dynamic> _latestNews = [];
   bool _newsLoading = true;
+  Map<String, dynamic>? _weatherData;
 
   @override
   void initState() {
@@ -37,9 +38,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _fetchLatestNews() async {
     try {
       final r = await ApiClient.dio.get('/news/');
+      final w = await ApiClient.dio.get('/news/weather');
       if (mounted) {
         setState(() {
           _latestNews = (r.data as List).take(5).toList();
+          _weatherData = w.data;
           _newsLoading = false;
         });
       }
@@ -377,6 +380,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  
+                  // ── Weather Widget ──────────────────────────────────────────
+                  if (_weatherData != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF3A86FF), Color(0xFF00B4D8)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(color: const Color(0xFF3A86FF).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _weatherData!['condition'] ?? 'Clear',
+                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.water_drop_rounded, color: Colors.white70, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text('Humidity: ${_weatherData!['humidity']}%', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${_weatherData!['temperature']}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w800, height: 1),
+                                ),
+                                const Text('°C', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 24),
 
                   // ── Quick Access Bar ──────────────────────────────────────────

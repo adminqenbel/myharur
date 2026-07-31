@@ -6,6 +6,7 @@ from app.db.session import SessionLocal
 from app.models.ingestion import RawArticle
 from app.models.news import News, NewsCategory
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,21 @@ async def async_process_article(raw_article_id: int):
         priority = "High" if "#Alert" in nlp_result["tags"] else "Medium"
         is_breaking = priority == "High"
 
+        meta = article.raw_json or {}
+        img_url = meta.get("image_url")
+        published_str = meta.get("published")
+        
+        # Parse published date or use now
+        from dateutil import parser
+        try:
+            created_at = parser.parse(published_str).replace(tzinfo=None) if published_str else datetime.utcnow()
+        except:
+            created_at = datetime.utcnow()
+
+        from app.models.user import User
+        system_user = db.query(User).filter(User.username == "news").first()
+        author_id = system_user.id if system_user else 1
+
         published_news = News(
             title=title,
             description=abstract,
@@ -70,7 +86,10 @@ async def async_process_article(raw_article_id: int):
             location_name="Harur", # fallback
             is_approved=True, 
             is_breaking=is_breaking,
-            tags=tags_str
+            tags=tags_str,
+            image_url=img_url,
+            author_id=author_id,
+            created_at=created_at
         )
         db.add(published_news)
         

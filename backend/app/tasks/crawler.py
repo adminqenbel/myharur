@@ -28,35 +28,53 @@ async def async_crawl_source(source_id: int):
         if not source:
             return
 
-        async with aiohttp.ClientSession() as session:
-            html = await fetch_url(session, source.url)
-            if not html:
-                raise Exception("Failed to retrieve content")
-                
-            soup = BeautifulSoup(html, 'html.parser')
-            # Extract basic text (simplified logic)
-            text = soup.get_text(separator=' ', strip=True)[:2000]
-            title = soup.title.string if soup.title else "News Update"
+        import feedparser
+        import re
 
-            log = CrawlerLog(source_id=source.id, status="success", articles_found=1)
-            db.add(log)
-            source.last_successful_sync = func.now()
-            source.failure_count = 0
+        feed = feedparser.parse(source.url)
+        if not feed.entries:
+            raise Exception("Failed to retrieve or parse RSS content")
+
+        source.last_successful_sync = func.now()
+        source.failure_count = 0
+        db.commit()
+
+        for entry in feed.entries[:20]:
+            title = (entry.title or "").strip()
+            link = entry.link if hasattr(entry, 'link') else f"{source.url}#{datetime.now().timestamp()}"
             
-            article_url = f"{source.url}#{datetime.now().timestamp()}"
+            # Extract basic text and image
+            content = entry.get('summary', '') or entry.get('description', '')
+            clean_re = re.compile('<.*?>')
+            text = re.sub(clean_re, '', content).replace('&nbsp;', ' ').strip()
+            
+            img_match = re.search(r'<img[^>]+src="([^">]+)"', content)
+            img_url = img_match.group(1) if img_match else None
+
+            # Check for existing
+            existing = db.query(RawArticle).filter(RawArticle.original_url == link).first()
+            if existing:
+                continue
+
             raw_article = RawArticle(
                 source_id=source.id,
-                original_url=article_url,
-                raw_html=html[:1000], # store subset for example
+                original_url=link,
                 extracted_title=title,
-                extracted_text=text,
+                extracted_text=text[:5000],
                 status="pending"
             )
+            # Store image in json metadata for AI processor
+            raw_article.raw_json = {"image_url": img_url, "published": str(entry.get('published', ''))}
+            
             db.add(raw_article)
             db.commit()
             db.refresh(raw_article)
 
             process_raw_article.delay(raw_article.id)
+
+        log = CrawlerLog(source_id=source.id, status="success", articles_found=len(feed.entries[:20]))
+        db.add(log)
+        db.commit()
 
     except Exception as e:
         logger.error(f"Error crawling source {source_id}: {e}")
@@ -82,5 +100,50 @@ def trigger_crawlers():
         sources = db.query(NewsSource).filter(NewsSource.is_active == True).all()
         for source in sources:
             crawl_source.delay(source.id)
+            
+        fetch_weather.delay()
     finally:
         db.close()
+
+@shared_task(name="app.tasks.crawler.fetch_weather")
+def fetch_weather():
+    asyncio.run(async_fetch_weather())
+
+async def async_fetch_weather():
+    from app.models.v4_extensions import Weather
+    # Harur coordinates
+    lat = 12.0628
+    lng = 78.4950
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&timezone=Asia%2FKolkata"
+    
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, timeout=10) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    current = data.get("current", {})
+                    temp = current.get("temperature_2m", 0)
+                    hum = current.get("relative_humidity_2m", 0)
+                    rain = current.get("precipitation", 0)
+                    wind = current.get("wind_speed_10m", 0)
+                    
+                    condition = "Clear"
+                    if rain > 0:
+                        condition = "Rain"
+                    elif hum > 80:
+                        condition = "Cloudy"
+                        
+                    db = SessionLocal()
+                    try:
+                        weather = Weather(
+                            temperature=temp,
+                            condition=condition,
+                            humidity=hum,
+                            # Optional: you could add rain and wind if columns are added later, but we map to condition for now.
+                        )
+                        db.add(weather)
+                        db.commit()
+                    finally:
+                        db.close()
+        except Exception as e:
+            logger.error(f"Failed to fetch weather: {e}")

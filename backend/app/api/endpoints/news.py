@@ -10,91 +10,38 @@ from app.models.user import User as UserModel, Profile as ProfileModel
 
 router = APIRouter()
 
-RSS_FEEDS = [
-    "https://news.google.com/rss/search?q=Harur+Tamil+Nadu&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://news.google.com/rss/search?q=Dharmapuri+district&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://news.google.com/rss/search?q=Tamil+Nadu+news&hl=en-IN&gl=IN&ceid=IN:en",
-]
+from app.tasks.crawler import trigger_crawlers
 
-import feedparser
-import re
-import threading
+def trigger_bg_news_fetch():
+    """Triggers the Celery pipeline which handles dynamic sources and locations."""
+    trigger_crawlers.delay()
 
-def strip_html(text):
-    if not text:
-        return text
-    clean = re.compile('<.*?>')
-    return re.sub(clean, '', text).replace('&nbsp;', ' ').strip()
+def _get_geo_priority_keywords(db: Session) -> dict:
+    """Dynamically builds location keywords from the database for sorting priority."""
+    from app.models.location import District, Taluk, Town, Village
+    keywords = {0: ["harur", "ஹாரூர்"], 1: ["dharmapuri", "தர்மபுரி"], 2: ["tamil nadu", "tamilnadu", "தமிழ்நாடு"]}
+    
+    # Attempt to fetch from DB
+    try:
+        taluks = [t.name.lower() for t in db.query(Taluk).all()]
+        villages = [v.name.lower() for v in db.query(Village).all()]
+        if taluks or villages:
+            keywords[0].extend(taluks)
+            keywords[0].extend(villages)
+    except Exception:
+        pass
+        
+    return keywords
 
-def extract_image(text):
-    if not text:
-        return None
-    match = re.search(r'<img[^>]+src="([^">]+)"', text)
-    if match:
-        return match.group(1)
-    return None
-
-def _geo_priority(title: str, source: str) -> int:
-    """Return sort priority: lower = higher priority."""
+def _geo_priority_dynamic(title: str, source: str, keywords: dict) -> int:
     text = (title + " " + source).lower()
-    if any(k in text for k in ['harur', 'ஹாரூர்']):
-        return 0
-    if any(k in text for k in ['dharmapuri', 'தர்மபுரி']):
-        return 1
-    if any(k in text for k in ['tamil nadu', 'tamilnadu', 'தமிழ்நாடு', 'salem', 'krishnagiri', 'tiruvannamalai']):
-        return 2
+    for priority, words in keywords.items():
+        if any(w in text for w in words):
+            return priority
     if any(k in text for k in ['india', 'national']):
         return 3
-    return 4  # International
+    return 4
 
-
-def bg_fetch_news():
-    """Background task to fetch RSS, deduplicate, and store in DB."""
-    from app.db.session import SessionLocal
-    from app.models.user import User as UserModel
-    from app.models.news import News as NewsModel
-    
-    db = SessionLocal()
-    try:
-        # Find the system news account
-        news_user = db.query(UserModel).filter(UserModel.username == 'news').first()
-        author_id = news_user.id if news_user else 1
-
-        seen_titles = {n.title.lower()[:50] for n in db.query(NewsModel.title).all() if n.title}
-
-        for rss_url in RSS_FEEDS:
-            try:
-                feed = feedparser.parse(rss_url)
-                for entry in feed.entries[:20]:
-                    title = (entry.title or "").strip()
-                    title_key = re.sub(r'\W+', '', title.lower())[:50]
-                    if title_key in seen_titles:
-                        continue
-                    seen_titles.add(title_key)
-
-                    try:
-                        published_dt = datetime(*entry.published_parsed[:6])
-                    except Exception:
-                        published_dt = datetime.utcnow()
-
-                    source_name = entry.source.title if hasattr(entry, 'source') else "Google News"
-                    img_url = extract_image(entry.get('summary', '') or entry.get('description', ''))
-                    content_text = strip_html(entry.get('summary', '') or entry.get('description', '')) or "Read more at the source."
-
-                    news_item = NewsModel(
-                        author_id=author_id,
-                        title=title,
-                        description=content_text[:500],
-                        image_url=img_url,
-                        created_at=published_dt,
-                        is_approved=True,
-                    )
-                    db.add(news_item)
-                db.commit()
-            except Exception as e:
-                print(f"[News] RSS fetch error ({rss_url}): {e}")
-    finally:
-        db.close()
 
 
 def _get_author_name(db: Session, user_id: int) -> str:
@@ -139,6 +86,8 @@ def read_news(
         .all()
     )
 
+    keywords = _get_geo_priority_keywords(db)
+
     combined_news = []
     for n, u, p in db_news_joined:
         # Resolve author name
@@ -152,7 +101,7 @@ def read_news(
                 author = f"{p.first_name or ''} {p.last_name or ''}".strip() or "Anonymous"
 
         source = "Local News" if author != "@news" else "Harur News Feed"
-        priority = _geo_priority(n.title, source) if author == "@news" else -1
+        priority = _geo_priority_dynamic(n.title, source, keywords) if author == "@news" else -1
         
         combined_news.append({
             "id": n.id,
@@ -189,8 +138,9 @@ def create_news(
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     """Create a new news post. Admins/Moderators are auto-approved."""
-    role = getattr(current_user.role, "name", None)
-    auto_approve = role in ("Admin", "Moderator", "Super Admin")
+    from app.core.rbac import get_user_permissions
+    perms = get_user_permissions(db, current_user)
+    auto_approve = "Manage News" in perms or "Super Admin" in [r.name for r in current_user.roles]
 
     news = NewsModel(
         author_id=current_user.id,
@@ -206,8 +156,29 @@ def create_news(
         verified_at=datetime.utcnow() if auto_approve else None,
     )
     db.add(news)
-    db.commit()
     db.refresh(news)
     return news
+    
+from app.models.v4_extensions import Weather
+
+@router.get("/weather")
+def get_weather(db: Session = Depends(deps.get_db)) -> Any:
+    """Get the latest weather update."""
+    latest = db.query(Weather).order_by(Weather.recorded_at.desc()).first()
+    if not latest:
+        # Fallback if crawler hasn't run
+        return {
+            "temperature": 28.5,
+            "condition": "Clear",
+            "humidity": 65,
+            "recorded_at": datetime.utcnow().isoformat()
+        }
+    return {
+        "temperature": latest.temperature,
+        "condition": latest.condition,
+        "humidity": latest.humidity,
+        "recorded_at": latest.recorded_at.isoformat() if latest.recorded_at else None
+    }
+
 
 
