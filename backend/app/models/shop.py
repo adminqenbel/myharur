@@ -24,8 +24,10 @@ class Shop(Base):
     phone = Column(String, nullable=True)
     whatsapp = Column(String, nullable=True)
     opening_hours = Column(String, nullable=True)
-    is_verified = Column(Boolean, default=False)
-    is_approved = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=False, index=True)
+    is_approved = Column(Boolean, default=False, index=True)
+    is_open = Column(Boolean, default=True)
+    delivery_available = Column(Boolean, default=False)
     visit_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
@@ -39,7 +41,9 @@ class Product(Base):
     shop_id = Column(Integer, ForeignKey("shops.id"))
     name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
-    price = Column(Float, nullable=False)
+    price = Column(Float, nullable=False, index=True)
+    bulk_price = Column(Float, nullable=True)
+    stock = Column(Integer, default=0)
     image_url = Column(String, nullable=True)
     
     shop = relationship("Shop", back_populates="products")

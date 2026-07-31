@@ -22,3 +22,4 @@ from app.models.v4_extensions import (
     Permission, role_permissions, GovernmentOfficial, Volunteer, 
     Order, Tournament, LeaderboardSnapshot, Weather, Donation, RestaurantRanking
 )
+from app.models.jobs import JobListing

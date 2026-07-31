@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users, shops, news, emergency, rates, config, admin, community, upload, locations, news_sources, leaderboard, dashboard, marketplace, reputation
+from app.api.endpoints import auth, users, shops, news, emergency, rates, config, admin, community, upload, locations, news_sources, leaderboard, dashboard, marketplace, reputation, jobs
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -18,3 +18,4 @@ api_router.include_router(leaderboard.router, prefix="/leaderboard", tags=["lead
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(marketplace.router, prefix="/marketplace", tags=["marketplace"])
 api_router.include_router(reputation.router, prefix="/reputation", tags=["reputation"])
+api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])

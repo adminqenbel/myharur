@@ -4,9 +4,15 @@ from datetime import datetime
 
 class MarketplaceListingBase(BaseModel):
     type: str
+    category: Optional[str] = None
     title: str
     description: Optional[str] = None
+    condition: Optional[str] = None
     price: Optional[float] = None
+    image_url: Optional[str] = None
+    video_url: Optional[str] = None
+    location_lat: Optional[float] = None
+    location_lng: Optional[float] = None
     status: Optional[str] = "active"
 
 class MarketplaceListingCreate(MarketplaceListingBase):

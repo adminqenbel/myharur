@@ -13,6 +13,8 @@ class ShopBase(BaseModel):
     visit_count: int = 0
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
+    is_open: Optional[bool] = True
+    delivery_available: Optional[bool] = False
 
 class ShopCreate(ShopBase):
     pass

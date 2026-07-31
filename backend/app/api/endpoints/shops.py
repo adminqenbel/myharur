@@ -29,11 +29,20 @@ def create_shop(
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Create new shop.
     """
+    Create new shop. Max 2 shops unless approved.
+    """
+    existing_shops = db.query(ShopModel).filter(ShopModel.owner_id == current_user.id).count()
+    if existing_shops >= 2:
+        # Require 'Unlimited Shops' permission or Super Admin
+        from app.core.rbac import get_user_permissions
+        perms = get_user_permissions(db, current_user)
+        if "Unlimited Shops" not in perms and "Super Admin" not in [r.name for r in current_user.roles]:
+            raise HTTPException(status_code=403, detail="Maximum 2 shops allowed. Additional shops require admin approval.")
+
     shop = ShopModel(
         owner_id=current_user.id,
-        **shop_in.dict()
+        **shop_in.model_dump()
     )
     db.add(shop)
     db.commit()

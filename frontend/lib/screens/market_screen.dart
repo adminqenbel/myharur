@@ -34,7 +34,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   Future<void> _fetchListings() async {
     setState(() => _loadingListings = true);
     try {
-      final r = await ApiClient.dio.get('/community/listings');
+      final r = await ApiClient.dio.get('/marketplace/');
       setState(() => _listings = r.data);
     } catch (_) {} finally {
       setState(() => _loadingListings = false);
@@ -44,7 +44,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   Future<void> _fetchJobs() async {
     setState(() => _loadingJobs = true);
     try {
-      final r = await ApiClient.dio.get('/community/jobs');
+      final r = await ApiClient.dio.get('/jobs/');
       setState(() => _jobs = r.data);
     } catch (_) {} finally {
       setState(() => _loadingJobs = false);
@@ -139,14 +139,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   if (titleCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
                   setMBS(() => isSubmitting = true);
                   try {
-                    await ApiClient.dio.post('/community/listings', data: {
+                    await ApiClient.dio.post('/marketplace/', data: {
                       'title': titleCtrl.text,
                       'description': descCtrl.text,
                       'price': double.parse(priceCtrl.text),
                       'category': selectedCategory,
                       'condition': selectedCondition,
                       'contact_phone': phoneCtrl.text,
-                      'image_urls': imageUrl != null ? [imageUrl] : [],
+                      'type': 'sell',
+                      'image_url': imageUrl,
                     });
                     if (ctx.mounted) Navigator.pop(ctx);
                     _fetchListings();
@@ -210,9 +211,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                   if (titleCtrl.text.isEmpty) return;
                   setMBS(() => isSubmitting = true);
                   try {
-                    await ApiClient.dio.post('/community/jobs', data: {
+                    await ApiClient.dio.post('/jobs/', data: {
                       'title': titleCtrl.text,
-                      'company': companyCtrl.text,
+                      'company_name': companyCtrl.text,
                       'description': descCtrl.text,
                       'job_type': selectedType,
                       'salary_range': salaryCtrl.text,
@@ -287,8 +288,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         itemBuilder: (ctx, i) {
           final item = _listings[i];
           final isSold = item['is_sold'] == true;
-          final List? imageUrls = item['image_urls'] as List?;
-          final String? imageUrl = (imageUrls != null && imageUrls.isNotEmpty) ? imageUrls[0] : null;
+          final String? imageUrl = item['image_url'] as String?;
 
           return Card(
             clipBehavior: Clip.antiAlias,
@@ -385,7 +385,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (job['company'] != null) Text(job['company'], style: const TextStyle(color: Colors.grey)),
+                  if (job['company_name'] != null) Text(job['company_name'], style: const TextStyle(color: Colors.grey)),
                   if (job['salary_range'] != null) Text(job['salary_range'], style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                   Container(margin: const EdgeInsets.only(top: 4), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)), child: Text(job['job_type'] ?? '', style: TextStyle(color: Colors.blue.shade900, fontSize: 11))),
                 ],
