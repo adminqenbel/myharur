@@ -89,6 +89,7 @@ class User(UserBase):
     last_login: Optional[datetime] = None
     profile: Optional[Profile] = None
     role: Optional[Role] = None
+    roles: List[Role] = []
 
     class Config:
         from_attributes = True
@@ -100,6 +101,7 @@ class UserMe(User):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str
     user: Optional[User] = None
 
@@ -128,6 +130,7 @@ class AdminUserList(BaseModel):
     is_banned: bool = False
     login_provider: Optional[str] = None
     role: Optional[Role] = None
+    roles: List[Role] = []
     profile: Optional[Profile] = None
     created_at: datetime
     last_login: Optional[datetime] = None

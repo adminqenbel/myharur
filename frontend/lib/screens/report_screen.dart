@@ -3,9 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/translations.dart';
+import '../api_client.dart';
+import 'package:dio/dio.dart';
 
-class ReportScreen extends ConsumerWidget {
+class ReportScreen extends ConsumerStatefulWidget {
   const ReportScreen({super.key});
+  @override
+  ConsumerState<ReportScreen> createState() => _ReportScreenState();
+}
+
+class _ReportScreenState extends ConsumerState<ReportScreen> {
+  bool _isLoading = false;
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
@@ -14,15 +22,77 @@ class ReportScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _reportEmergency(String type, String category) async {
+    setState(() => _isLoading = true);
+    try {
+      // Mock coordinates for demo
+      final payload = {
+        "type": type,
+        "category": category,
+        "lat": 12.064,
+        "lng": 78.490
+      };
+      await ApiClient.dio.post('/emergency/', data: payload);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Successfully reported: $category! Alerting network...')));
+    } on DioException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: ${e.message}')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showGrievanceDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        String selectedCategory = 'road';
+        return StatefulBuilder(builder: (context, setStateBuilder) {
+          return AlertDialog(
+            title: Text(l(ref, 'Report Grievance')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButton<String>(
+                  value: selectedCategory,
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'road', child: Text('Road/Pothole')),
+                    DropdownMenuItem(value: 'water', child: Text('Water Supply')),
+                    DropdownMenuItem(value: 'electricity', child: Text('Electricity')),
+                  ],
+                  onChanged: (v) => setStateBuilder(() => selectedCategory = v!),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _reportEmergency('govt_grievance', selectedCategory);
+                },
+                child: const Text('Submit'),
+              )
+            ],
+          );
+        });
+      },
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(l(ref, 'Citizen Report & SOS')),
         backgroundColor: Colors.redAccent,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator()) 
+        : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,16 +103,16 @@ class ReportScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               icon: const Icon(Icons.local_police, size: 28),
-              label: Text(l(ref, 'Police (100)'), style: const TextStyle(fontSize: 18)),
+              label: Text(l(ref, 'Police SOS Alert'), style: const TextStyle(fontSize: 18)),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
-              onPressed: () => _makePhoneCall('100'),
+              onPressed: () => _reportEmergency('citizen_sos', 'medical'), // Mapped to general SOS
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              icon: const Icon(Icons.local_hospital, size: 28),
-              label: Text(l(ref, 'Medical (108)'), style: const TextStyle(fontSize: 18)),
+              icon: const Icon(Icons.bloodtype, size: 28),
+              label: Text(l(ref, 'Urgent Blood Required'), style: const TextStyle(fontSize: 18)),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade900, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
-              onPressed: () => _makePhoneCall('108'),
+              onPressed: () => _reportEmergency('citizen_sos', 'blood'),
             ),
             const SizedBox(height: 48),
             const Divider(),
@@ -53,11 +123,9 @@ class ReportScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             OutlinedButton.icon(
               icon: const Icon(Icons.report_problem),
-              label: Text(l(ref, 'Report Issue')),
+              label: Text(l(ref, 'Report Govt Grievance')),
               style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Issue reporting coming soon!')));
-              },
+              onPressed: _showGrievanceDialog,
             ),
           ],
         ),

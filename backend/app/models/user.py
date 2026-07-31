@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Float, Text, Index
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Float, Text, Index, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.session import Base
@@ -9,11 +9,17 @@ def generate_uid():
     return str(uuid.uuid4())
 
 
+user_roles = Table(
+    "user_roles",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
+)
+
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)  # Super Admin, Admin, Moderator, User
-    users = relationship("User", back_populates="role")
+    name = Column(String, unique=True, index=True)  # Super Admin, Admin, Moderator, User, etc.
 
 
 class User(Base):
@@ -34,13 +40,31 @@ class User(Base):
     ban_reason = Column(String, nullable=True)
     is_setup_complete = Column(Boolean, default=False)
     login_provider = Column(String, default="email")  # "email", "google", "both"
+    
+    # Primary role for backward compatibility
     role_id = Column(Integer, ForeignKey("roles.id"))
+    
     last_login = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    role = relationship("Role", back_populates="users")
+    role = relationship("Role", back_populates="primary_users", foreign_keys=[role_id])
+    roles = relationship("Role", secondary=user_roles, backref="users")
     profile = relationship("Profile", back_populates="user", uselist=False)
+    username_history = relationship("UsernameHistory", back_populates="user")
+
+
+Role.primary_users = relationship("User", back_populates="role", foreign_keys=[User.role_id])
+
+class UsernameHistory(Base):
+    __tablename__ = "username_history"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    old_username = Column(String, nullable=True)
+    new_username = Column(String, nullable=False)
+    changed_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User", back_populates="username_history")
 
 
 class Profile(Base):

@@ -183,7 +183,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                 const SizedBox(height: 16),
                 Center(
                   child: Text(
-                    'Username cannot be changed after this step.',
+                    'Username cannot be changed frequently.',
                     style: TextStyle(color: Colors.red.shade300, fontSize: 12),
                   ),
                 ),

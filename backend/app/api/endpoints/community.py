@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.community import (
     Listing as ListingModel, JobPosting as JobModel,
-    Event as EventModel, Poll as PollModel, PollOption, PollVote,
+    Event as EventModel, EventTicket, Poll as PollModel, PollOption, PollVote,
     Question as QuestionModel, Answer as AnswerModel,
     ChatRoom, ChatMessage
 )
@@ -13,7 +13,7 @@ from app.models.user import User as UserModel, Profile as ProfileModel
 from app.schemas.community import (
     ListingCreate, ListingUpdate, Listing as ListingSchema,
     JobPostingCreate, JobPosting as JobSchema,
-    EventCreate, Event as EventSchema,
+    EventCreate, Event as EventSchema, EventTicketOut,
     PollCreate, PollOut, VoteIn,
     QuestionCreate, AnswerCreate, QuestionOut, AnswerOut,
     ChatMessageCreate, ChatMessageOut, ChatRoomOut,
@@ -96,11 +96,39 @@ def create_event(
     db: Session = Depends(deps.get_db),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
-    event = EventModel(**event_in.dict(), organizer_id=current_user.id)
+    event = EventModel(**event_in.model_dump(), organizer_id=current_user.id)
     db.add(event)
     db.commit()
     db.refresh(event)
     return event
+
+@router.post("/events/{event_id}/rsvp", response_model=EventTicketOut)
+def rsvp_event(
+    event_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    event = db.query(EventModel).filter(EventModel.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+        
+    if event.max_attendees and event.current_attendees >= event.max_attendees:
+        raise HTTPException(status_code=400, detail="Event is at full capacity")
+        
+    existing = db.query(EventTicket).filter(EventTicket.event_id == event_id, EventTicket.user_id == current_user.id).first()
+    if existing:
+        return existing
+        
+    import uuid
+    qr_data = f"event_{event_id}_user_{current_user.id}_{uuid.uuid4().hex[:8]}"
+    
+    ticket = EventTicket(event_id=event_id, user_id=current_user.id, qr_code_data=qr_data)
+    event.current_attendees += 1
+    
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
 
 
 # ── Polls ─────────────────────────────────────────────────────────────────────
@@ -301,6 +329,8 @@ def send_message(
         sender_id=current_user.id,
         content=msg_in.content,
         mentions=mentions,
+        is_voice_note=msg_in.is_voice_note,
+        audio_url=msg_in.audio_url
     )
     db.add(msg)
     db.commit()

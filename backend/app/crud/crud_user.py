@@ -4,7 +4,7 @@ from typing import Optional, List
 from datetime import date, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
-from app.models.user import User, Role, Profile
+from app.models.user import User, Role, Profile, UsernameHistory
 from app.schemas.user import UserCreate, UserUpdate, SetupProfile
 from app.core.security import get_password_hash, verify_password
 
@@ -16,7 +16,9 @@ RESERVED_USERNAMES = {
     "api", "bot", "official", "staff", "help", "administrator",
     "info", "contact", "mail", "email", "noreply", "no_reply",
     "myharur", "harur", "anonymous", "guest", "null", "undefined",
-    "moderator", "mod", "owner", "webmaster",
+    "owner", "webmaster", "police", "hospital", "collector", 
+    "verification", "weather", "emergency", "developer", "municipality", 
+    "government", "gov"
 }
 
 ABUSIVE_WORDS = {
@@ -31,11 +33,14 @@ USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{3,30}$')
 def validate_username(username: str) -> Optional[str]:
     """Returns error string or None if valid."""
     if not USERNAME_REGEX.match(username):
-        return "Username must be 3-30 characters, letters/numbers/underscore only."
+        return "Username must be 3-30 characters, letters/numbers/underscore only (no emojis, unicode, or spaces)."
 
     lower_uname = username.lower()
-    if lower_uname in RESERVED_USERNAMES:
-        return f"'{username}' is a reserved username."
+    
+    # Fuzzy match reserved words
+    for reserved in RESERVED_USERNAMES:
+        if reserved in lower_uname:
+            return f"Username contains reserved word '{reserved}'."
 
     for word in ABUSIVE_WORDS:
         if word in lower_uname:
@@ -253,6 +258,15 @@ def set_username(db: Session, user: User, username: str, display_name: Optional[
     available, err = is_username_available(db, username, exclude_user_id=user.id)
     if not available:
         return user, err
+
+    # Log into history if changing
+    if user.username and user.username != username.lower():
+        history_entry = UsernameHistory(
+            user_id=user.id,
+            old_username=user.username,
+            new_username=username.lower()
+        )
+        db.add(history_entry)
 
     user.username = username.lower()
     user.username_required = False

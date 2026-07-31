@@ -22,6 +22,9 @@ class GoogleAuthRequest(BaseModel):
     photo_url: Optional[str] = None
 
 
+from app.core.security import create_access_token, create_refresh_token, verify_password
+from app.core.redis_session import create_session
+
 def _make_token_response(user: UserModel, db) -> dict:
     crud_user.ensure_user_identifiers(db, user)
     crud_user.update_streak(db, user)
@@ -32,8 +35,14 @@ def _make_token_response(user: UserModel, db) -> dict:
     db.refresh(user)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token = create_access_token(user.id, expires_delta=access_token_expires)
+    refresh_token = create_refresh_token(user.id)
+    
+    # Store in Redis
+    create_session(user.id, refresh_token)
+    
     return {
         "access_token": token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": user,
     }

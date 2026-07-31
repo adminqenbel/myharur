@@ -110,3 +110,20 @@ def search_users(
             "role": u.role,
         })
     return out
+@router.get("/{mid}", response_model=UserSearchResult)
+def get_user_by_mid(
+    mid: str,
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """Public lookup of user by MMID."""
+    user = crud_user.get_user_by_mid(db, mid)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": user.id,
+        "mid": user.mid,
+        "username": user.username,
+        "display_name": user.display_name,
+        "avatar_url": user.profile.avatar_url if user.profile else None,
+        "role": user.role,
+    }

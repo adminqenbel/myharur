@@ -13,3 +13,8 @@ from app.models.community import (
 from app.models.location import State, District, Taluk, Town, Village
 from app.models.ingestion import NewsSource, CrawlerLog, RawArticle
 from app.models.ai import KnowledgeBase, FAQ, ChatSession, CommandHistory, IntentLog
+from app.models.admin import AuditLog, DeletionRequest
+from app.models.support import SupportTicket
+from app.models.marketplace import MarketplaceListing
+from app.models.emergency_platform import Emergency
+from app.models.gamification import UserReputation

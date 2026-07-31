@@ -64,6 +64,9 @@ class EventBase(BaseModel):
     event_date: datetime
     location_name: Optional[str] = None
     image_url: Optional[str] = None
+    is_paid: Optional[bool] = False
+    ticket_price: Optional[float] = None
+    max_attendees: Optional[int] = None
 
 class EventCreate(EventBase):
     pass
@@ -72,9 +75,22 @@ class Event(EventBase):
     id: int
     organizer_id: int
     is_approved: bool
+    is_featured: bool
+    current_attendees: int
     created_at: datetime
     class Config:
         from_attributes = True
+
+class EventTicketOut(BaseModel):
+    id: int
+    event_id: int
+    user_id: int
+    qr_code_data: str
+    status: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
 
 
 # ── Polls ────────────────────────────────────────────────────────────────────
@@ -141,12 +157,16 @@ class QuestionOut(BaseModel):
 # ── Chat ─────────────────────────────────────────────────────────────────────
 class ChatMessageCreate(BaseModel):
     content: str
+    is_voice_note: Optional[bool] = False
+    audio_url: Optional[str] = None
 
 class ChatMessageOut(BaseModel):
     id: int
     room_id: int
     sender_id: int
     content: str
+    is_voice_note: bool
+    audio_url: Optional[str] = None
     created_at: datetime
     sender_name: Optional[str] = None
     sender_role: Optional[str] = None
@@ -162,5 +182,6 @@ class ChatRoomOut(BaseModel):
     name: str
     description: Optional[str]
     icon: Optional[str]
+    is_secure: bool
     class Config:
         from_attributes = True

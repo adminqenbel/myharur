@@ -102,6 +102,13 @@ def export_users_csv(
     )
 
 
+from app.models.admin import AuditLog, DeletionRequest
+
+def log_admin_action(db: Session, admin_id: int, action: str, target_id: Optional[int] = None, details: Optional[dict] = None):
+    log = AuditLog(admin_id=admin_id, action=action, target_id=target_id, details=details)
+    db.add(log)
+    db.commit()
+
 @router.put("/users/{user_id}/role")
 def assign_role(
     user_id: int,
@@ -127,6 +134,7 @@ def assign_role(
 
     user.role_id = role.id
     db.commit()
+    log_admin_action(db, current_user.id, "assign_role", target_id=user_id, details={"role": role_in.role_name})
     return {"message": f"Role '{role_in.role_name}' assigned to user {user_id}"}
 
 
@@ -141,6 +149,7 @@ def toggle_user_active(
         raise HTTPException(status_code=404, detail="User not found")
     user.is_active = not user.is_active
     db.commit()
+    log_admin_action(db, current_user.id, "toggle_active", target_id=user_id, details={"is_active": user.is_active})
     return {"message": "User status updated", "is_active": user.is_active}
 
 
@@ -161,6 +170,7 @@ def ban_user(
     user.ban_reason = ban_in.reason
     user.is_active = False
     db.commit()
+    log_admin_action(db, current_user.id, "ban_user", target_id=user_id, details={"reason": ban_in.reason})
     return {"message": f"User {user_id} banned", "reason": ban_in.reason}
 
 
@@ -178,6 +188,7 @@ def unban_user(
     user.ban_reason = None
     user.is_active = True
     db.commit()
+    log_admin_action(db, current_user.id, "unban_user", target_id=user_id)
     return {"message": f"User {user_id} unbanned"}
 
 
@@ -196,10 +207,73 @@ def reset_user_password(
     temp_pass = secrets.token_urlsafe(12)
     user.hashed_password = get_password_hash(temp_pass)
     db.commit()
+    log_admin_action(db, current_user.id, "reset_password", target_id=user_id)
     return {"message": "Password reset", "temp_password": temp_pass}
 
 
-# ── News Moderation ──────────────────────────────────────────────────────────
+@router.post("/users/{user_id}/request-deletion")
+def request_user_deletion(
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(_require_admin),
+) -> Any:
+    """Initiate a graceful deletion request for a user."""
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # If Super Admin, bypass the 3-approval rule
+    if current_user.role.name == "Super Admin":
+        user.is_active = False
+        user.email = f"archived_{user.id}_{user.email}"
+        user.username = f"archived_{user.id}_{user.username}"
+        db.commit()
+        log_admin_action(db, current_user.id, "force_delete_user", target_id=user_id)
+        return {"message": f"User {user_id} bypassed and gracefully archived by Super Admin."}
+        
+    req = db.query(DeletionRequest).filter(DeletionRequest.user_id == user_id, DeletionRequest.status == "pending").first()
+    if not req:
+        req = DeletionRequest(user_id=user_id, approvals=[current_user.id], status="pending")
+        db.add(req)
+        db.commit()
+        log_admin_action(db, current_user.id, "request_delete_user", target_id=user_id)
+        return {"message": f"Deletion request initiated. Needs 2 more approvals."}
+    else:
+        raise HTTPException(status_code=400, detail="Pending request already exists.")
+
+@router.post("/deletion-requests/{request_id}/approve")
+def approve_deletion_request(
+    request_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(_require_admin),
+) -> Any:
+    """Approve a pending deletion request."""
+    req = db.query(DeletionRequest).filter(DeletionRequest.id == request_id, DeletionRequest.status == "pending").first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Pending request not found")
+        
+    approvals = list(req.approvals or [])
+    if current_user.id in approvals:
+        raise HTTPException(status_code=400, detail="You have already approved this request.")
+        
+    approvals.append(current_user.id)
+    req.approvals = approvals
+    
+    log_admin_action(db, current_user.id, "approve_deletion", target_id=req.user_id)
+    
+    if len(approvals) >= 3 or current_user.role.name == "Super Admin":
+        req.status = "executed"
+        user = db.query(UserModel).filter(UserModel.id == req.user_id).first()
+        if user:
+            user.is_active = False
+            user.email = f"archived_{user.id}_{user.email}"
+            user.username = f"archived_{user.id}_{user.username}"
+        db.commit()
+        return {"message": "Deletion approved and executed."}
+        
+    db.commit()
+    return {"message": f"Approval added. Total approvals: {len(approvals)}/3."}
+
 
 def _get_author_name(db: Session, user_id: int) -> str:
     profile = db.query(ProfileModel).filter(ProfileModel.user_id == user_id).first()

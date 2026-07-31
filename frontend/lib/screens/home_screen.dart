@@ -352,29 +352,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
 
               // ── Top Banner ────────────────────────────────────────────────
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: const LinearGradient(colors: [Colors.blue, Colors.indigo]),
-                ),
-                child: const Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Rain Alert', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                          SizedBox(height: 4),
-                          Text('Heavy rain expected in Harur at 5 PM', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                        ],
-                      ),
+              if (_latestNews.any((n) => n['is_breaking'] == true))
+                ..._latestNews.where((n) => n['is_breaking'] == true).map((news) => 
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(colors: [Colors.redAccent, Colors.red]),
                     ),
-                    Icon(Icons.cloudy_snowing, color: Colors.white, size: 48),
-                  ],
-                ),
-              ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(news['title'] ?? 'Breaking Alert', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                              const SizedBox(height: 4),
+                              Text(news['description'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 48),
+                      ],
+                    ),
+                  )
+                ).toList(),
               
               // ── Services Grid ─────────────────────────────────────────────
               Padding(

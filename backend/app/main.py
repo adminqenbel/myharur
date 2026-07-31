@@ -326,6 +326,7 @@ async def _auto_reply_support(room_id: int, original_msg_data: dict):
         from app.db.session import SessionLocal
         from app.models.user import User as UserModel
         from app.models.community import ChatMessage
+        from app.models.support import SupportTicket
         db = SessionLocal()
         try:
             support_user = db.query(UserModel).filter(UserModel.username == "support").first()
@@ -334,13 +335,30 @@ async def _auto_reply_support(room_id: int, original_msg_data: dict):
                 
             content = original_msg_data.get('content', '').lower()
             reply_text = "I'm the MyHarur support bot. I've noted your message and a human moderator will assist you shortly."
+            priority = "normal"
+            confidence = 0.5
             
             if any(w in content for w in ["password", "login", "account", "locked"]):
                 reply_text = "Having trouble with your account? An admin can reset your password or update your details. We've notified them."
+                priority = "high"
+                confidence = 0.8
             elif any(w in content for w in ["bug", "error", "issue", "crash", "not working"]):
                 reply_text = "Thank you for reporting this issue! I've flagged it for our development team to investigate."
+                priority = "normal"
+                confidence = 0.9
             elif any(w in content for w in ["hello", "hi", "help"]):
                 reply_text = "Hello! I am the automated support assistant. Please describe your issue in detail and an admin will get back to you."
+                priority = "low"
+                confidence = 0.6
+
+            # Create SupportTicket
+            ticket = SupportTicket(
+                user_id=original_msg_data['sender_id'],
+                status="open",
+                priority=priority,
+                ai_confidence_score=confidence
+            )
+            db.add(ticket)
 
             msg = ChatMessage(room_id=room_id, sender_id=support_user.id, content=reply_text)
             db.add(msg)

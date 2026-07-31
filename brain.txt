@@ -49,10 +49,16 @@ This is a full-stack monorepo for the "MyHarur" super-app, consisting of a Pytho
 - `/releases/`: Storage for generated release APKs.
 - `/assest/`: General project assets.
 
-## Recent Milestones & Capabilities
-- Finalized multi-server scaling via Redis and Socket.IO for the real-time chat module.
-- Implemented a moderated news system with an admin dashboard.
-- Integrated an in-app `UpdateManager` to handle app version updates without user friction.
-- Ensured consistent UI across all screens and refined the chat message rendering for low-latency synchronization.
-- Verified production readiness of the backend with automated tests (`test_api.py`, `/tests` directory).
-- Prepared zero-downtime deployment configurations and robust cloud deployment workflows.
+## Recent Milestones & Capabilities (V4.0 Enterprise Evolution)
+- **Phase 1 (Identity System & Role Engine)**: Migrated to multi-role mapping via `user_roles`. Added strict ASCII reserved-word filtering for Usernames with history tracking. Public MID lookup API built.
+- **Phase 2 (Auth & Sessions)**: Upgraded to `access_token` and `refresh_token` architecture. Integrated Redis-backed session limits (5 devices max) with revocation logic.
+- **Phase 3 (Admin Governance)**: Bound `AuditLog` mapping to strict mutations (bans, passwords). Deletion requests now follow a rigorous 3-Admin Approval Consensus.
+- **Phase 4 (AI Support System)**: Socket.io bot intelligently routes `@support` requests into `SupportTicket` models with dynamic Priority and Confidence AI tagging.
+- **Phase 5 (Marketplace & Shops)**: Deployed `MarketplaceListing` handling `business`, `rental`, `jobs`, `community_new`.
+- **Phase 6 (Emergency SOS)**: Refactored emergency endpoints. Integrated dynamic radius-escalation logic (1km -> 5km -> 10km) across `citizen_sos` and `govt_grievance`.
+- **Phase 7 (True News Intelligence)**: Rearchitected `crawler.py` and `ai_processor.py` utilizing `asyncio/aiohttp` for non-blocking scraping. AI handles sentiment-based auto-tagging (`#Alert`, `#Local`).
+- **Phase 8 (Events & Ticketing)**: Upgraded `EventModel` with free/paid caps. Introduced `EventTicket` generation (QR codes) for capacity-limited RSVPs.
+- **Phase 9 (Secure Voice & Video)**: Updated `ChatRoom` with `is_secure` flag and `ChatMessage` to handle `is_voice_note`/`audio_url` payloads for rich media.
+- **Phase 10 (Gamification)**: Engineered `UserReputation` with weighted metrics determining dynamically calculated tiers (Bronze, Silver, Gold, Platinum).
+- **Phase 11 (Cross-Platform UI)**: Stripped out static placeholders. Fully bound Flutter Dashboard and Emergency SOS widgets to dynamic APIs. Implemented standard `Plus Jakarta Sans` aesthetic (Golden Amber/Deep Navy).
+- **Phase 12 (Production Ready)**: Backwards-compatible Alembic migrations staged securely. Ready for V4.0 signed APK payload compilation.
