@@ -156,18 +156,31 @@ class QuestionOut(BaseModel):
 
 # ── Chat ─────────────────────────────────────────────────────────────────────
 class ChatMessageCreate(BaseModel):
-    content: str
+    content: Optional[str] = None
+    reply_to_id: Optional[int] = None
     is_voice_note: Optional[bool] = False
     audio_url: Optional[str] = None
+    image_urls: Optional[List[str]] = []
+    video_urls: Optional[List[str]] = []
+    file_urls: Optional[List[str]] = []
 
 class ChatMessageOut(BaseModel):
     id: int
     room_id: int
     sender_id: int
-    content: str
+    content: Optional[str] = None
+    reply_to_id: Optional[int] = None
     is_voice_note: bool
     audio_url: Optional[str] = None
+    image_urls: List[str] = []
+    video_urls: List[str] = []
+    file_urls: List[str] = []
+    reactions: dict = {}
+    is_pinned: bool = False
+    status: str = "sent"
+    translated_text: dict = {}
     created_at: datetime
+    updated_at: Optional[datetime] = None
     sender_name: Optional[str] = None
     sender_role: Optional[str] = None
     sender_avatar: Optional[str] = None

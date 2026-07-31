@@ -397,6 +397,11 @@ def get_messages(
             "username": user_info["username"],
             "display_name": user_info["display_name"],
             "mentions": m.mentions or [],
+            "reactions": m.reactions or {},
+            "image_urls": m.image_urls or [],
+            "video_urls": m.video_urls or [],
+            "file_urls": m.file_urls or [],
+            "translated_text": m.translated_text or {}
         })
     return result
 
@@ -409,20 +414,28 @@ def send_message(
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     import re as _re
-    mentions = _re.findall(r'@(\w+)', msg_in.content)
+    mentions = []
+    if msg_in.content:
+        mentions = _re.findall(r'@(\w+)', msg_in.content)
+        
     msg = ChatMessage(
         room_id=room_id,
         sender_id=current_user.id,
         content=msg_in.content,
+        reply_to_id=msg_in.reply_to_id,
         mentions=mentions,
         is_voice_note=msg_in.is_voice_note,
-        audio_url=msg_in.audio_url
+        audio_url=msg_in.audio_url,
+        image_urls=msg_in.image_urls,
+        video_urls=msg_in.video_urls,
+        file_urls=msg_in.file_urls
     )
     db.add(msg)
     db.commit()
     db.refresh(msg)
     user_info = _get_user_info(db, current_user.id)
-    return {
+    
+    response = {
         **msg.__dict__,
         "sender_name": _get_name(db, current_user.id),
         "sender_role": _get_role(db, current_user.id),
@@ -430,4 +443,29 @@ def send_message(
         "username": user_info["username"],
         "display_name": user_info["display_name"],
         "mentions": mentions,
+        "reactions": msg.reactions or {},
+        "image_urls": msg.image_urls or [],
+        "video_urls": msg.video_urls or [],
+        "file_urls": msg.file_urls or [],
+        "translated_text": msg.translated_text or {}
     }
+    
+    # Auto AI/Bot Responses for System Mentions
+    system_mentions = [m.lower() for m in mentions]
+    if any(m in ["support", "help", "news", "weather", "admin", "hospital", "police"] for m in system_mentions):
+        # Create a bot response
+        bot_user = db.query(UserModel).filter(UserModel.username == "system_bot").first()
+        if not bot_user:
+            # Fallback to current user if bot doesn't exist yet, or just don't reply
+            pass
+        else:
+            bot_msg = ChatMessage(
+                room_id=room_id,
+                sender_id=bot_user.id,
+                content=f"Hello! I am the automated assistant. I have notified the requested department ({', '.join(system_mentions)}) and logged your request. A human agent will take over if unresolved.",
+                reply_to_id=msg.id
+            )
+            db.add(bot_msg)
+            db.commit()
+            
+    return response

@@ -161,11 +161,31 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("chat_rooms.id"), index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), index=True)
-    content = Column(Text, nullable=False)
-    mentions = Column(JSON, default=list)   # List of @mentioned usernames
-    is_deleted = Column(Boolean, default=False)
+    
+    content = Column(Text, nullable=True) # Text can be null if it's just media
+    
+    # Threading
+    reply_to_id = Column(Integer, ForeignKey("chat_messages.id"), nullable=True)
+    
+    # Media & Files
     is_voice_note = Column(Boolean, default=False)
     audio_url = Column(String, nullable=True)
+    image_urls = Column(JSON, default=list)
+    video_urls = Column(JSON, default=list)
+    file_urls = Column(JSON, default=list)
+    
+    # Metadata
+    mentions = Column(JSON, default=list)   # List of @mentioned usernames
+    reactions = Column(JSON, default=dict)  # Emoji reactions {"👍": ["user_id_1"], "❤️": []}
+    is_pinned = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)
+    
+    # Delivery & Localization
+    status = Column(String, default="sent") # sent, delivered, seen
+    translated_text = Column(JSON, default=dict) # {"ta": "...", "en": "..."}
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     room = relationship("ChatRoom", back_populates="messages")
+    replies = relationship("ChatMessage", backref="parent_message", remote_side=[id])
