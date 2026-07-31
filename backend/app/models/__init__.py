@@ -18,3 +18,7 @@ from app.models.support import SupportTicket
 from app.models.marketplace import MarketplaceListing
 from app.models.emergency_platform import Emergency
 from app.models.gamification import UserReputation
+from app.models.v4_extensions import (
+    Permission, role_permissions, GovernmentOfficial, Volunteer, 
+    Order, Tournament, LeaderboardSnapshot, Weather, Donation, RestaurantRanking
+)
