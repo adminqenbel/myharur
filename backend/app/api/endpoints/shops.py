@@ -40,7 +40,6 @@ def create_shop(
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     """
-    """
     Create new shop. Max 2 shops unless approved.
     """
     existing_shops = db.query(ShopModel).filter(ShopModel.owner_id == current_user.id).count()
