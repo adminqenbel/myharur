@@ -17,7 +17,7 @@ python-socketio
 slowapi
 
 argon2-cffi
-python-magic-bin
+python-magic
 Pillow
 aiohttp
 beautifulsoup4
