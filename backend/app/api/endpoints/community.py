@@ -269,6 +269,8 @@ def _seed_default_rooms(db: Session):
     """Ensure default chat rooms exist."""
     defaults = [
         {"name": "General", "description": "Public town chat", "icon": "chat"},
+        {"name": "Announcements", "description": "Official updates & alerts", "icon": "campaign"},
+        {"name": "Government Updates", "description": "Info from local authorities", "icon": "account_balance"},
         {"name": "Marketplace", "description": "Buy and sell discussions", "icon": "shopping_bag"},
         {"name": "Events", "description": "Upcoming events & meetups", "icon": "event"},
         {"name": "Help & Support", "description": "Ask for help from the community", "icon": "help"},
@@ -284,6 +286,33 @@ def _seed_default_rooms(db: Session):
 def get_chat_rooms(db: Session = Depends(deps.get_db)) -> Any:
     _seed_default_rooms(db)
     return db.query(ChatRoom).filter(ChatRoom.is_public == True).all()
+
+from pydantic import BaseModel
+class ChatRoomCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = "chat"
+
+@router.post("/chat/rooms", response_model=ChatRoomOut)
+def create_chat_room(
+    room_in: ChatRoomCreate,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """Create a custom chat room (Admins only)."""
+    if current_user.role.name not in ["Super Admin", "Admin", "Moderator", "Government", "Police", "Municipality"]:
+        raise HTTPException(status_code=403, detail="Not authorized to create chat rooms")
+        
+    room = ChatRoom(
+        name=room_in.name,
+        description=room_in.description,
+        icon=room_in.icon,
+        is_public=True
+    )
+    db.add(room)
+    db.commit()
+    db.refresh(room)
+    return room
 
 
 @router.get("/chat/rooms/{room_id}/messages", response_model=List[ChatMessageOut])

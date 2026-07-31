@@ -52,22 +52,32 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F9), // Light background theme
       appBar: AppBar(
-        title: Text(l(ref, 'Community Hub')),
+        title: Text(l(ref, 'Community Hub'), style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: Color(0xFF081C2D)),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          labelColor: const Color(0xFF007AFF),
+          unselectedLabelColor: const Color(0xFF64748B),
+          indicatorColor: const Color(0xFF007AFF),
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
-            Tab(icon: Icon(Icons.how_to_vote, size: 18), text: 'Polls'),
-            Tab(icon: Icon(Icons.event, size: 18), text: 'Events'),
-            Tab(icon: Icon(Icons.forum, size: 18), text: 'Q&A'),
-            Tab(icon: Icon(Icons.chat_bubble_outline, size: 18), text: 'Chat'),
+            Tab(icon: Icon(Icons.how_to_vote_rounded, size: 20), text: 'Polls'),
+            Tab(icon: Icon(Icons.event_rounded, size: 20), text: 'Events'),
+            Tab(icon: Icon(Icons.forum_rounded, size: 20), text: 'Q&A'),
+            Tab(icon: Icon(Icons.chat_bubble_outline_rounded, size: 20), text: 'Chat'),
           ],
         ),
       ),
       floatingActionButton: _buildFAB(),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF3A86FF)))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -83,25 +93,34 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
   Widget? _buildFAB() {
     final auth = ref.watch(authProvider);
     if (!auth.isLoggedIn) return null;
+
+    final role = auth.user?['role']?['name'] ?? '';
+    final canCreateRoom = ['Super Admin', 'Admin', 'Moderator', 'Government', 'Police', 'Municipality'].contains(role);
+
+    // If on Chat tab and not authorized, hide FAB
+    if (_tabController.index == 3 && !canCreateRoom) return null;
+
     return FloatingActionButton(
+      backgroundColor: const Color(0xFF081C2D),
       onPressed: () {
         switch (_tabController.index) {
           case 0: _showCreatePollDialog(); break;
           case 1: _showCreateEventDialog(); break;
           case 2: _showCreateQuestionDialog(); break;
+          case 3: _showCreateChatRoomDialog(); break;
         }
       },
-      child: const Icon(Icons.add),
+      child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
     );
   }
 
   // ── Polls ──────────────────────────────────────────────────────────────────
   Widget _buildPolls() {
-    if (_polls.isEmpty) return _emptyState(Icons.how_to_vote, 'No polls yet');
+    if (_polls.isEmpty) return _emptyState(Icons.how_to_vote_rounded, 'No polls yet');
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
         itemCount: _polls.length,
         itemBuilder: (ctx, i) => _buildPollCard(_polls[i]),
       ),
@@ -113,42 +132,53 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final totalVotes = options.fold<int>(0, (sum, o) => sum + (o['vote_count'] as int? ?? 0));
     final votedId = poll['user_voted_option_id'] as int?;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(poll['question'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 12),
+            Text(poll['question'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D))),
+            const SizedBox(height: 16),
             ...options.map<Widget>((opt) {
               final votes = opt['vote_count'] as int? ?? 0;
               final pct = totalVotes > 0 ? votes / totalVotes : 0.0;
               final isVoted = votedId == opt['id'];
               return InkWell(
                 onTap: votedId != null ? null : () => _castVote(poll['id'], opt['id']),
+                borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Text(opt['text'] ?? '', style: TextStyle(fontWeight: isVoted ? FontWeight.bold : FontWeight.normal)),
-                        Text('${(pct * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        Text(opt['text'] ?? '', style: TextStyle(fontWeight: isVoted ? FontWeight.w800 : FontWeight.w600, color: isVoted ? const Color(0xFF007AFF) : const Color(0xFF081C2D))),
+                        Text('${(pct * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.bold)),
                       ]),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: pct,
-                        backgroundColor: Colors.grey.shade200,
-                        color: isVoted ? Colors.blue : Colors.blue.shade200,
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 8,
+                          backgroundColor: const Color(0xFFF4F6F9),
+                          color: isVoted ? const Color(0xFF007AFF) : const Color(0xFF3A86FF).withOpacity(0.4),
+                        ),
                       ),
                     ],
                   ),
                 ),
               );
             }).toList(),
-            Text('$totalVotes votes', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            const SizedBox(height: 8),
+            Text('$totalVotes votes', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -173,37 +203,42 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setMBS) => Padding(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Create a Poll', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(controller: questionCtrl, decoration: const InputDecoration(labelText: 'Poll Question *', border: OutlineInputBorder())),
+            const Text('Create a Poll', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+            const SizedBox(height: 20),
+            TextField(controller: questionCtrl, decoration: const InputDecoration(labelText: 'Poll Question *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
             const SizedBox(height: 12),
-            TextField(controller: option1, decoration: const InputDecoration(labelText: 'Option 1 *', border: OutlineInputBorder())),
-            const SizedBox(height: 8),
-            TextField(controller: option2, decoration: const InputDecoration(labelText: 'Option 2 *', border: OutlineInputBorder())),
-            const SizedBox(height: 8),
-            TextField(controller: option3, decoration: const InputDecoration(labelText: 'Option 3 (optional)', border: OutlineInputBorder())),
-            const SizedBox(height: 16),
-            SizedBox(width: double.infinity, child: ElevatedButton(
-              onPressed: isSubmitting ? null : () async {
-                final options = [option1.text, option2.text, if (option3.text.isNotEmpty) option3.text];
-                if (questionCtrl.text.isEmpty || options.length < 2) return;
-                setMBS(() => isSubmitting = true);
-                try {
-                  await ApiClient.dio.post('/community/polls', data: {'question': questionCtrl.text, 'options': options});
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _fetchAll();
-                } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  setMBS(() => isSubmitting = false);
-                }
-              },
-              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Poll'),
-            )),
+            TextField(controller: option1, decoration: const InputDecoration(labelText: 'Option 1 *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            const SizedBox(height: 12),
+            TextField(controller: option2, decoration: const InputDecoration(labelText: 'Option 2 *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            const SizedBox(height: 12),
+            TextField(controller: option3, decoration: const InputDecoration(labelText: 'Option 3 (optional)', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF081C2D), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                onPressed: isSubmitting ? null : () async {
+                  final options = [option1.text, option2.text, if (option3.text.isNotEmpty) option3.text];
+                  if (questionCtrl.text.isEmpty || options.length < 2) return;
+                  setMBS(() => isSubmitting = true);
+                  try {
+                    await ApiClient.dio.post('/community/polls', data: {'question': questionCtrl.text, 'options': options});
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _fetchAll();
+                  } catch (e) {
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    setMBS(() => isSubmitting = false);
+                  }
+                },
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Poll', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              )
+            ),
           ]),
         ),
       ),
@@ -212,42 +247,49 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   // ── Events ─────────────────────────────────────────────────────────────────
   Widget _buildEvents() {
-    if (_events.isEmpty) return _emptyState(Icons.event, 'No events yet');
+    if (_events.isEmpty) return _emptyState(Icons.event_rounded, 'No events yet');
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
         itemCount: _events.length,
         itemBuilder: (ctx, i) {
           final event = _events[i];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (event['image_url'] != null)
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                     child: Image.network(event['image_url'], width: double.infinity, height: 160, fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const SizedBox()),
                   ),
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(event['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(event['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF081C2D))),
+                    const SizedBox(height: 12),
                     if (event['event_date'] != null)
                       Row(children: [
-                        const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(event['event_date'].toString().substring(0, 10), style: const TextStyle(color: Colors.grey)),
+                        const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF007AFF)),
+                        const SizedBox(width: 8),
+                        Text(event['event_date'].toString().substring(0, 10), style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
                       ]),
+                    const SizedBox(height: 8),
                     if (event['location_name'] != null)
                       Row(children: [
-                        const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(event['location_name'], style: const TextStyle(color: Colors.grey)),
+                        const Icon(Icons.location_on_rounded, size: 16, color: Color(0xFFEF233C)),
+                        const SizedBox(width: 8),
+                        Text(event['location_name'], style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
                       ]),
-                    if (event['description'] != null) ...[const SizedBox(height: 8), Text(event['description'])],
+                    if (event['description'] != null) ...[const SizedBox(height: 16), Text(event['description'], style: const TextStyle(color: Color(0xFF081C2D), height: 1.5))],
                   ]),
                 ),
               ],
@@ -267,41 +309,46 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setMBS) => Padding(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Create Event', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Event Title *', border: OutlineInputBorder())),
+            const Text('Create Event', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+            const SizedBox(height: 20),
+            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Event Title *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
             const SizedBox(height: 12),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLines: 2),
+            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))), maxLines: 2),
             const SizedBox(height: 12),
-            TextField(controller: locationCtrl, decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder())),
+            TextField(controller: locationCtrl, decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
             const SizedBox(height: 12),
-            TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD) *', border: OutlineInputBorder())),
-            const SizedBox(height: 16),
-            SizedBox(width: double.infinity, child: ElevatedButton(
-              onPressed: isSubmitting ? null : () async {
-                if (titleCtrl.text.isEmpty || dateCtrl.text.isEmpty) return;
-                setMBS(() => isSubmitting = true);
-                try {
-                  await ApiClient.dio.post('/community/events', data: {
-                    'title': titleCtrl.text,
-                    'description': descCtrl.text,
-                    'location_name': locationCtrl.text,
-                    'event_date': '${dateCtrl.text}T00:00:00',
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _fetchAll();
-                } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  setMBS(() => isSubmitting = false);
-                }
-              },
-              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Event'),
-            )),
+            TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD) *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF081C2D), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                onPressed: isSubmitting ? null : () async {
+                  if (titleCtrl.text.isEmpty || dateCtrl.text.isEmpty) return;
+                  setMBS(() => isSubmitting = true);
+                  try {
+                    await ApiClient.dio.post('/community/events', data: {
+                      'title': titleCtrl.text,
+                      'description': descCtrl.text,
+                      'location_name': locationCtrl.text,
+                      'event_date': '${dateCtrl.text}T00:00:00',
+                    });
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _fetchAll();
+                  } catch (e) {
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    setMBS(() => isSubmitting = false);
+                  }
+                },
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Event', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              )
+            ),
           ]),
         ),
       ),
@@ -310,50 +357,99 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   // ── Q&A ────────────────────────────────────────────────────────────────────
   Widget _buildQA() {
-    if (_questions.isEmpty) return _emptyState(Icons.forum, 'No questions yet');
+    if (_questions.isEmpty) return _emptyState(Icons.forum_rounded, 'No questions yet');
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
         itemCount: _questions.length,
         itemBuilder: (ctx, i) {
           final q = _questions[i];
           final answers = q['answers'] as List? ?? [];
-          return Card(
+          return Container(
             margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
+            ),
             child: ExpansionTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.purple.shade100,
-                child: Text('Q', style: TextStyle(color: Colors.purple.shade900, fontWeight: FontWeight.bold)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              leading: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF007AFF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16)
+                ),
+                child: const Center(child: Text('Q', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800, fontSize: 18))),
               ),
-              title: Text(q['text'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(q['author_name'] ?? 'Anonymous', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 13)),
-                  if (q['author_role'] != null && q['author_role'] != 'User')
-                    Text(q['author_role'], style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                  const SizedBox(height: 4),
-                  Text('${answers.length} answers', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
+              title: Text(q['text'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D))),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(q['author_name'] ?? 'Anonymous', style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 13)),
+                    if (q['author_role'] != null && q['author_role'] != 'User')
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFFFFB703).withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                        child: Text(q['author_role'], style: const TextStyle(color: Color(0xFFD97706), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    const SizedBox(height: 8),
+                    Text('${answers.length} answers', style: const TextStyle(color: Color(0xFF007AFF), fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
               children: [
-                ...answers.map<Widget>((a) => ListTile(
-                  leading: const CircleAvatar(backgroundColor: Colors.green, child: Text('A', style: TextStyle(color: Colors.white))),
-                  title: Text(a['text'] ?? ''),
-                  subtitle: Column(
+                ...answers.map<Widget>((a) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey.shade100))),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(a['author_name'] ?? 'Anonymous', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 12)),
-                      if (a['author_role'] != null && a['author_role'] != 'User')
-                        Text(a['author_role'], style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF06D6A0).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10)
+                        ),
+                        child: const Center(child: Text('A', style: TextStyle(color: Color(0xFF06D6A0), fontWeight: FontWeight.w800, fontSize: 14))),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(a['author_name'] ?? 'Anonymous', style: const TextStyle(color: Color(0xFF081C2D), fontWeight: FontWeight.bold, fontSize: 13)),
+                            if (a['author_role'] != null && a['author_role'] != 'User')
+                              Text(a['author_role'], style: const TextStyle(color: Color(0xFFD97706), fontSize: 10, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Text(a['text'] ?? '', style: const TextStyle(color: Color(0xFF64748B), height: 1.4)),
+                          ],
+                        ),
+                      )
                     ],
-                  ),
+                  )
                 )),
-                ListTile(
-                  leading: const Icon(Icons.reply, color: Colors.blue),
-                  title: const Text('Add Answer', style: TextStyle(color: Colors.blue)),
+                InkWell(
                   onTap: () => _showAnswerDialog(q['id']),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: const Color(0xFFF4F6F9), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20))),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.reply_rounded, color: Color(0xFF007AFF), size: 18),
+                        SizedBox(width: 8),
+                        Text('Add Answer', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -369,30 +465,35 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setMBS) => Padding(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Ask the Community', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Your Question *', border: OutlineInputBorder()), maxLines: 3),
-            const SizedBox(height: 16),
-            SizedBox(width: double.infinity, child: ElevatedButton(
-              onPressed: isSubmitting ? null : () async {
-                if (ctrl.text.isEmpty) return;
-                setMBS(() => isSubmitting = true);
-                try {
-                  await ApiClient.dio.post('/community/questions', data: {'text': ctrl.text});
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _fetchAll();
-                } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  setMBS(() => isSubmitting = false);
-                }
-              },
-              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Question'),
-            )),
+            const Text('Ask the Community', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+            const SizedBox(height: 20),
+            TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Your Question *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))), maxLines: 3),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF081C2D), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                onPressed: isSubmitting ? null : () async {
+                  if (ctrl.text.isEmpty) return;
+                  setMBS(() => isSubmitting = true);
+                  try {
+                    await ApiClient.dio.post('/community/questions', data: {'text': ctrl.text});
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _fetchAll();
+                  } catch (e) {
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    setMBS(() => isSubmitting = false);
+                  }
+                },
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Question', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              )
+            ),
           ]),
         ),
       ),
@@ -405,30 +506,35 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setMBS) => Padding(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Your Answer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Write your answer...', border: OutlineInputBorder()), maxLines: 3),
-            const SizedBox(height: 16),
-            SizedBox(width: double.infinity, child: ElevatedButton(
-              onPressed: isSubmitting ? null : () async {
-                if (ctrl.text.isEmpty) return;
-                setMBS(() => isSubmitting = true);
-                try {
-                  await ApiClient.dio.post('/community/questions/$questionId/answers', data: {'text': ctrl.text});
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _fetchAll();
-                } catch (e) {
-                  if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                  setMBS(() => isSubmitting = false);
-                }
-              },
-              child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Submit Answer'),
-            )),
+            const Text('Your Answer', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+            const SizedBox(height: 20),
+            TextField(controller: ctrl, decoration: const InputDecoration(labelText: 'Write your answer...', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))), maxLines: 3),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF081C2D), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                onPressed: isSubmitting ? null : () async {
+                  if (ctrl.text.isEmpty) return;
+                  setMBS(() => isSubmitting = true);
+                  try {
+                    await ApiClient.dio.post('/community/questions/$questionId/answers', data: {'text': ctrl.text});
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _fetchAll();
+                  } catch (e) {
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    setMBS(() => isSubmitting = false);
+                  }
+                },
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Submit Answer', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              )
+            ),
           ]),
         ),
       ),
@@ -437,26 +543,139 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   // ── Chat ───────────────────────────────────────────────────────────────────
   Widget _buildChatRooms() {
-    if (_chatRooms.isEmpty) return _emptyState(Icons.chat_bubble_outline, 'No rooms yet');
+    if (_chatRooms.isEmpty) return _emptyState(Icons.chat_bubble_outline_rounded, 'No rooms yet');
+    
+    // Icon mapping logic
+    IconData getIconForName(String? iconName) {
+      switch(iconName) {
+        case 'campaign': return Icons.campaign_rounded;
+        case 'account_balance': return Icons.account_balance_rounded;
+        case 'shopping_bag': return Icons.shopping_bag_rounded;
+        case 'event': return Icons.event_rounded;
+        case 'help': return Icons.help_outline_rounded;
+        default: return Icons.chat_bubble_outline_rounded;
+      }
+    }
+
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
       itemCount: _chatRooms.length,
       itemBuilder: (ctx, i) {
         final room = _chatRooms[i];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
-              child: Icon(Icons.chat, color: Colors.blue.shade900),
+        final isOfficial = ['Announcements', 'Government Updates'].contains(room['name']);
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
+            border: isOfficial ? Border.all(color: const Color(0xFF007AFF).withOpacity(0.3), width: 1) : null,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => _openChatRoom(room),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isOfficial ? const Color(0xFF007AFF).withOpacity(0.1) : const Color(0xFFF4F6F9),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        getIconForName(room['icon']),
+                        color: isOfficial ? const Color(0xFF007AFF) : const Color(0xFF64748B),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(room['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D))),
+                              if (isOfficial) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.verified_rounded, color: Color(0xFF007AFF), size: 16),
+                              ]
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            room['description'] ?? '',
+                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+                  ],
+                ),
+              ),
             ),
-            title: Text(room['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(room['description'] ?? ''),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _openChatRoom(room),
           ),
         );
       },
+    );
+  }
+
+  void _showCreateChatRoomDialog() {
+    final nameCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    bool isSubmitting = false;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => Padding(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Create Custom Chat Room', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+            const SizedBox(height: 8),
+            const Text('Authorized Roles Only', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.bold, fontSize: 12)),
+            const SizedBox(height: 20),
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Room Name *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            const SizedBox(height: 12),
+            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))), maxLines: 2),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF081C2D), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                onPressed: isSubmitting ? null : () async {
+                  if (nameCtrl.text.isEmpty) return;
+                  setMBS(() => isSubmitting = true);
+                  try {
+                    await ApiClient.dio.post('/community/chat/rooms', data: {
+                      'name': nameCtrl.text,
+                      'description': descCtrl.text,
+                      'icon': 'chat'
+                    });
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _fetchAll();
+                  } catch (e) {
+                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: Only Admins can create rooms')));
+                    setMBS(() => isSubmitting = false);
+                  }
+                },
+                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Create Room', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              )
+            ),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -468,9 +687,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   Widget _emptyState(IconData icon, String text) {
     return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(icon, size: 64, color: Colors.grey.shade300),
+      Icon(icon, size: 64, color: const Color(0xFFCBD5E1)),
       const SizedBox(height: 16),
-      Text(text, style: const TextStyle(color: Colors.grey, fontSize: 18)),
+      Text(text, style: const TextStyle(color: Color(0xFF64748B), fontSize: 18, fontWeight: FontWeight.w600)),
     ]));
   }
 }
