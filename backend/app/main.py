@@ -591,29 +591,17 @@ async def startup_event():
         super_admin_email = "admin.qenbel@gmail.com"
         from app.core.security import get_password_hash
 
+        # ── Seed All System & Government Roles ──
+        required_roles = ["Super Admin", "Admin", "Moderator", "User", "Government", "Police", "Hospital", "Municipality"]
+        for r_name in required_roles:
+            role = db.query(RoleModel).filter(RoleModel.name == r_name).first()
+            if not role:
+                role = RoleModel(name=r_name)
+                db.add(role)
+        db.commit()
+
         sa_role = db.query(RoleModel).filter(RoleModel.name == "Super Admin").first()
-        if not sa_role:
-            sa_role = RoleModel(name="Super Admin")
-            db.add(sa_role)
-            db.commit()
-
-        user_role = db.query(RoleModel).filter(RoleModel.name == "User").first()
-        if not user_role:
-            user_role = RoleModel(name="User")
-            db.add(user_role)
-            db.commit()
-
         mod_role = db.query(RoleModel).filter(RoleModel.name == "Moderator").first()
-        if not mod_role:
-            mod_role = RoleModel(name="Moderator")
-            db.add(mod_role)
-            db.commit()
-
-        admin_role = db.query(RoleModel).filter(RoleModel.name == "Admin").first()
-        if not admin_role:
-            admin_role = RoleModel(name="Admin")
-            db.add(admin_role)
-            db.commit()
 
         super_admin = db.query(UserModel).filter(UserModel.email == super_admin_email).first()
         if not super_admin:
