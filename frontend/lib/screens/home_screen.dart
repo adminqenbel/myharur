@@ -224,23 +224,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color.withOpacity(0.8), color],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: color.withOpacity(0.2), width: 1.5),
                 boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                  BoxShadow(color: color.withOpacity(0.15), blurRadius: 15, offset: const Offset(0, 8)),
                 ],
               ),
-              child: Icon(icon, color: Colors.white, size: 26),
+              child: Icon(icon, color: color, size: 28),
             ),
-            const SizedBox(height: 8),
-            Text(l(ref, label), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 10),
+            Text(l(ref, label), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0D1B2A)), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -250,211 +247,259 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildServiceIcon(IconData icon, String label, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              shape: BoxShape.circle,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 26),
             ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(l(ref, label), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
-        ],
+            const SizedBox(height: 8),
+            Text(l(ref, label), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF16324F)), textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+    final displayName = auth.user?['display_name'] ?? auth.user?['username'] ?? 'Citizen';
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        toolbarHeight: 70,
-        backgroundColor: Colors.white,
-        elevation: 1,
-        title: InkWell(
-          onTap: _showManualLocationPicker,
-          child: Row(
-            children: [
-              Icon(Icons.location_on, color: _isInsideDharmapuri ? Colors.green : Colors.red, size: 28),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          _locationName,
-                          style: const TextStyle(color: Colors.black54, fontSize: 12),
-                        ),
-                        const Icon(Icons.arrow_drop_down, color: Colors.black54, size: 16),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          // Tamil/English Toggle
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ChoiceChip(
-              label: Text(ref.watch(isEnglishProvider) ? 'அ' : 'A', style: const TextStyle(fontWeight: FontWeight.bold)),
-              selected: true,
-              selectedColor: Colors.blue.shade50,
-              onSelected: (_) {
-                ref.read(isEnglishProvider.notifier).state = !ref.read(isEnglishProvider.notifier).state;
-              },
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF4F6F9), // Light background theme
       body: RefreshIndicator(
         onRefresh: () async {
           await _fetchLatestNews();
         },
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Quick Access Bar ──────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      _buildQuickAction(Icons.newspaper, 'News', Colors.deepOrange, () => _navigateTo(const NewsScreen())),
-                      _buildQuickAction(Icons.chat_bubble, 'Chats', Colors.blue, () => context.go('/community')),
-                      _buildQuickAction(Icons.emergency, 'SOS', Colors.red, () => _navigateTo(const EmergencyScreen())),
-                      _buildQuickAction(Icons.storefront, 'Shops', Colors.teal, () => _navigateTo(const ShopsScreen())),
-                      _buildQuickAction(Icons.how_to_vote, 'Polls', Colors.purple, () => context.go('/community')),
-                      _buildQuickAction(Icons.local_mall, 'Market', Colors.green, () => context.go('/market')),
-                    ],
+          slivers: [
+            // ── Custom Header (SliverAppBar) ───────────────────────────────
+            SliverAppBar(
+              expandedHeight: 110.0,
+              floating: true,
+              pinned: true,
+              backgroundColor: const Color(0xFF081C2D), // Primary Dark
+              elevation: 0,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+                title: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Hello,", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                    Text(displayName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+                  ],
+                ),
+                background: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF081C2D),
+                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
                   ),
                 ),
               ),
-
-              // ── Top Banner ────────────────────────────────────────────────
-              if (_latestNews.any((n) => n['is_breaking'] == true))
-                ..._latestNews.where((n) => n['is_breaking'] == true).map((news) => 
-                  Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(colors: [Colors.redAccent, Colors.red]),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 28),
+                  onPressed: () {},
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => context.go('/profile'),
+                  child: const CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Color(0xFF16324F),
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 24),
+              ],
+            ),
+            
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  
+                  // ── Location Badge ──────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: InkWell(
+                      onTap: _showManualLocationPicker,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on_rounded, color: _isInsideDharmapuri ? const Color(0xFF06D6A0) : const Color(0xFFEF233C), size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF081C2D)),
+                                  ),
+                                  Text(
+                                    _locationName,
+                                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                          ],
+                        ),
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Quick Access Bar ──────────────────────────────────────────
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(news['title'] ?? 'Breaking Alert', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                              const SizedBox(height: 4),
-                              Text(news['description'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 48),
-                      ],
-                    ),
-                  )
-                ).toList(),
-              
-              // ── Services Grid ─────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 8,
-                  children: [
-                    _buildServiceIcon(Icons.local_offer, 'Daily Deals', Colors.orange, () => context.go('/market')),
-                    _buildServiceIcon(Icons.work, 'Jobs Nearby', Colors.blue, () => context.go('/market')),
-                    _buildServiceIcon(Icons.handshake, 'Buy/Sell', Colors.green, () => context.go('/market')),
-                    _buildServiceIcon(Icons.festival, 'Events', Colors.purple, () => context.go('/community')),
-                    _buildServiceIcon(Icons.how_to_vote, 'Polls', Colors.teal, () => context.go('/community')),
-                    _buildServiceIcon(Icons.handyman, 'Services', Colors.brown, () => _navigateTo(const ShopsScreen())),
-                    _buildServiceIcon(Icons.emoji_events, 'Leaderboard', Colors.amber, () => _navigateTo(const LeaderboardScreen())),
-                    _buildServiceIcon(Icons.map, 'Town Map', Colors.indigo, () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Town Map coming soon!')));
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // ── Latest News Section ───────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      l(ref, 'Latest News'),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => _navigateTo(const NewsScreen()),
-                      icon: const Icon(Icons.arrow_forward, size: 16),
-                      label: Text(l(ref, 'View All')),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              if (_newsLoading)
-                const Center(child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
-                ))
-              else if (_latestNews.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        Icon(Icons.article, size: 48, color: Colors.grey.shade300),
-                        const SizedBox(height: 8),
-                        const Text('No news available', style: TextStyle(color: Colors.grey)),
+                        _buildQuickAction(Icons.newspaper_rounded, 'News', const Color(0xFF3A86FF), () => _navigateTo(const NewsScreen())),
+                        _buildQuickAction(Icons.sos_rounded, 'Emergency', const Color(0xFFEF233C), () => _navigateTo(const EmergencyScreen())),
+                        _buildQuickAction(Icons.storefront_rounded, 'Shops', const Color(0xFF06D6A0), () => _navigateTo(const ShopsScreen())),
+                        _buildQuickAction(Icons.shopping_bag_rounded, 'Market', const Color(0xFFFFB703), () => context.go('/market')),
                       ],
                     ),
                   ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _latestNews.length,
-                  itemBuilder: (context, index) {
-                    final news = _latestNews[index];
-                    return _buildNewsCard(news);
-                  },
-                ),
-              const SizedBox(height: 24),
-            ],
-          ),
+                  const SizedBox(height: 24),
+
+                  // ── Top Banner (Emergency) ────────────────────────────────────
+                  if (_latestNews.any((n) => n['is_breaking'] == true))
+                    ..._latestNews.where((n) => n['is_breaking'] == true).map((news) => 
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: const LinearGradient(colors: [Color(0xFFEF233C), Color(0xFFD90429)]),
+                          boxShadow: [BoxShadow(color: const Color(0xFFEF233C).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(news['title'] ?? 'Breaking Alert', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                                  const SizedBox(height: 6),
+                                  Text(news['description'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.warning_rounded, color: Colors.white, size: 42),
+                          ],
+                        ),
+                      )
+                    ).toList(),
+                  
+                  // ── Services Grid ─────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Discover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
+                        const SizedBox(height: 16),
+                        GridView.count(
+                          crossAxisCount: 3,
+                          childAspectRatio: 0.9,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          children: [
+                            _buildServiceIcon(Icons.work_rounded, 'Jobs', const Color(0xFF3A86FF), () => context.go('/market')),
+                            _buildServiceIcon(Icons.festival_rounded, 'Events', const Color(0xFF8338EC), () => context.go('/community')),
+                            _buildServiceIcon(Icons.handyman_rounded, 'Services', const Color(0xFFFB5607), () => _navigateTo(const ShopsScreen())),
+                            _buildServiceIcon(Icons.emoji_events_rounded, 'Rankings', const Color(0xFFFFBE0B), () => _navigateTo(const LeaderboardScreen())),
+                            _buildServiceIcon(Icons.map_rounded, 'Map', const Color(0xFF06D6A0), () {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Town Map coming soon!')));
+                            }),
+                            _buildServiceIcon(Icons.forum_rounded, 'Community', const Color(0xFF3A86FF), () => context.go('/community')),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // ── Latest News Section ───────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l(ref, 'Trending News'),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF081C2D)),
+                        ),
+                        TextButton(
+                          onPressed: () => _navigateTo(const NewsScreen()),
+                          child: Text(l(ref, 'View All'), style: const TextStyle(color: Color(0xFF3A86FF), fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  if (_newsLoading)
+                    const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+                  else if (_latestNews.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          children: [
+                            Icon(Icons.article_rounded, size: 64, color: Colors.grey.shade300),
+                            const SizedBox(height: 12),
+                            const Text('No news available right now.', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _latestNews.length,
+                      itemBuilder: (context, index) => _buildNewsCard(_latestNews[index]),
+                    ),
+                  const SizedBox(height: 100), // padding for bottom nav
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -462,66 +507,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildNewsCard(Map<String, dynamic> news) {
     final hasImage = news['image_url'] != null && (news['image_url'] as String).isNotEmpty;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // If it's an RSS link, could open externally; for now navigate to NewsScreen
-          _navigateTo(const NewsScreen());
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (hasImage)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  news['image_url'],
-                  width: double.infinity,
-                  height: 160,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _navigateTo(const NewsScreen()),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasImage)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: Image.network(
+                    news['image_url'],
+                    width: double.infinity,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox(),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4F6F9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            news['source'] ?? 'Local News',
+                            style: const TextStyle(color: Color(0xFF3A86FF), fontWeight: FontWeight.w700, fontSize: 11),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          news['created_at'] != null ? news['created_at'].toString().substring(0, 10) : '',
+                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      news['title'] ?? 'News Update',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D)),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      news['content'] ?? '',
+                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.4),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    news['title'] ?? 'News Update',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    news['content'] ?? '',
-                    style: const TextStyle(color: Colors.black54, fontSize: 13),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        news['source'] ?? 'Local News',
-                        style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600, fontSize: 12),
-                      ),
-                      Text(
-                        news['created_at'] != null ? news['created_at'].toString().substring(0, 10) : '',
-                        style: const TextStyle(color: Colors.grey, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
