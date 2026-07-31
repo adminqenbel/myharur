@@ -24,27 +24,8 @@ class BanUser(BaseModel):
     reason: Optional[str] = None
 
 
-def _require_admin(current_user: UserModel = Depends(deps.get_current_user)) -> UserModel:
-    role = getattr(current_user.role, "name", None)
-    if role not in ("Admin", "Super Admin"):
-        raise HTTPException(status_code=403, detail="Admins only")
-    return current_user
-
-
-def _require_moderator(current_user: UserModel = Depends(deps.get_current_user)) -> UserModel:
-    """Require at least Moderator role."""
-    role = getattr(current_user.role, "name", None)
-    if role not in ("Moderator", "Admin", "Super Admin"):
-        raise HTTPException(status_code=403, detail="Moderators/Admins only")
-    return current_user
-
-
-def _require_superadmin(current_user: UserModel = Depends(deps.get_current_user)) -> UserModel:
-    role = getattr(current_user.role, "name", None)
-    if role != "Super Admin":
-        raise HTTPException(status_code=403, detail="Super Admins only")
-    return current_user
-
+from app.core.rbac import promote_to_admin, demote_from_admin
+from app.api.deps import check_permissions
 
 # ── User Management ──────────────────────────────────────────────────────────
 
@@ -54,7 +35,9 @@ def list_all_users(
     skip: int = 0,
     limit: int = 50,
     q: Optional[str] = Query(None, description="Search by username, MID, email, display name"),
-    current_user: UserModel = Depends(_require_admin),
+    role: Optional[str] = Query(None, description="Filter by role"),
+    status: Optional[str] = Query(None, description="Filter by status (active/banned)"),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
 ) -> Any:
     query = db.query(UserModel)
     if q:
@@ -67,6 +50,14 @@ def list_all_users(
             (func.lower(UserModel.email).like(pattern.lower())) |
             (UserModel.uid == q)
         )
+    if role:
+        query = query.join(UserModel.roles).filter(RoleModel.name == role)
+    if status:
+        if status.lower() == "active":
+            query = query.filter(UserModel.is_active == True)
+        elif status.lower() == "banned":
+            query = query.filter(UserModel.is_banned == True)
+
     users = query.offset(skip).limit(limit).all()
     return users
 
@@ -74,7 +65,7 @@ def list_all_users(
 @router.get("/users/export")
 def export_users_csv(
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
 ) -> Any:
     """Export all users as CSV."""
     users = db.query(UserModel).all()
@@ -114,35 +105,56 @@ def assign_role(
     user_id: int,
     role_in: RoleAssign,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
 ) -> Any:
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Only Super Admins can assign Admin/Super Admin roles
-    if role_in.role_name in ("Admin", "Super Admin"):
-        if current_user.role.name != "Super Admin":
-            raise HTTPException(status_code=403, detail="Only Super Admins can assign admin roles")
+    if role_in.role_name in ("Admin", "Super Admin") and not current_user.role.name == "Super Admin":
+        raise HTTPException(status_code=403, detail="Only Super Admins can assign admin roles")
 
-    role = db.query(RoleModel).filter(RoleModel.name == role_in.role_name).first()
-    if not role:
+    from app.core.rbac import promote_to_admin
+    try:
+        promote_to_admin(db, user, role_in.role_name)
+    except ValueError as e:
+        # Create role if missing
         role = RoleModel(name=role_in.role_name)
         db.add(role)
         db.commit()
         db.refresh(role)
+        promote_to_admin(db, user, role_in.role_name)
 
-    user.role_id = role.id
-    db.commit()
     log_admin_action(db, current_user.id, "assign_role", target_id=user_id, details={"role": role_in.role_name})
     return {"message": f"Role '{role_in.role_name}' assigned to user {user_id}"}
+
+@router.delete("/users/{user_id}/role/{role_name}")
+def remove_role(
+    user_id: int,
+    role_name: str,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
+) -> Any:
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if role_name in ("Admin", "Super Admin") and not current_user.role.name == "Super Admin":
+        raise HTTPException(status_code=403, detail="Only Super Admins can remove admin roles")
+        
+    from app.core.rbac import demote_from_admin
+    demote_from_admin(db, user, role_name)
+    log_admin_action(db, current_user.id, "remove_role", target_id=user_id, details={"role": role_name})
+    return {"message": f"Role '{role_name}' removed from user {user_id}"}
+
 
 
 @router.put("/users/{user_id}/toggle-active")
 def toggle_user_active(
     user_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Suspend")),
 ) -> Any:
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
@@ -158,7 +170,7 @@ def ban_user(
     user_id: int,
     ban_in: BanUser,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Suspend")),
 ) -> Any:
     """Ban a user account."""
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -178,7 +190,7 @@ def ban_user(
 def unban_user(
     user_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Suspend")),
 ) -> Any:
     """Unban a user account."""
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -196,7 +208,7 @@ def unban_user(
 def reset_user_password(
     user_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Write")),
 ) -> Any:
     """Reset a user's password to a temporary one."""
     import secrets
@@ -215,7 +227,7 @@ def reset_user_password(
 def request_user_deletion(
     user_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Delete")),
 ) -> Any:
     """Initiate a graceful deletion request for a user."""
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
@@ -245,7 +257,7 @@ def request_user_deletion(
 def approve_deletion_request(
     request_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_admin),
+    current_user: UserModel = Depends(check_permissions("Delete")),
 ) -> Any:
     """Approve a pending deletion request."""
     req = db.query(DeletionRequest).filter(DeletionRequest.id == request_id, DeletionRequest.status == "pending").first()
@@ -286,7 +298,7 @@ def _get_author_name(db: Session, user_id: int) -> str:
 @router.get("/news/pending")
 def list_pending_news(
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_moderator),
+    current_user: UserModel = Depends(check_permissions("Manage News")),
 ) -> Any:
     """List all news awaiting approval."""
     pending = (
@@ -313,7 +325,7 @@ def list_pending_news(
 def approve_news(
     news_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_moderator),
+    current_user: UserModel = Depends(check_permissions("Manage News")),
 ) -> Any:
     """Approve a pending news post."""
     news = db.query(NewsModel).filter(NewsModel.id == news_id).first()
@@ -331,7 +343,7 @@ def approve_news(
 def reject_news(
     news_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_moderator),
+    current_user: UserModel = Depends(check_permissions("Manage News")),
 ) -> Any:
     """Reject and delete a pending news post."""
     news = db.query(NewsModel).filter(NewsModel.id == news_id).first()
@@ -348,7 +360,7 @@ def reject_news(
 @router.get("/stats")
 def get_admin_stats(
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_moderator),
+    current_user: UserModel = Depends(check_permissions("Read")),
 ) -> Any:
     """Get platform statistics."""
     total_users = db.query(UserModel).count()
@@ -372,7 +384,7 @@ def get_admin_stats(
 @router.get("/intelligence-stats")
 def get_intelligence_stats(
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(_require_superadmin),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
 ) -> Any:
     """Get V2 Intelligence Engine statistics for SuperAdmins."""
     from app.models.ingestion import NewsSource, CrawlerLog, RawArticle
@@ -408,3 +420,61 @@ def get_intelligence_stats(
             "total_ai_intents_processed": total_intents,
         }
     }
+
+# ── Bulk Actions & Help Desk ───────────────────────────────────────────────
+
+class BulkAction(BaseModel):
+    user_ids: List[int]
+    action: str # suspend, restore, delete
+
+@router.post("/users/bulk-action")
+def perform_bulk_action(
+    payload: BulkAction,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Write", "Suspend")),
+) -> Any:
+    """Perform bulk actions on users."""
+    users = db.query(UserModel).filter(UserModel.id.in_(payload.user_ids)).all()
+    for user in users:
+        # Protection against self/admin targeting
+        if user.id == current_user.id or (user.role and user.role.name == "Super Admin"):
+            continue
+            
+        if payload.action == "suspend":
+            user.is_active = False
+            user.is_banned = True
+        elif payload.action == "restore":
+            user.is_active = True
+            user.is_banned = False
+        elif payload.action == "delete":
+            # For bulk delete, only Super Admins bypass 3-approval rule
+            if current_user.role.name == "Super Admin":
+                user.is_active = False
+                user.email = f"archived_{user.id}_{user.email}"
+                user.username = f"archived_{user.id}_{user.username}"
+                
+    db.commit()
+    log_admin_action(db, current_user.id, f"bulk_{payload.action}", details={"user_ids": payload.user_ids})
+    return {"message": f"Bulk {payload.action} executed on {len(users)} users."}
+
+from app.models.support import SupportTicket
+
+@router.put("/tickets/{ticket_id}/escalate")
+def escalate_ticket(
+    ticket_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Read")), # Agents/Admins can escalate
+) -> Any:
+    """Escalates a Help Desk ticket from AI -> Admin -> Super Admin."""
+    ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+        
+    if ticket.status == "ai_assigned":
+        ticket.status = "open" # Escalate to Admin pool
+    elif ticket.status in ("open", "pending"):
+        ticket.status = "escalated_to_superadmin" # Escalate to Super Admin
+        ticket.priority = "high"
+        
+    db.commit()
+    return {"message": f"Ticket escalated. New status: {ticket.status}"}
