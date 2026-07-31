@@ -192,7 +192,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.go('/home'),
+                    onPressed: () async {
+                      await ref.read(authProvider.notifier).loginAsGuest();
+                      if (context.mounted) context.go('/home');
+                    },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: AppTheme.primary,

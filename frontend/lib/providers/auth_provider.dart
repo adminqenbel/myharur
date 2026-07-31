@@ -64,6 +64,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthState(token: token, user: user);
   }
 
+  /// Guest Mode Login
+  Future<void> loginAsGuest() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', 'guest_mode');
+    ApiClient.setToken('guest_mode');
+    state = const AuthState(token: 'guest_mode', user: {
+      'uid': 'guest',
+      'mid': 'GUEST',
+      'username': 'guest',
+      'display_name': 'Guest User',
+      'role': {'name': 'Guest'},
+      'is_setup_complete': true,
+      'username_required': false,
+    });
+  }
+
   /// Refresh user data from server
   Future<void> refreshUser() async {
     try {
