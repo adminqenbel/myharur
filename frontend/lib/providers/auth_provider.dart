@@ -102,6 +102,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     ApiClient.clearToken();
     state = const AuthState();
   }
+
+  Future<void> logoutAll() async {
+    try {
+      if (state.token != null && state.token != 'guest_mode') {
+        await ApiClient.dio.post('/auth/logout-all');
+      }
+    } catch (_) {}
+    await logout();
+  }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {

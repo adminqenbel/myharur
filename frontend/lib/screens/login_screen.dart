@@ -239,8 +239,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 24),
                       TextField(
                         controller: _emailController,
-                        decoration: const InputDecoration(labelText: 'Email Address', prefixIcon: Icon(Icons.email_outlined, size: 18)),
-                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Username or Email', prefixIcon: Icon(Icons.person_outline, size: 18)),
+                        keyboardType: TextInputType.text,
                       ),
                       const SizedBox(height: 14),
                       TextField(

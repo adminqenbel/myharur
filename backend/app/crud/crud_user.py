@@ -27,7 +27,7 @@ ABUSIVE_WORDS = {
     "porn", "sex", "rape", "murder", "kill", "nazi",
 }
 
-USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{3,30}$')
+USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_\.]{3,30}$')
 
 
 def validate_username(username: str) -> Optional[str]:
@@ -66,22 +66,17 @@ def generate_mid(db: Session, is_system: bool = False, system_seq: int = 1) -> s
     """
     Generate a unique MID.
     System accounts: SYS000001, SYS000002, etc.
-    Regular users: YYYYMMDDHHMM + 2-digit sequence (e.g. 20260726163001)
+    Regular users: YYYYMMDDHHMMSS + 4 random digits
     """
     if is_system:
         return f"SYS{system_seq:06d}"
 
     now = datetime.utcnow()
-    prefix = now.strftime("%Y%m%d%H%M")
-    existing = db.execute(
-        text("SELECT COUNT(*) FROM users WHERE mid LIKE :prefix AND mid NOT LIKE 'SYS%'"),
-        {"prefix": f"{prefix}%"},
-    ).scalar() or 0
-    seq = existing + 1
-    if seq > 99:
-        import secrets
-        return f"{prefix}{secrets.token_hex(1).upper()}"
-    return f"{prefix}{seq:02d}"
+    prefix = now.strftime("%Y%m%d%H%M%S")
+    import secrets
+    import string
+    random_digits = ''.join(secrets.choice(string.digits) for _ in range(4))
+    return f"{prefix}{random_digits}"
 
 
 def ensure_user_identifiers(db: Session, user: User) -> User:
@@ -333,6 +328,8 @@ def update_streak(db: Session, user: User) -> User:
 
 def authenticate(db: Session, email: str, password: str) -> Optional[User]:
     user = get_user_by_email(db, email=email)
+    if not user:
+        user = get_user_by_username(db, username=email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

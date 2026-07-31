@@ -23,9 +23,10 @@ class GoogleAuthRequest(BaseModel):
 
 
 from app.core.security import create_access_token, create_refresh_token, verify_password
-from app.core.redis_session import create_session
+from app.core.redis_session import create_session, revoke_all_sessions
+from fastapi import Request
 
-def _make_token_response(user: UserModel, db) -> dict:
+def _make_token_response(user: UserModel, db, request: Request = None) -> dict:
     crud_user.ensure_user_identifiers(db, user)
     crud_user.update_streak(db, user)
     # Update last_login
@@ -37,8 +38,10 @@ def _make_token_response(user: UserModel, db) -> dict:
     token = create_access_token(user.id, expires_delta=access_token_expires)
     refresh_token = create_refresh_token(user.id)
     
+    device_info = request.headers.get("User-Agent", "Unknown Device") if request else "Unknown Device"
+    
     # Store in Redis
-    create_session(user.id, refresh_token)
+    create_session(user.id, refresh_token, device_info=device_info)
     
     return {
         "access_token": token,
@@ -50,6 +53,7 @@ def _make_token_response(user: UserModel, db) -> dict:
 
 @router.post("/login", response_model=Token)
 def login_access_token(
+    request: Request,
     db: Session = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
@@ -60,11 +64,12 @@ def login_access_token(
         raise HTTPException(status_code=403, detail="Account is inactive")
     if user.is_banned:
         raise HTTPException(status_code=403, detail=f"Account is banned. Reason: {user.ban_reason or 'Policy violation'}")
-    return _make_token_response(user, db)
+    return _make_token_response(user, db, request)
 
 
 @router.post("/register", response_model=Token)
 def register_user(
+    request: Request,
     *,
     db: Session = Depends(deps.get_db),
     user_in: UserCreate,
@@ -86,11 +91,12 @@ def register_user(
     if user:
         raise HTTPException(status_code=409, detail="Email already registered.")
     user = crud_user.create_user(db, user_in=user_in)
-    return _make_token_response(user, db)
+    return _make_token_response(user, db, request)
 
 
 @router.post("/google", response_model=Token)
 def google_auth(
+    request: Request,
     *,
     db: Session = Depends(deps.get_db),
     req: GoogleAuthRequest,
@@ -102,7 +108,7 @@ def google_auth(
         last_name=req.last_name or "",
         photo_url=req.photo_url or "",
     )
-    return _make_token_response(user, db)
+    return _make_token_response(user, db, request)
 
 
 @router.get("/check-username", response_model=UsernameCheckResult)
@@ -170,3 +176,11 @@ def set_password(
         raise HTTPException(status_code=400, detail="Use change-password for existing password accounts")
     crud_user.update_password(db, current_user, password_in.new_password)
     return {"message": "Password set successfully"}
+
+@router.post("/logout-all")
+def logout_all_devices(
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """Revokes all active sessions for the current user."""
+    revoke_all_sessions(current_user.id)
+    return {"message": "All devices have been logged out successfully."}

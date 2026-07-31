@@ -11,7 +11,7 @@ try:
 except Exception:
     redis_client = None
 
-def create_session(user_id: int, refresh_token: str, max_concurrent: int = 5) -> str:
+def create_session(user_id: int, refresh_token: str, max_concurrent: int = 5, device_info: str = "Unknown Device") -> str:
     """Stores session in redis, enforces max concurrent sessions."""
     if not redis_client:
         return str(uuid.uuid4())
@@ -33,7 +33,11 @@ def create_session(user_id: int, refresh_token: str, max_concurrent: int = 5) ->
     redis_client.setex(
         f"session:{session_id}",
         timedelta(days=7),
-        json.dumps({"user_id": user_id, "refresh_token": refresh_token})
+        json.dumps({
+            "user_id": user_id, 
+            "refresh_token": refresh_token,
+            "device_info": device_info
+        })
     )
     return session_id
 
@@ -51,3 +55,12 @@ def revoke_session(user_id: int, session_id: str):
         return
     redis_client.srem(f"user_sessions:{user_id}", session_id)
     redis_client.delete(f"session:{session_id}")
+
+def revoke_all_sessions(user_id: int):
+    if not redis_client:
+        return
+    key = f"user_sessions:{user_id}"
+    existing = redis_client.smembers(key)
+    for sid in existing:
+        redis_client.delete(f"session:{sid}")
+    redis_client.delete(key)
