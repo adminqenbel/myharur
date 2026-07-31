@@ -56,37 +56,37 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         child: Padding(
           padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
           child: Container(
-            height: 80,
+            height: 72,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(40),
+              borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4),
+                color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                  blurRadius: 30,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 8),
                 )
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(40),
+              borderRadius: BorderRadius.circular(30),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
-                  color: isDark ? const Color(0xFF16324F).withOpacity(0.7) : Colors.white.withOpacity(0.65),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  color: isDark ? const Color(0xFF16324F).withOpacity(0.7) : Colors.white.withOpacity(0.85),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildNavItem(0, Icons.explore, Icons.explore, l(ref, 'Explore'), selectedIndex, isDark, hasBadge: false),
-                      _buildNavItem(1, Icons.storefront, Icons.storefront, l(ref, 'Market'), selectedIndex, isDark, hasBadge: false),
-                      _buildNavItem(2, Icons.chat_bubble, Icons.chat_bubble, l(ref, 'Chats'), selectedIndex, isDark, hasBadge: true, badgeCount: 8),
-                      _buildNavItem(3, Icons.campaign, Icons.campaign, l(ref, 'Report'), selectedIndex, isDark, hasBadge: false),
-                      _buildNavItem(4, Icons.settings, Icons.settings, l(ref, 'Settings'), selectedIndex, isDark, hasBadge: false),
+                      _buildNavItem(0, Icons.explore_rounded, l(ref, 'Explore'), selectedIndex, isDark),
+                      _buildNavItem(1, Icons.storefront_rounded, l(ref, 'Market'), selectedIndex, isDark),
+                      _buildNavItem(2, Icons.forum_rounded, l(ref, 'Community'), selectedIndex, isDark),
+                      _buildNavItem(3, Icons.campaign_rounded, l(ref, 'Report'), selectedIndex, isDark),
+                      _buildNavItem(4, Icons.person_rounded, l(ref, 'Profile'), selectedIndex, isDark),
                     ],
                   ),
                 ),
@@ -98,9 +98,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData iconOutlined, IconData iconFilled, String label, int selectedIndex, bool isDark, {bool hasBadge = false, int badgeCount = 0}) {
+  Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isDark) {
     final bool isSelected = index == selectedIndex;
-    final primaryColor = const Color(0xFF007AFF); // iOS blue like in image
+    final Color activeColor = const Color(0xFFF4B400); // Yellow from spec
+    final Color inactiveColor = isDark ? Colors.white60 : const Color(0xFF64748B);
     
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -109,63 +110,37 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 24 : 12, 
-          vertical: isSelected ? 10 : 12
+          horizontal: isSelected ? 20 : 12, 
+          vertical: 10
         ),
         decoration: BoxDecoration(
-          color: isSelected ? (isDark ? Colors.grey.shade800 : Colors.white) : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-            )
-          ] : [],
+          color: isSelected ? activeColor.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedScale(
-                  scale: isSelected ? 1.15 : 1.0,
-                  duration: const Duration(milliseconds: 250),
-                  child: Icon(
-                    isSelected ? iconFilled : iconOutlined,
-                    color: isSelected ? primaryColor : (isDark ? Colors.white70 : Colors.black87),
-                    size: 26,
-                  ),
-                ),
-                if (hasBadge && !isSelected) // hide badge when selected or adjust logic
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF3B30), // iOS red
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        badgeCount.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  )
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? primaryColor : (isDark ? Colors.white70 : Colors.black87),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                fontSize: 11,
+            AnimatedScale(
+              scale: isSelected ? 1.15 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              child: Icon(
+                icon,
+                color: isSelected ? activeColor : inactiveColor,
+                size: 26,
               ),
             ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: activeColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ]
           ],
         ),
       ),
