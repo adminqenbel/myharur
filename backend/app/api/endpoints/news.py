@@ -128,17 +128,29 @@ def read_news(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    """Retrieve approved news from DB."""
-    db_news = (
-        db.query(NewsModel)
+    """Retrieve approved news from DB (optimized)."""
+    db_news_joined = (
+        db.query(NewsModel, UserModel, ProfileModel)
+        .outerjoin(UserModel, NewsModel.author_id == UserModel.id)
+        .outerjoin(ProfileModel, ProfileModel.user_id == UserModel.id)
         .filter(NewsModel.is_approved == True)
         .order_by(NewsModel.created_at.desc())
+        .limit(200)  # Limit search space to avoid full table scan
         .all()
     )
 
     combined_news = []
-    for n in db_news:
-        author = _get_author_name(db, n.author_id)
+    for n, u, p in db_news_joined:
+        # Resolve author name
+        author = "Anonymous"
+        if u:
+            if u.display_name:
+                author = u.display_name
+            elif u.username:
+                author = f"@{u.username}"
+            elif p and (p.first_name or p.last_name):
+                author = f"{p.first_name or ''} {p.last_name or ''}".strip() or "Anonymous"
+
         source = "Local News" if author != "@news" else "Harur News Feed"
         priority = _geo_priority(n.title, source) if author == "@news" else -1
         
