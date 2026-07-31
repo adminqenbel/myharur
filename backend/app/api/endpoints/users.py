@@ -14,12 +14,15 @@ def _is_admin(user: UserModel) -> bool:
     return getattr(user.role, "name", None) in ("Admin", "Super Admin")
 
 
+from app.core.rbac import get_user_permissions
+
 @router.get("/me", response_model=UserMe)
 def read_user_me(
     db: Session = Depends(deps.get_db),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     crud_user.ensure_user_identifiers(db, current_user)
+    current_user.permissions = get_user_permissions(db, current_user)
     return current_user
 
 

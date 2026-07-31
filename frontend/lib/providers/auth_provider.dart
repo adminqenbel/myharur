@@ -13,8 +13,9 @@ class AuthState {
   bool get isLoggedIn => token != null;
   bool get isSetupComplete => user?['is_setup_complete'] == true;
   bool get isAdmin => ['Admin', 'Super Admin'].contains(user?['role']?['name']);
-  bool get isSuperAdmin => user?['role']?['name'] == 'Super Admin';
-  bool get isModerator => ['Moderator', 'Admin', 'Super Admin'].contains(user?['role']?['name']);
+  bool get isSuperAdmin => hasRole('Super Admin');
+  bool get isModerator => hasRole('Moderator') || hasRole('Admin') || hasRole('Super Admin');
+  
   bool get usernameRequired =>
       user?['username_required'] == true || (user?['username'] == null && user?['mid'] != null);
   String? get uid => user?['uid'];
@@ -23,6 +24,21 @@ class AuthState {
   String? get displayName => user?['display_name'];
   String? get email => user?['email'];
   String? get loginProvider => user?['login_provider'];
+
+  List<String> get permissions => List<String>.from(user?['permissions'] ?? []);
+  List<String> get roles {
+    final legacyRole = user?['role']?['name'];
+    final multipleRoles = (user?['roles'] as List<dynamic>?)
+        ?.map((r) => r['name'] as String)
+        .toList() ?? [];
+    if (legacyRole != null && !multipleRoles.contains(legacyRole)) {
+      multipleRoles.add(legacyRole);
+    }
+    return multipleRoles;
+  }
+
+  bool hasPermission(String perm) => isSuperAdmin || permissions.contains(perm);
+  bool hasRole(String roleName) => roles.contains(roleName);
 
   AuthState copyWith({String? token, Map<String, dynamic>? user, bool? isLoading}) {
     return AuthState(

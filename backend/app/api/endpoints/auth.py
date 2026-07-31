@@ -24,6 +24,7 @@ class GoogleAuthRequest(BaseModel):
 
 from app.core.security import create_access_token, create_refresh_token, verify_password
 from app.core.redis_session import create_session, revoke_all_sessions
+from app.core.rbac import get_user_permissions
 from fastapi import Request
 
 def _make_token_response(user: UserModel, db, request: Request = None) -> dict:
@@ -42,6 +43,9 @@ def _make_token_response(user: UserModel, db, request: Request = None) -> dict:
     
     # Store in Redis
     create_session(user.id, refresh_token, device_info=device_info)
+    
+    # Hydrate permissions
+    user.permissions = get_user_permissions(db, user)
     
     return {
         "access_token": token,

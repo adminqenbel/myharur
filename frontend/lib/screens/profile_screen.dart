@@ -34,7 +34,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final avatarUrl = profile['avatar_url'] as String?;
     final streak = profile['streak_days'] ?? 0;
     final rewards = profile['reward_points'] ?? 0;
-    final roleName = role['name'] ?? 'User';
+    final roles = auth.roles;
+    final roleName = roles.isNotEmpty ? roles.join(', ') : 'Citizen';
     final mid = user['mid'] ?? '—';
     final username = user['username'] as String?;
     final displayName = user['display_name'] as String?;
@@ -85,10 +86,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       margin: const EdgeInsets.only(top: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: roleName == 'Super Admin' ? Colors.amber : roleName == 'Admin' ? Colors.orange : Colors.white24,
+                        color: auth.isSuperAdmin ? Colors.amber : auth.isAdmin ? Colors.orange : Colors.white24,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(roleName, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text(roleName, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                     ),
                   ],
                 ),

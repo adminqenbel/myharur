@@ -90,6 +90,7 @@ class User(UserBase):
     profile: Optional[Profile] = None
     role: Optional[Role] = None
     roles: List[Role] = []
+    permissions: List[str] = []
 
     class Config:
         from_attributes = True

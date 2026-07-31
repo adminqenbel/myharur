@@ -51,6 +51,20 @@ def get_current_active_superuser(
         )
     return current_user
 
+# =========================================
+# V4 ENTERPRISE RBAC DEPENDENCIES
+# =========================================
+from app.core.rbac import require_permissions
+
+def check_permissions(*perms: str):
+    """
+    Factory function to create a dependency that checks for all specified permissions.
+    Usage: @router.post("/x", dependencies=[Depends(check_permissions("Write", "Approve"))])
+    """
+    def _dependency(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+        dep = require_permissions(list(perms))
+        return dep(current_user, db)
+    return _dependency
 
 def get_optional_current_user(
     db: Session = Depends(get_db),
