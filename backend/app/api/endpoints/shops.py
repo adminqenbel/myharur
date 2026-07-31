@@ -12,13 +12,24 @@ router = APIRouter()
 @router.get("/", response_model=List[Shop])
 def read_shops(
     db: Session = Depends(deps.get_db),
+    category_id: Optional[int] = Query(None),
+    sort: Optional[str] = Query("newest", description="newest, popular"),
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
     """
     Retrieve shops.
     """
-    shops = db.query(ShopModel).filter(ShopModel.is_approved == True).offset(skip).limit(limit).all()
+    q = db.query(ShopModel).filter(ShopModel.is_approved == True)
+    if category_id:
+        q = q.filter(ShopModel.category_id == category_id)
+        
+    if sort == "popular":
+        q = q.order_by(ShopModel.visit_count.desc())
+    else:
+        q = q.order_by(ShopModel.created_at.desc())
+        
+    shops = q.offset(skip).limit(limit).all()
     return shops
 
 @router.post("/", response_model=Shop)

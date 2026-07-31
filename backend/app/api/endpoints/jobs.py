@@ -13,11 +13,17 @@ router = APIRouter()
 def get_jobs(
     db: Session = Depends(deps.get_db),
     type: Optional[str] = Query(None, description="Full-time, Part-time, Temporary, Volunteer, Internship"),
+    location: Optional[str] = Query(None),
+    sort: Optional[str] = Query("newest", description="newest, popular"),
     skip: int = 0, limit: int = 50,
 ) -> Any:
     q = db.query(JobListingModel).filter(JobListingModel.status == "active")
     if type:
         q = q.filter(JobListingModel.job_type == type)
+    if location:
+        q = q.filter(JobListingModel.location.ilike(f"%{location}%"))
+        
+    # Assuming we might add views count later for popularity, for now just sort by newest
     return q.order_by(JobListingModel.created_at.desc()).offset(skip).limit(limit).all()
 
 @router.post("/", response_model=JobListing)
