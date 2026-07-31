@@ -59,14 +59,44 @@ def escalate_emergency(
     if emergency.user_id != current_user.id and current_user.role.name not in ["Admin", "Super Admin", "Emergency Admin"]:
         raise HTTPException(status_code=403, detail="Not authorized to escalate this emergency")
 
-    if emergency.radius_escalation < 10:
-        if emergency.radius_escalation == 1:
-            emergency.radius_escalation = 5
-        elif emergency.radius_escalation == 5:
-            emergency.radius_escalation = 10
-        db.commit()
-        db.refresh(emergency)
+    levels = ["1km", "5km", "10km", "govt", "police", "hospital"]
+    try:
+        idx = levels.index(emergency.escalation_level)
+        if idx < len(levels) - 1:
+            emergency.escalation_level = levels[idx + 1]
+            db.commit()
+            db.refresh(emergency)
+    except ValueError:
+        pass
         
+    return emergency
+
+@router.put("/{emergency_id}/status", response_model=EmergencyOut)
+def update_status(
+    emergency_id: int,
+    status: str,
+    eta_minutes: Optional[int] = None,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Update status of emergency/grievance (accepted, in_progress, resolved).
+    """
+    emergency = db.query(EmergencyModel).filter(EmergencyModel.id == emergency_id).first()
+    if not emergency:
+        raise HTTPException(status_code=404, detail="Emergency not found")
+        
+    emergency.status = status
+    if eta_minutes is not None:
+        emergency.eta_minutes = eta_minutes
+    if status == "accepted":
+        emergency.assigned_to = current_user.id
+    if status in ["resolved", "completed", "closed"]:
+        from datetime import datetime
+        emergency.resolved_at = datetime.utcnow()
+        
+    db.commit()
+    db.refresh(emergency)
     return emergency
 
 @router.put("/{emergency_id}/resolve", response_model=EmergencyOut)
