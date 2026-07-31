@@ -15,3 +15,10 @@ email-validator
 feedparser
 python-socketio
 slowapi
+
+argon2-cffi
+python-magic-bin
+Pillow
+aiohttp
+beautifulsoup4
+google-generativeai
