@@ -285,6 +285,12 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     final username = msg['username'] as String?;
     final role = msg['sender_role'] as String?;
     final mentions = (msg['mentions'] as List?)?.cast<String>() ?? [];
+    final image_urls = (msg['image_urls'] as List?)?.cast<String>() ?? [];
+    final translated_text = msg['translated_text'] as Map<String, dynamic>? ?? {};
+    final reactions = msg['reactions'] as Map<String, dynamic>? ?? {};
+    final isPinned = msg['is_pinned'] == true;
+    final status = msg['status'] as String? ?? 'sent';
+    
     final timeStr = () {
       final raw = msg['created_at']?.toString() ?? '';
       return raw.length >= 16 ? raw.substring(11, 16) : '';
@@ -324,6 +330,15 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)],
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (isPinned) ...[
+                  Row(children: [
+                    Icon(Icons.push_pin, size: 12, color: isMe ? Colors.white70 : Colors.blueGrey),
+                    const SizedBox(width: 4),
+                    Text('Pinned', style: TextStyle(color: isMe ? Colors.white70 : Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ]),
+                  const SizedBox(height: 4),
+                ],
+                
                 if (!isMe) ...[
                   Row(mainAxisSize: MainAxisSize.min, children: [
                     if (username != null) Text('@$username', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 11)),
@@ -340,12 +355,48 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                   ]),
                   const SizedBox(height: 2),
                 ],
-                _buildContent(msg['content'] ?? '', isMe, mentions),
+                
+                if (image_urls.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(image_urls[0], height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image)),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                
+                if ((msg['content'] ?? '').isNotEmpty)
+                  _buildContent(msg['content'] ?? '', isMe, mentions),
+                  
+                if (translated_text.isNotEmpty && translated_text['en'] != null && translated_text['en'] != msg['content']) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+                    child: Text(translated_text['en'], style: TextStyle(color: isMe ? Colors.white70 : Colors.grey.shade700, fontSize: 12, fontStyle: FontStyle.italic)),
+                  ),
+                ],
+                
                 const SizedBox(height: 2),
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   Text(timeStr, style: TextStyle(color: isMe ? Colors.white60 : Colors.grey.shade500, fontSize: 10)),
                   if (isPending) ...[const SizedBox(width: 4), Icon(Icons.access_time, size: 10, color: isMe ? Colors.white60 : Colors.grey)],
+                  if (!isPending && isMe) ...[
+                    const SizedBox(width: 4),
+                    Icon(status == 'seen' ? Icons.done_all : Icons.check, size: 12, color: status == 'seen' ? Colors.blue.shade200 : Colors.white60)
+                  ],
                 ]),
+                
+                if (reactions.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 4,
+                    children: reactions.entries.map((e) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                      child: Text('${e.key} ${(e.value as List).length}', style: TextStyle(fontSize: 10, color: isMe ? Colors.white : Colors.black87)),
+                    )).toList(),
+                  )
+                ],
               ]),
             ),
           ),
