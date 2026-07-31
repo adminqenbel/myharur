@@ -53,15 +53,19 @@ class Event(Base):
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)
     image_url = Column(String, nullable=True)
-    is_approved = Column(Boolean, default=True)
+    is_approved = Column(Boolean, default=False) # Changed to default False for approval flow
+    status = Column(String, default="pending", index=True) # pending, approved, rejected
     is_featured = Column(Boolean, default=False)
     is_paid = Column(Boolean, default=False)
     ticket_price = Column(Float, nullable=True)
+    payment_link = Column(String, nullable=True) # Google Forms or external payment link
     max_attendees = Column(Integer, nullable=True)
     current_attendees = Column(Integer, default=0)
+    chat_room_id = Column(Integer, ForeignKey("chat_rooms.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     tickets = relationship("EventTicket", back_populates="event", cascade="all, delete-orphan")
+    chat_room = relationship("ChatRoom")
 
 
 class EventTicket(Base):

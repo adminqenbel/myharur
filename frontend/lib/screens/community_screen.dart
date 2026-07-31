@@ -323,6 +323,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
             TextField(controller: locationCtrl, decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
             const SizedBox(height: 12),
             TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD) *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            const SizedBox(height: 12),
+            TextField(decoration: const InputDecoration(labelText: 'Payment / Registration Link (Google Forms)', hintText: 'Optional external link', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

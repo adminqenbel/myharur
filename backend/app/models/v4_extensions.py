@@ -68,7 +68,38 @@ class Tournament(Base):
     location = Column(String, nullable=True)
     prize_pool = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    payment_link = Column(String, nullable=True) # Payment via external link
+    chat_room_id = Column(Integer, ForeignKey("chat_rooms.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    teams = relationship("TournamentTeam", back_populates="tournament", cascade="all, delete-orphan")
+    fixtures = relationship("TournamentFixture", back_populates="tournament", cascade="all, delete-orphan")
+
+class TournamentTeam(Base):
+    __tablename__ = "tournament_teams"
+    id = Column(Integer, primary_key=True, index=True)
+    tournament_id = Column(Integer, ForeignKey("tournaments.id"))
+    captain_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String, nullable=False)
+    status = Column(String, default="registered") # registered, approved, eliminated, winner
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    tournament = relationship("Tournament", back_populates="teams")
+
+class TournamentFixture(Base):
+    __tablename__ = "tournament_fixtures"
+    id = Column(Integer, primary_key=True, index=True)
+    tournament_id = Column(Integer, ForeignKey("tournaments.id"))
+    round_name = Column(String, nullable=False) # Quarter Final, Semi Final, etc
+    team1_id = Column(Integer, ForeignKey("tournament_teams.id"), nullable=True)
+    team2_id = Column(Integer, ForeignKey("tournament_teams.id"), nullable=True)
+    winner_team_id = Column(Integer, ForeignKey("tournament_teams.id"), nullable=True)
+    match_time = Column(DateTime(timezone=True), nullable=True)
+    score = Column(String, nullable=True)
+    status = Column(String, default="scheduled") # scheduled, live, completed
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    tournament = relationship("Tournament", back_populates="fixtures")
 
 # 6. LEADERBOARD (Snapshot cache table for optimization)
 class LeaderboardSnapshot(Base):

@@ -96,11 +96,44 @@ def create_event(
     db: Session = Depends(deps.get_db),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
-    event = EventModel(**event_in.model_dump(), organizer_id=current_user.id)
+    event = EventModel(**event_in.model_dump(), organizer_id=current_user.id, status="pending")
     db.add(event)
     db.commit()
     db.refresh(event)
     return event
+
+@router.put("/events/{event_id}/approve")
+def approve_event(
+    event_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    if current_user.role.name not in ["Admin", "Super Admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    event = db.query(EventModel).filter(EventModel.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+        
+    event.is_approved = True
+    event.status = "approved"
+    
+    # Create Event Chat Room
+    room = ChatRoom(name=f"Event: {event.title[:20]}", description=f"Chat for event {event.title}", icon="event", is_public=True)
+    db.add(room)
+    db.flush()
+    event.chat_room_id = room.id
+    
+    # Assign Event Head role if they don't have a higher role
+    organizer = db.query(UserModel).filter(UserModel.id == event.organizer_id).first()
+    if organizer and organizer.role.name == "User":
+        from app.models.user import Role
+        head_role = db.query(Role).filter(Role.name == "Event Head").first()
+        if head_role:
+            organizer.role_id = head_role.id
+            
+    db.commit()
+    return {"message": "Event approved, chat room created, organizer promoted to Event Head"}
 
 @router.post("/events/{event_id}/rsvp", response_model=EventTicketOut)
 def rsvp_event(
@@ -262,6 +295,30 @@ def answer_question(
     db.refresh(a)
     return {**a.__dict__, "author_name": _get_name(db, a.author_id), "author_role": _get_role(db, a.author_id)}
 
+
+# ── Tournaments ───────────────────────────────────────────────────────────────
+
+@router.post("/tournaments/approve")
+def approve_tournament(
+    tournament_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    from app.models.v4_extensions import Tournament
+    if current_user.role.name not in ["Admin", "Super Admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    tournament = db.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+        
+    # Create Chat Room
+    room = ChatRoom(name=f"Tournament: {tournament.name[:20]}", description=f"Chat for {tournament.name}", icon="emoji_events", is_public=True)
+    db.add(room)
+    db.flush()
+    tournament.chat_room_id = room.id
+    db.commit()
+    return {"message": "Tournament chat room created"}
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
 
