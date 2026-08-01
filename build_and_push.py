@@ -37,8 +37,10 @@ def main():
     
     # Optional: also copy to backend/static if required
     static_apk = r"d:\harur\backend\static\myharur.apk"
+    static_beta_apk = r"d:\harur\backend\static\myharur-beta.apk"
     if os.path.exists(os.path.dirname(static_apk)):
         shutil.copy2(src_apk, static_apk)
+        shutil.copy2(beta_apk, static_beta_apk)
 
     # 3. Git commit and push
     print("Committing and pushing to git...")
