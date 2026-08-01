@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float, JSON
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float, JSON, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.session import Base
@@ -158,6 +158,9 @@ class ChatRoom(Base):
 class ChatMessage(Base):
     """Messages in a chat room."""
     __tablename__ = "chat_messages"
+    __table_args__ = (
+        Index('idx_chat_room_created', 'room_id', 'created_at', postgresql_using='btree'),
+    )
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("chat_rooms.id"), index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), index=True)

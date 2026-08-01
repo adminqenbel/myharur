@@ -577,6 +577,7 @@ def fix_database_schema():
         
         db.execute(text("ALTER TABLE chat_messages ALTER COLUMN translated_text TYPE JSONB USING translated_text::jsonb;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
+        db.execute(text("CREATE INDEX IF NOT EXISTS idx_chat_room_created ON chat_messages (room_id, created_at DESC);"))
         
         db.execute(text("UPDATE user_profiles SET avatar_url = NULL WHERE avatar_url = '';"))
         

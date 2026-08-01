@@ -216,17 +216,30 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       body: Column(children: [
         Expanded(
           child: _loading
-              ? Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  controller: _scrollCtrl,
-                  reverse: true,
-                  padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-                  itemCount: _messages.length,
-                  itemBuilder: (ctx, i) {
-                    final msg = _messages[_messages.length - 1 - i];
-                    return _buildBubble(msg, msg['sender_id'] == myId, isDark);
-                  },
-                ),
+              ? Center(child: CircularProgressIndicator(color: AppTheme.accent))
+              : _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.chat_bubble_outline_rounded, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2)),
+                          SizedBox(height: 16),
+                          Text('No messages yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 16, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 8),
+                          Text('Be the first to start the conversation!', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollCtrl,
+                      reverse: true,
+                      padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                      itemCount: _messages.length,
+                      itemBuilder: (ctx, i) {
+                        final msg = _messages[_messages.length - 1 - i];
+                        return _buildBubble(msg, msg['sender_id'] == myId, isDark);
+                      },
+                    ),
         ),
         if (_typingText.isNotEmpty)
           Container(

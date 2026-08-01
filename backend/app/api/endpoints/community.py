@@ -406,17 +406,44 @@ def get_messages(
         .limit(limit)
         .all()
     )
+    
+    if not msgs:
+        return []
+
+    # Optimize N+1 queries by bulk fetching users and profiles
+    sender_ids = {m.sender_id for m in msgs}
+    users = db.query(UserModel).filter(UserModel.id.in_(sender_ids)).all()
+    profiles = db.query(ProfileModel).filter(ProfileModel.user_id.in_(sender_ids)).all()
+    
+    user_map = {u.id: u for u in users}
+    profile_map = {p.user_id: p for p in profiles}
+
     result = []
     for m in reversed(msgs):
-        profile = db.query(ProfileModel).filter(ProfileModel.user_id == m.sender_id).first()
-        user_info = _get_user_info(db, m.sender_id)
+        user = user_map.get(m.sender_id)
+        profile = profile_map.get(m.sender_id)
+        
+        username = user.username if user else None
+        display_name = user.display_name if user else None
+        role_name = user.role.name if user and user.role else "User"
+        
+        sender_name = "Anonymous"
+        if display_name:
+            sender_name = display_name
+        elif username:
+            sender_name = f"@{username}"
+        elif profile:
+            name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+            if name:
+                sender_name = name
+
         result.append({
             **m.__dict__,
-            "sender_name": _get_name(db, m.sender_id),
-            "sender_role": _get_role(db, m.sender_id),
+            "sender_name": sender_name,
+            "sender_role": role_name,
             "sender_avatar": profile.avatar_url if profile and profile.avatar_url else None,
-            "username": user_info["username"],
-            "display_name": user_info["display_name"],
+            "username": username,
+            "display_name": display_name,
             "mentions": m.mentions or [],
             "reactions": m.reactions or {},
             "image_urls": m.image_urls or [],
@@ -425,7 +452,6 @@ def get_messages(
             "translated_text": m.translated_text or {}
         })
     return result
-
 
 @router.post("/chat/rooms/{room_id}/messages", response_model=ChatMessageOut)
 def send_message(
