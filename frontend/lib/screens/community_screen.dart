@@ -37,45 +37,43 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   Future<void> _fetchAll() async {
     setState(() => _loading = true);
-    try {
-      final results = await Future.wait([
-        ApiClient.dio.get('/community/polls'),
-        ApiClient.dio.get('/community/events'),
-        ApiClient.dio.get('/community/questions'),
-        ApiClient.dio.get('/community/chat/rooms'),
-      ]);
-      setState(() {
-        _polls = results[0].data;
-        _events = results[1].data;
-        _questions = results[2].data;
-        _chatRooms = results[3].data;
-      });
-    } catch (_) {} finally {
-      setState(() => _loading = false);
-    }
+    final results = await Future.wait<dynamic>([
+      ApiClient.dio.get('/community/polls').then((response) => response.data).catchError((_) => _polls),
+      ApiClient.dio.get('/community/events').then((response) => response.data).catchError((_) => _events),
+      ApiClient.dio.get('/community/questions').then((response) => response.data).catchError((_) => _questions),
+      ApiClient.dio.get('/community/chat/rooms').then((response) => response.data).catchError((_) => _chatRooms),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _polls = results[0] as List<dynamic>;
+      _events = results[1] as List<dynamic>;
+      _questions = results[2] as List<dynamic>;
+      _chatRooms = results[3] as List<dynamic>;
+      _loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(l(ref, 'Community Hub'), style: Theme.of(context).textTheme.headlineMedium),
-        backgroundColor: isDark ? AppTheme.surface : Theme.of(context).colorScheme.surface,
+        title: Text(l(ref, 'Community Hub'), style: theme.textTheme.headlineMedium),
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: isDark ? Theme.of(context).colorScheme.surface : AppTheme.textPrimaryLight),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
-            color: isDark ? AppTheme.surface : Theme.of(context).colorScheme.surface,
+            color: theme.colorScheme.surface,
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
               labelColor: AppTheme.accent,
-              unselectedLabelColor: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : AppTheme.textSecondaryLight,
+              unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
               indicator: BoxDecoration(
                 color: AppTheme.accent.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(16),
@@ -242,7 +240,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.onSurface, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                 onPressed: isSubmitting ? null : () async {
-                  final options = [option1.text, option2.text, if (option3.text.isNotEmpty) option3.text];
+                  final options = [option1.text, option2.text, option3.text]
+                      .map((option) => option.trim())
+                      .where((option) => option.isNotEmpty)
+                      .toList();
                   if (questionCtrl.text.isEmpty || options.length < 2) return;
                   setMBS(() => isSubmitting = true);
                   try {

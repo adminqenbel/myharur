@@ -144,14 +144,14 @@ class MHCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark ? AppTheme.surface : Theme.of(context).colorScheme.surface;
+    final color = Theme.of(context).colorScheme.surface;
     
     return Container(
       margin: margin,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Theme.of(context).colorScheme.surface.withOpacity(0.05) : AppTheme.divider),
+        border: Border.all(color: isDark ? Theme.of(context).dividerColor.withOpacity(0.7) : Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 16, offset: const Offset(0, 4))
         ]
@@ -216,7 +216,6 @@ class MHBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.only(
         left: padding.horizontal / 2, 
@@ -225,7 +224,7 @@ class MHBottomSheet extends StatelessWidget {
         bottom: padding.vertical / 2 + MediaQuery.of(context).viewInsets.bottom
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surface : Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: child,
@@ -530,7 +529,7 @@ class MHMarketplaceCard extends StatelessWidget {
             height: 140,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: imageUrl != null && imageUrl.isNotEmpty

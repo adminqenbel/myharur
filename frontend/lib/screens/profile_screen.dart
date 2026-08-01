@@ -45,14 +45,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final provider = user['login_provider'] ?? 'email';
 
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // Hero App Bar with Cover + Avatar overlap
           SliverAppBar(
             expandedHeight: 260,
             pinned: true,
-            backgroundColor: AppTheme.bgLight,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -77,7 +77,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Container(
                       padding: EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: AppTheme.bgLight,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         shape: BoxShape.circle,
                       ),
                       child: MHAvatar(url: avatarUrl, radius: 50, fallback: fullName.isNotEmpty ? fullName[0] : null),
@@ -95,14 +95,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           fullName.isEmpty
                               ? (displayName ?? (username != null ? '@$username' : (isSetup ? email : 'Complete Your Profile')))
                               : fullName,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onBackground),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         if (username != null)
                           Padding(
                             padding: EdgeInsets.only(top: 2),
-                            child: Text('@$username', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondaryLight)),
+                            child: Text('@$username', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7))),
                           ),
                       ],
                     ),
@@ -145,9 +145,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _stat('${streak}', 'Day Streak', Icons.local_fire_department_rounded, AppTheme.accent),
-                        Container(width: 1, height: 40, color: AppTheme.divider),
+                        Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
                         _stat('${rewards}', 'Reputation', Icons.workspace_premium_rounded, AppTheme.accent),
-                        Container(width: 1, height: 40, color: AppTheme.divider),
+                        Container(width: 1, height: 40, color: Theme.of(context).dividerColor),
                         _stat(roleName, 'Role', Icons.shield_rounded, AppTheme.info),
                       ],
                     ),
@@ -173,12 +173,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Member ID', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondaryLight)),
+                              Text('Member ID', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
                               Text(mid, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                             ],
                           ),
                         ),
-                        Icon(Icons.copy_rounded, color: AppTheme.textSecondaryLight, size: 20),
+                        Icon(Icons.copy_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 20),
                       ],
                     ),
                   ),
@@ -260,7 +260,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondaryLight, letterSpacing: 0.5)),
+            child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), letterSpacing: 0.5)),
           ),
           ...tiles,
         ],
@@ -272,7 +272,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return ListTile(
       leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
       title: Text(label, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
-      subtitle: Text(value, style: TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
+      subtitle: Text(value, style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500)),
     );
   }
 

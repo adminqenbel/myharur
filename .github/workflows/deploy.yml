@@ -23,14 +23,15 @@ jobs:
             # Pull latest changes
             git pull origin main
             
-            # Rebuild and restart containers
+            # Bring infrastructure up, then apply the schema before starting API workers.
+            docker-compose -f docker-compose.prod.yml up -d db redis
+            docker-compose -f docker-compose.prod.yml run --rm backend alembic upgrade head
+
+            # Rebuild and restart application containers.
             docker-compose -f docker-compose.prod.yml up -d --build
             
             # Prune dangling images to save space
             docker image prune -f
-            
-            # Run database migrations
-            # Note: Handled by main.py startup currently, but could be separated here
             
             # Check Health
             sleep 10

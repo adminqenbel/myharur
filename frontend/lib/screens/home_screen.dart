@@ -163,7 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 leading: Icon(Icons.location_city_rounded, color: AppTheme.info),
                 title: Text('Harur Town', style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text('Dharmapuri District'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppTheme.divider)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Theme.of(context).dividerColor)),
                 onTap: () async {
                   await LocationPrefs.saveManualLocation(12.0620, 78.4975, 'Harur Town');
                   if (context.mounted) Navigator.pop(context);
@@ -175,7 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 leading: Icon(Icons.location_city_rounded, color: AppTheme.success),
                 title: Text('Dharmapuri City', style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text('Dharmapuri District'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppTheme.divider)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Theme.of(context).dividerColor)),
                 onTap: () async {
                   await LocationPrefs.saveManualLocation(12.1211, 78.1582, 'Dharmapuri City');
                   if (context.mounted) Navigator.pop(context);
@@ -299,7 +299,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               actions: [
                 IconButton(
                   icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.surface, size: 28),
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon!')));
+                  },
                 ),
                 SizedBox(width: 8),
                 GestureDetector(
