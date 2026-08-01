@@ -281,129 +281,138 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   }
 
   Widget _buildBubble(Map<String, dynamic> msg, bool isMe, bool isDark) {
-    final isPending = msg['_pending'] == true;
-    final senderName = msg['display_name'] ?? msg['sender_name'] ?? '';
-    final username = msg['username'] as String?;
-    final role = msg['sender_role'] as String?;
-    final mentions = (msg['mentions'] as List?)?.cast<String>() ?? [];
-    final image_urls = (msg['image_urls'] as List?)?.cast<String>() ?? [];
-    final translated_text = msg['translated_text'] as Map<String, dynamic>? ?? {};
-    final reactions = msg['reactions'] as Map<String, dynamic>? ?? {};
-    final isPinned = msg['is_pinned'] == true;
-    final status = msg['status'] as String? ?? 'sent';
-    
-    final timeStr = () {
-      final raw = msg['created_at']?.toString() ?? '';
-      return raw.length >= 16 ? raw.substring(11, 16) : '';
-    }();
-    Color? roleBadgeColor;
-    if (role == 'Super Admin') roleBadgeColor = AppTheme.danger;
-    else if (role == 'Admin') roleBadgeColor = Colors.orange;
-    else if (role == 'Moderator') roleBadgeColor = Colors.purple;
+    try {
+      final isPending = msg['_pending'] == true;
+      final senderName = msg['display_name'] ?? msg['sender_name'] ?? '';
+      final username = msg['username'] as String?;
+      final role = msg['sender_role'] as String?;
+      final mentions = (msg['mentions'] as List?)?.cast<String>() ?? [];
+      final image_urls = (msg['image_urls'] as List?)?.cast<String>() ?? [];
+      final translated_text = msg['translated_text'] as Map<String, dynamic>? ?? {};
+      final reactions = msg['reactions'] as Map<String, dynamic>? ?? {};
+      final isPinned = msg['is_pinned'] == true;
+      final status = msg['status'] as String? ?? 'sent';
+      
+      final timeStr = () {
+        final raw = msg['created_at']?.toString() ?? '';
+        return raw.length >= 16 ? raw.substring(11, 16) : '';
+      }();
+      Color? roleBadgeColor;
+      if (role == 'Super Admin') roleBadgeColor = AppTheme.danger;
+      else if (role == 'Admin') roleBadgeColor = Colors.orange;
+      else if (role == 'Moderator') roleBadgeColor = Colors.purple;
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: [
-          if (!isMe) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: msg['sender_avatar'] != null ? NetworkImage(msg['sender_avatar']) : null,
-              backgroundColor: Colors.blueGrey,
-              child: msg['sender_avatar'] == null ? Icon(Icons.person, size: 16) : null,
-            ),
-            SizedBox(width: 6),
-          ],
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-              margin: EdgeInsets.only(bottom: 6),
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isMe ? Theme.of(context).colorScheme.primary : (isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface),
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16), topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4), bottomRight: Radius.circular(isMe ? 4 : 16),
-                ),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)],
+      return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+          children: [
+            if (!isMe) ...[
+              CircleAvatar(
+                radius: 16,
+                backgroundImage: msg['sender_avatar'] != null ? NetworkImage(msg['sender_avatar']) : null,
+                backgroundColor: Colors.blueGrey,
+                child: msg['sender_avatar'] == null ? Icon(Icons.person, size: 16) : null,
               ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if (isPinned) ...[
-                  Row(children: [
-                    Icon(Icons.push_pin, size: 12, color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Colors.blueGrey),
-                    SizedBox(width: 4),
-                    Text('Pinned', style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.bold)),
-                  ]),
-                  SizedBox(height: 4),
-                ],
-                
-                if (!isMe) ...[
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    if (username != null) Text('@$username', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 11)),
-                    if (username != null && senderName.isNotEmpty && senderName != username)
-                      Text(' · $senderName', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 11)),
-                    if (roleBadgeColor != null) ...[
+              SizedBox(width: 6),
+            ],
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+                margin: EdgeInsets.only(bottom: 6),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isMe ? Theme.of(context).colorScheme.primary : (isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface),
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16), topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isMe ? 16 : 4), bottomRight: Radius.circular(isMe ? 4 : 16),
+                  ),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4)],
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  if (isPinned) ...[
+                    Row(children: [
+                      Icon(Icons.push_pin, size: 12, color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Colors.blueGrey),
                       SizedBox(width: 4),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(color: roleBadgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4), border: Border.all(color: roleBadgeColor, width: 0.5)),
-                        child: Text(role!, style: TextStyle(color: roleBadgeColor, fontSize: 9, fontWeight: FontWeight.bold)),
-                      ),
+                      Text('Pinned', style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ]),
+                    SizedBox(height: 4),
+                  ],
+                  
+                  if (!isMe) ...[
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      if (username != null) Text('@$username', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 11)),
+                      if (username != null && senderName.isNotEmpty && senderName != username)
+                        Text(' · $senderName', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 11)),
+                      if (roleBadgeColor != null) ...[
+                        SizedBox(width: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(color: roleBadgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4), border: Border.all(color: roleBadgeColor, width: 0.5)),
+                          child: Text(role!, style: TextStyle(color: roleBadgeColor, fontSize: 9, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ]),
+                    SizedBox(height: 2),
+                  ],
+                  
+                  if (image_urls.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(image_urls[0], height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.broken_image)),
+                    ),
+                    SizedBox(height: 4),
+                  ],
+                  
+                  if ((msg['content'] ?? '').isNotEmpty)
+                    _buildContent(msg['content'] ?? '', isMe, mentions),
+                    
+                  if (translated_text.isNotEmpty && translated_text['en'] != null && translated_text['en'] != msg['content']) ...[
+                    SizedBox(height: 4),
+                    Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+                      child: Text(translated_text['en'], style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontStyle: FontStyle.italic)),
+                    ),
+                  ],
+                  
+                  SizedBox(height: 2),
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(timeStr, style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 10)),
+                    if (isPending) ...[SizedBox(width: 4), Icon(Icons.access_time, size: 10, color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5))],
+                    if (!isPending && isMe) ...[
+                      SizedBox(width: 4),
+                      Icon(status == 'seen' ? Icons.done_all : Icons.check, size: 12, color: status == 'seen' ? Colors.blue : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))
                     ],
                   ]),
-                  SizedBox(height: 2),
-                ],
-                
-                if (image_urls.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(image_urls[0], height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.broken_image)),
-                  ),
-                  SizedBox(height: 4),
-                ],
-                
-                if ((msg['content'] ?? '').isNotEmpty)
-                  _buildContent(msg['content'] ?? '', isMe, mentions),
                   
-                if (translated_text.isNotEmpty && translated_text['en'] != null && translated_text['en'] != msg['content']) ...[
-                  SizedBox(height: 4),
-                  Container(
-                    padding: EdgeInsets.all(4),
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
-                    child: Text(translated_text['en'], style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontStyle: FontStyle.italic)),
-                  ),
-                ],
-                
-                SizedBox(height: 2),
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(timeStr, style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 10)),
-                  if (isPending) ...[SizedBox(width: 4), Icon(Icons.access_time, size: 10, color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5))],
-                  if (!isPending && isMe) ...[
-                    SizedBox(width: 4),
-                    Icon(status == 'seen' ? Icons.done_all : Icons.check, size: 12, color: status == 'seen' ? Colors.blue : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))
+                  if (reactions.isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      children: reactions.entries.map((e) => Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                        child: Text('${e.key} ${(e.value as List).length}', style: TextStyle(fontSize: 10, color: isMe ? Theme.of(context).colorScheme.surface : Colors.black87)),
+                      )).toList(),
+                    )
                   ],
                 ]),
-                
-                if (reactions.isNotEmpty) ...[
-                  SizedBox(height: 4),
-                  Wrap(
-                    spacing: 4,
-                    children: reactions.entries.map((e) => Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                      child: Text('${e.key} ${(e.value as List).length}', style: TextStyle(fontSize: 10, color: isMe ? Theme.of(context).colorScheme.surface : Colors.black87)),
-                    )).toList(),
-                  )
-                ],
-              ]),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } catch (e) {
+      return Container(
+        margin: EdgeInsets.symmetric(vertical: 4),
+        padding: EdgeInsets.all(8),
+        color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+        child: Text('Error loading message', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+      );
+    }
   }
 
   Widget _buildContent(String content, bool isMe, List<String> mentions) {
