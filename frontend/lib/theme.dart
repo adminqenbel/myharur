@@ -12,6 +12,7 @@ class AppTheme {
   static const Color info       = Color(0xFF3A86FF);  
   
   static const Color bgLight    = Color(0xFFFFFFFF);
+  static const Color bgDark     = Color(0xFF000000);
   static const Color textPrimaryLight = Color(0xFF081C2D);
   static const Color textSecondaryLight = Color(0xFF64748B);
   
@@ -213,13 +214,13 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: primary,
+      scaffoldBackgroundColor: bgDark,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: const ColorScheme.dark(
         primary: primary,
         secondary: accent,
         surface: surface,
-        background: primary,
+        background: bgDark,
         error: danger,
         onPrimary: Colors.white,
         onSecondary: primary,

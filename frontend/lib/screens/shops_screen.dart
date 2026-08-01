@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api_client.dart';
+import '../theme.dart';
 
 class ShopsScreen extends StatefulWidget {
   const ShopsScreen({super.key});
@@ -95,7 +96,11 @@ class _ShopsScreenState extends State<ShopsScreen> {
                           onPressed: () => setState(() => _shopsFuture = _fetchShops()),
                           icon: const Icon(Icons.refresh_rounded, color: Colors.white),
                           label: const Text('Try Again', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3A86FF), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accent, 
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                          ),
                         ),
                       ],
                     ),

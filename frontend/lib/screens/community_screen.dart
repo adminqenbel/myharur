@@ -58,7 +58,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9), // Light background theme
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(l(ref, 'Community Hub'), style: Theme.of(context).textTheme.headlineMedium),
         backgroundColor: isDark ? AppTheme.surface : Colors.white,
@@ -93,7 +93,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
       ),
       floatingActionButton: _buildFAB(),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF3A86FF)))
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
           : TabBarView(
               controller: _tabController,
               children: [

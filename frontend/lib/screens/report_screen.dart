@@ -5,6 +5,7 @@ import '../providers/locale_provider.dart';
 import '../l10n/translations.dart';
 import '../api_client.dart';
 import 'package:dio/dio.dart';
+import '../theme.dart';
 
 class ReportScreen extends ConsumerStatefulWidget {
   const ReportScreen({super.key});
@@ -104,7 +105,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.local_police, size: 28),
               label: Text(l(ref, 'Police SOS Alert'), style: const TextStyle(fontSize: 18)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, foregroundColor: AppTheme.primary, padding: const EdgeInsets.symmetric(vertical: 16)),
               onPressed: () => _reportEmergency('citizen_sos', 'medical'), // Mapped to general SOS
             ),
             const SizedBox(height: 16),

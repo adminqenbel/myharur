@@ -4,6 +4,7 @@ import '../api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../utils/image_upload_helper.dart';
+import '../theme.dart';
 
 class NewsScreen extends ConsumerStatefulWidget {
   const NewsScreen({super.key});
@@ -193,7 +194,7 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
               future: _newsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3A86FF)));
+                  return const Center(child: CircularProgressIndicator(color: AppTheme.accent));
                 }
                 if (snapshot.hasError) {
                   return Center(
@@ -211,9 +212,13 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
                           onPressed: () => setState(() => _fetchData()),
-                          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                          label: const Text('Try Again', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3A86FF), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                          icon: const Icon(Icons.refresh_rounded, color: AppTheme.primary),
+                          label: const Text('Try Again', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accent, 
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                          ),
                         ),
                       ],
                     ),
@@ -354,10 +359,10 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildInteractionButton(Icons.translate_rounded, 'Translate'),
-                          _buildInteractionButton(Icons.mode_comment_outlined, 'Comment'),
-                          _buildInteractionButton(Icons.bookmark_border_rounded, 'Save'),
-                          _buildInteractionButton(Icons.share_rounded, 'Share'),
+                          _buildInteractionButton(context, Icons.translate_rounded, 'Translate'),
+                          _buildInteractionButton(context, Icons.mode_comment_outlined, 'Comment'),
+                          _buildInteractionButton(context, Icons.bookmark_border_rounded, 'Save'),
+                          _buildInteractionButton(context, Icons.share_rounded, 'Share'),
                         ],
                       )
                     ],
@@ -371,9 +376,11 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
     );
   }
 
-  Widget _buildInteractionButton(IconData icon, String label) {
+  Widget _buildInteractionButton(BuildContext context, IconData icon, String label) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label feature coming soon!')));
+      },
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

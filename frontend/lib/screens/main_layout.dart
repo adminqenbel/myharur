@@ -67,14 +67,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                     color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                     width: 1,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 8),
-                    )
-                  ],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(32),
