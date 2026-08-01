@@ -40,7 +40,6 @@ class SocketService {
     _socket = IO.io(
       _baseUrl,
       IO.OptionBuilder()
-          .setTransports(['websocket']) // Force WebSocket (not polling)
           .setAuth({'token': token})
           .setQuery({'token': token})
           .enableAutoConnect()

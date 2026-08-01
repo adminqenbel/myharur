@@ -500,12 +500,8 @@ def send_message(
     # Auto AI/Bot Responses for System Mentions
     system_mentions = [m.lower() for m in mentions]
     if any(m in ["support", "help", "news", "weather", "admin", "hospital", "police"] for m in system_mentions):
-        # Create a bot response
         bot_user = db.query(UserModel).filter(UserModel.username == "system_bot").first()
-        if not bot_user:
-            # Fallback to current user if bot doesn't exist yet, or just don't reply
-            pass
-        else:
+        if bot_user:
             bot_msg = ChatMessage(
                 room_id=room_id,
                 sender_id=bot_user.id,
@@ -514,5 +510,20 @@ def send_message(
             )
             db.add(bot_msg)
             db.commit()
+            
+    # Broadcast to Socket.IO
+    import asyncio
+    try:
+        from app.main import sio
+        async def _broadcast():
+            await sio.emit("new_message", response, room=f"chat_room_{room_id}")
+        
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_broadcast())
+        except RuntimeError:
+            asyncio.run(_broadcast())
+    except Exception as e:
+        print(f"Failed to broadcast REST message: {e}")
             
     return response
