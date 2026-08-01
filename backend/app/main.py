@@ -565,6 +565,16 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS ai_confidence_score FLOAT;"))
         db.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
         
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT false;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending';"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT false;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS ticket_price FLOAT;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS payment_link VARCHAR;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS max_attendees INTEGER;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS current_attendees INTEGER DEFAULT 0;"))
+        db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS chat_room_id INTEGER;"))
+        
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS translated_text VARCHAR;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
         

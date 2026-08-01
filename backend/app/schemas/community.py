@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -179,7 +179,7 @@ class ChatMessageOut(BaseModel):
     reactions: dict = {}
     is_pinned: bool = False
     status: str = "sent"
-    translated_text: dict = {}
+    translated_text: Any = {}
     created_at: datetime
     updated_at: Optional[datetime] = None
     sender_name: Optional[str] = None
