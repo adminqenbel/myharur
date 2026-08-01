@@ -84,29 +84,68 @@ class IntelligentRouter:
             return "Please describe your emergency clearly."
             
         elif command == "support" or command == "help":
-            # Highly efficient keyword-based support routing
-            if any(k in content_lower for k in ["register", "add", "create"]) and "shop" in content_lower:
-                return "To register your shop on MyHarur:\n1. Go to the 'Marketplace' tab.\n2. Tap the '+' button in the top right.\n3. Fill in your shop details and upload a valid Trade License.\nApproval usually takes 24 hours."
+            import os
             
-            elif any(k in content_lower for k in ["post", "add", "submit"]) and "news" in content_lower:
-                return "To post local news:\n1. Navigate to the 'News' feed.\n2. Tap the 'Create Post' icon.\n3. Ensure your news is accurate and follows community guidelines. Verified reporters earn +10 Reputation Points."
-                
-            elif any(k in content_lower for k in ["reputation", "points", "badge"]):
-                return "Reputation Points are earned by:\n- Posting verified news (+10)\n- Helping in emergencies (+50)\n- Getting upvotes on community posts (+1)\nYou can view your current tier (Bronze/Silver/Gold/Citizen) on your Profile page."
-                
-            elif any(k in content_lower for k in ["report", "spam", "abuse", "fake"]):
-                return "We take community safety seriously. To report a user or post:\n1. Tap the three dots (...) next to the message or post.\n2. Select 'Report'.\nOur moderators will review it within 2 hours. Thank you for keeping Harur safe!"
-                
-            elif any(k in content_lower for k in ["delete", "remove"]) and any(k in content_lower for k in ["account", "profile"]):
-                return "If you wish to delete your account, please send an email to admin@myharur.com from your registered email address with the subject 'Account Deletion'. We process these requests within 3 business days."
+            # Context regarding the app for the AI
+            system_prompt = \"\"\"You are the MyHarur AI Support Assistant.
+Be concise, helpful, and polite. Handle spelling mistakes gracefully.
+Knowledge Base:
+- Shop Registration: Go to Marketplace tab -> Click '+' -> Fill details -> Upload Trade License (24hr approval).
+- News Posting: Go to News feed -> Click 'Create Post' (+10 Reputation points for verified news).
+- Reputation Points: Earned by posting news (+10), emergency help (+50), upvotes (+1). Tiers are Bronze, Silver, Gold, Citizen.
+- Reporting Abuse: Tap three dots (...) on a post/message -> Select 'Report'. (2-hour moderator review).
+- Account Deletion: Email admin@myharur.com from registered email (3 business days).
+- Unknown questions: Apologize and state you are an AI still learning about Harur, and an admin will assist shortly.
+User Query: \"\"\"
             
-            elif "password" in content_lower or "login" in content_lower:
-                return "If you are having trouble logging in, please use the 'Forgot Password' link on the login screen to receive a reset OTP via email."
-
-            elif "update" in content_lower or "version" in content_lower:
-                return "You can always download the latest version of the MyHarur app from our website at https://myharur.onrender.com"
-
-            return "I am the MyHarur Automated Support Assistant.\n\nI can help you with:\n- Shop Registration\n- News Posting\n- Reputation Points\n- Reporting Abuse\n- Account Settings\n\nPlease ask a specific question, or wait for a human administrator to reply to your message."
+            # Try Google Gemini AI first
+            gemini_key = os.getenv("GEMINI_API_KEY")
+            if gemini_key:
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=gemini_key)
+                    # Use standard gemini-1.5-flash for fast text responses
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    response = model.generate_content(system_prompt + content)
+                    if response.text:
+                        return response.text
+                except Exception as e:
+                    logger.error(f"Gemini AI failed: {e}")
+            
+            # Fallback to intelligent fuzzy matching if no API key or AI fails
+            import difflib
+            words = content_lower.split()
+            
+            kb = {
+                "shop": ["register", "add", "create", "shop", "store", "business", "shpo", "reister"],
+                "news": ["post", "add", "submit", "news", "article", "new", "nwes"],
+                "reputation": ["reputation", "points", "badge", "tier", "score", "ponts", "rep"],
+                "report": ["report", "spam", "abuse", "fake", "block"],
+                "account": ["delete", "remove", "account", "profile", "password", "login"]
+            }
+            
+            scores = {k: 0 for k in kb.keys()}
+            for w in words:
+                for cat, keywords in kb.items():
+                    # Check for fuzzy match
+                    matches = difflib.get_close_matches(w, keywords, n=1, cutoff=0.7)
+                    if matches:
+                        scores[cat] += 1
+                        
+            best_cat = max(scores, key=scores.get) if any(scores.values()) else None
+            
+            if best_cat == "shop":
+                return "To register your shop on MyHarur:\n1. Go to the 'Marketplace' tab.\n2. Tap the '+' button in the top right.\n3. Fill in your shop details and upload a valid Trade License."
+            elif best_cat == "news":
+                return "To post local news:\n1. Navigate to the 'News' feed.\n2. Tap the 'Create Post' icon. Verified reporters earn +10 Reputation Points."
+            elif best_cat == "reputation":
+                return "Reputation Points are earned by:\n- Posting verified news (+10)\n- Helping in emergencies (+50)\n- Getting upvotes (+1)\nView your tier on your Profile page."
+            elif best_cat == "report":
+                return "To report a user or post:\n1. Tap the three dots (...) next to the message or post.\n2. Select 'Report'."
+            elif best_cat == "account":
+                return "For account deletion or password resets, please email admin@myharur.com or use the 'Forgot Password' link."
+            
+            return "I am the MyHarur AI Assistant. Please ask a specific question about shops, news, reputation, or your account, and I will do my best to help (even if there are typos!)."
             
         else:
             return f"Command @{command} received. This module is under active development by the AI."
