@@ -460,6 +460,13 @@ def send_message(
     db: Session = Depends(deps.get_db),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
+    room = db.query(ChatRoom).filter(ChatRoom.id == room_id).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+        
+    is_official = room.name in ["Announcements", "Government Updates"]
+    if is_official and current_user.role.name not in ["Super Admin", "Admin", "Moderator", "Government", "Police", "Municipality"]:
+        raise HTTPException(status_code=403, detail="Only administrators can post in this room")
     import re as _re
     mentions = []
     if msg_in.content:

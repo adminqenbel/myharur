@@ -264,8 +264,26 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             ),
           ),
         if (auth.isLoggedIn)
-          SafeArea(
-            top: false,
+          Builder(builder: (context) {
+            final isOfficial = ['Announcements', 'Government Updates'].contains(widget.room['name']);
+            final role = auth.user?['role']?['name'] ?? 'User';
+            final canPost = !isOfficial || ['Super Admin', 'Admin', 'Moderator', 'Government', 'Police', 'Municipality'].contains(role);
+            
+            if (!canPost) {
+              return SafeArea(
+                top: false,
+                child: Container(
+                  width: double.infinity,
+                  color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.center,
+                  child: Text('Only administrators can post in this room', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.bold)),
+                ),
+              );
+            }
+            
+            return SafeArea(
+              top: false,
             child: Container(
               color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -291,7 +309,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 ),
               ]),
             ),
-          )
+            );
+          })
         else
           Container(
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
