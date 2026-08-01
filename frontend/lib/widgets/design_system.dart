@@ -151,7 +151,7 @@ class MHCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Theme.of(context).dividerColor.withOpacity(0.7) : Theme.of(context).dividerColor),
+        border: Border.all(color: isDark ? Theme.of(context).dividerColor.withOpacity(0.1) : Theme.of(context).dividerColor.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 16, offset: const Offset(0, 4))
         ]
