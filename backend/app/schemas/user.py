@@ -54,7 +54,7 @@ class Role(BaseModel):
 
 
 class UserBase(BaseModel):
-    email: EmailStr
+    email: str
     is_active: Optional[bool] = True
 
 
