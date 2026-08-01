@@ -150,11 +150,14 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
         ],
       ),
       floatingActionButton: auth.isLoggedIn
-          ? FloatingActionButton.extended(
-              onPressed: _showSubmitNewsDialog,
-              backgroundColor: const Color(0xFF081C2D),
-              icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-              label: const Text('Post News', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: FloatingActionButton.extended(
+                onPressed: _showSubmitNewsDialog,
+                backgroundColor: AppTheme.accent,
+                icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
+                label: const Text('Post News', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              ),
             )
           : null,
       body: Column(

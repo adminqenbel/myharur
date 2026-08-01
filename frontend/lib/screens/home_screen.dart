@@ -13,6 +13,7 @@ import 'emergency_screen.dart';
 import 'shops_screen.dart';
 import 'leaderboard_screen.dart';
 import '../widgets/design_system.dart';
+import '../theme.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

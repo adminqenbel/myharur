@@ -8,6 +8,7 @@ import '../services/socket_service.dart';
 import 'chat_room_screen.dart';
 import '../widgets/design_system.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../theme.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -116,17 +117,20 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     // If on Chat tab and not authorized, hide FAB
     if (_tabController.index == 3 && !canCreateRoom) return null;
 
-    return FloatingActionButton(
-      backgroundColor: AppTheme.accent,
-      onPressed: () {
-        switch (_tabController.index) {
-          case 0: _showCreatePollDialog(); break;
-          case 1: _showCreateEventDialog(); break;
-          case 2: _showCreateQuestionDialog(); break;
-          case 3: _showCreateChatRoomDialog(); break;
-        }
-      },
-      child: const Icon(Icons.add_rounded, color: AppTheme.primary, size: 28),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 80),
+      child: FloatingActionButton(
+        backgroundColor: AppTheme.accent,
+        onPressed: () {
+          switch (_tabController.index) {
+            case 0: _showCreatePollDialog(); break;
+            case 1: _showCreateEventDialog(); break;
+            case 2: _showCreateQuestionDialog(); break;
+            case 3: _showCreateChatRoomDialog(); break;
+          }
+        },
+        child: const Icon(Icons.add_rounded, color: AppTheme.primary, size: 28),
+      ),
     );
   }
 
@@ -148,6 +152,41 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final totalVotes = options.fold<int>(0, (sum, o) => sum + (o['vote_count'] as int? ?? 0));
     final votedId = poll['user_voted_option_id'] as int?;
 
+    List<Widget> optionWidgets = [];
+    for (var opt in options) {
+      final votes = opt['vote_count'] as int? ?? 0;
+      final pct = totalVotes > 0 ? votes / totalVotes : 0.0;
+      final isVoted = votedId == opt['id'];
+      optionWidgets.add(
+        InkWell(
+          onTap: votedId != null ? null : () => _castVote(poll['id'], opt['id']),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(opt['text'] ?? '', style: TextStyle(fontWeight: isVoted ? FontWeight.w800 : FontWeight.w600, color: isVoted ? const Color(0xFF007AFF) : const Color(0xFF081C2D))),
+                  Text('${(pct * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.bold)),
+                ]),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: pct,
+                    minHeight: 8,
+                    backgroundColor: const Color(0xFFF4F6F9),
+                    color: isVoted ? const Color(0xFF007AFF) : const Color(0xFF3A86FF).withOpacity(0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+      );
+    }
+
     return MHCard(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
@@ -155,42 +194,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(poll['question'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ...options.map<Widget>((opt) {
-              final votes = opt['vote_count'] as int? ?? 0;
-              final pct = totalVotes > 0 ? votes / totalVotes : 0.0;
-              final isVoted = votedId == opt['id'];
-              return InkWell(
-                onTap: votedId != null ? null : () => _castVote(poll['id'], opt['id']),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Text(opt['text'] ?? '', style: TextStyle(fontWeight: isVoted ? FontWeight.w800 : FontWeight.w600, color: isVoted ? const Color(0xFF007AFF) : const Color(0xFF081C2D))),
-                        Text('${(pct * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.bold)),
-                      ]),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: pct,
-                          minHeight: 8,
-                          backgroundColor: const Color(0xFFF4F6F9),
-                          color: isVoted ? const Color(0xFF007AFF) : const Color(0xFF3A86FF).withOpacity(0.4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            const SizedBox(height: 8),
-            Text('$totalVotes votes', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
-          ],
-        ),
+          const SizedBox(height: 16),
+          ...optionWidgets,
+          const SizedBox(height: 8),
+          Text('$totalVotes votes', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }
@@ -283,14 +291,14 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                     const SizedBox(height: 12),
                     if (event['event_date'] != null)
                       Row(children: [
-                        const Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.info),
+                        Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.info),
                         const SizedBox(width: 8),
                         Text(event['event_date'].toString().substring(0, 10), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                       ]),
                     const SizedBox(height: 8),
                     if (event['location_name'] != null)
                       Row(children: [
-                        const Icon(Icons.location_on_rounded, size: 16, color: AppTheme.danger),
+                        Icon(Icons.location_on_rounded, size: 16, color: AppTheme.danger),
                         const SizedBox(width: 8),
                         Text(event['location_name'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                       ]),
@@ -386,7 +394,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                   color: AppTheme.info.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16)
                 ),
-                child: const Center(child: Text('Q', style: TextStyle(color: AppTheme.info, fontWeight: FontWeight.w800, fontSize: 18))),
+                child: Center(child: Text('Q', style: const TextStyle(color: AppTheme.info, fontWeight: FontWeight.w800, fontSize: 18))),
               ),
               title: Text(q['text'] ?? '', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               subtitle: Padding(

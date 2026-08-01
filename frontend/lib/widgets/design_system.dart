@@ -135,9 +135,10 @@ class MHTextField extends StatelessWidget {
 class MHCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
 
-  const MHCard({super.key, required this.child, this.padding = const EdgeInsets.all(16), this.onTap});
+  const MHCard({super.key, required this.child, this.padding = const EdgeInsets.all(16), this.margin, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -145,6 +146,7 @@ class MHCard extends StatelessWidget {
     final color = isDark ? AppTheme.surface : Colors.white;
     
     return Container(
+      margin: margin,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(16),
