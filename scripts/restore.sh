@@ -31,7 +31,7 @@ docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME < "restored_db.sql"
 # 3. Restore Uploads
 echo "[$(date)] Restoring uploads..."
 mkdir -p "$UPLOADS_DIR"
-tar -xzf "restored_uploads.tar.gz" -C /
+tar -xzf "restored_uploads.tar.gz" -C .
 
 # 4. Cleanup
 rm "restored_db.sql" "restored_uploads.tar.gz"

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../api_client.dart';
 
 /// Singleton Socket.IO service.
 /// Architecture: Emit-first (optimistic) → DB async save → confirm real ID.
@@ -27,7 +28,9 @@ class SocketService {
 
   bool get isConnected => _isConnected;
 
-  static const String _baseUrl = 'https://myharur.onrender.com';
+  String get _baseUrl {
+    return ApiClient.dio.options.baseUrl.replaceAll('/api/v1', '').replaceAll('/api/v1/', '');
+  }
 
   void connect(String token) {
     if (_isConnected && _currentToken == token) return;

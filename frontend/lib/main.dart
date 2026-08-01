@@ -42,7 +42,8 @@ final GoRouter appRouter = GoRouter(
     if (loc == '/splash' || loc == '/login') return null;
     if (!auth.isLoggedIn) return '/login';
     if (auth.usernameRequired && loc != '/username-setup') return '/username-setup';
-    if (!auth.usernameRequired && loc == '/username-setup') return '/home';
+    if (!auth.usernameRequired && !auth.isSetupComplete && loc != '/onboarding' && loc != '/username-setup') return '/onboarding';
+    if (!auth.usernameRequired && auth.isSetupComplete && (loc == '/username-setup' || loc == '/onboarding')) return '/home';
     return null;
   },
   routes: [
