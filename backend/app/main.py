@@ -531,6 +531,19 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS contact_phone VARCHAR;"))
         db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS location_lat FLOAT;"))
         db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS location_lng FLOAT;"))
+        
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_voice_note BOOLEAN DEFAULT false;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS audio_url VARCHAR;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_urls JSON DEFAULT '[]'::json;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS video_urls JSON DEFAULT '[]'::json;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS file_urls JSON DEFAULT '[]'::json;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS mentions JSON DEFAULT '[]'::json;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS reactions JSON DEFAULT '{}'::json;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS status VARCHAR;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS translated_text VARCHAR;"))
         db.commit()
         return {"status": "success", "message": "Columns added successfully"}
     except Exception as e:
