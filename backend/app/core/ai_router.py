@@ -84,9 +84,29 @@ class IntelligentRouter:
             return "Please describe your emergency clearly."
             
         elif command == "support" or command == "help":
-            if "register" in content_lower and "shop" in content_lower:
-                return "To register your shop, go to the Shops tab and click 'Add Shop'. Ensure you have your Trade License ready."
-            return "I am the Intelligent Assistant. How can I help you today?"
+            # Highly efficient keyword-based support routing
+            if any(k in content_lower for k in ["register", "add", "create"]) and "shop" in content_lower:
+                return "To register your shop on MyHarur:\n1. Go to the 'Marketplace' tab.\n2. Tap the '+' button in the top right.\n3. Fill in your shop details and upload a valid Trade License.\nApproval usually takes 24 hours."
+            
+            elif any(k in content_lower for k in ["post", "add", "submit"]) and "news" in content_lower:
+                return "To post local news:\n1. Navigate to the 'News' feed.\n2. Tap the 'Create Post' icon.\n3. Ensure your news is accurate and follows community guidelines. Verified reporters earn +10 Reputation Points."
+                
+            elif any(k in content_lower for k in ["reputation", "points", "badge"]):
+                return "Reputation Points are earned by:\n- Posting verified news (+10)\n- Helping in emergencies (+50)\n- Getting upvotes on community posts (+1)\nYou can view your current tier (Bronze/Silver/Gold/Citizen) on your Profile page."
+                
+            elif any(k in content_lower for k in ["report", "spam", "abuse", "fake"]):
+                return "We take community safety seriously. To report a user or post:\n1. Tap the three dots (...) next to the message or post.\n2. Select 'Report'.\nOur moderators will review it within 2 hours. Thank you for keeping Harur safe!"
+                
+            elif any(k in content_lower for k in ["delete", "remove"]) and any(k in content_lower for k in ["account", "profile"]):
+                return "If you wish to delete your account, please send an email to admin@myharur.com from your registered email address with the subject 'Account Deletion'. We process these requests within 3 business days."
+            
+            elif "password" in content_lower or "login" in content_lower:
+                return "If you are having trouble logging in, please use the 'Forgot Password' link on the login screen to receive a reset OTP via email."
+
+            elif "update" in content_lower or "version" in content_lower:
+                return "You can always download the latest version of the MyHarur app from our website at https://myharur.onrender.com"
+
+            return "I am the MyHarur Automated Support Assistant.\n\nI can help you with:\n- Shop Registration\n- News Posting\n- Reputation Points\n- Reporting Abuse\n- Account Settings\n\nPlease ask a specific question, or wait for a human administrator to reply to your message."
             
         else:
             return f"Command @{command} received. This module is under active development by the AI."
