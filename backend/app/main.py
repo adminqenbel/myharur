@@ -588,6 +588,9 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS upvotes INTEGER DEFAULT 0;"))
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS downvotes INTEGER DEFAULT 0;"))
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS helpful_answers INTEGER DEFAULT 0;"))
+        
+        # Cleanup duplicate event created on July 26th due to missing debounce
+        db.execute(text("DELETE FROM events WHERE id = 2;"))
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS events_attended INTEGER DEFAULT 0;"))
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS news_reported INTEGER DEFAULT 0;"))
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS emergencies_responded INTEGER DEFAULT 0;"))
