@@ -150,7 +150,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                       'condition': selectedCondition,
                       'contact_phone': phoneCtrl.text,
                       'type': 'sell',
-                      'image_url': imageUrl,
+                      'image_urls': imageUrl != null ? [imageUrl] : [],
                     });
                     if (ctx.mounted) Navigator.pop(ctx);
                     _fetchListings();

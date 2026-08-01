@@ -111,6 +111,7 @@ class PollOptionOut(BaseModel):
 
 class PollOut(BaseModel):
     id: int
+    creator_id: Optional[int] = None
     question: str
     is_active: bool = True
     created_at: datetime

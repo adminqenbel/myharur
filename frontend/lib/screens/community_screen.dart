@@ -185,13 +185,35 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
       );
     }
 
+    final auth = ref.watch(authProvider);
+    final canDelete = poll['creator_id'] == auth.user?['id'] || auth.isAdmin;
+
     return MHCard(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(poll['question'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Text(poll['question'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
+              if (canDelete)
+                IconButton(
+                  icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    try {
+                      await ApiClient.dio.delete('/community/polls/${poll['id']}');
+                      _fetchAll();
+                    } catch (e) {
+                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete poll: $e')));
+                    }
+                  },
+                ),
+            ],
+          ),
           SizedBox(height: 16),
           ...optionWidgets,
           SizedBox(height: 8),

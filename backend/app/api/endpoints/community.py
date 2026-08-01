@@ -174,6 +174,7 @@ def _enrich_poll(poll: PollModel, user_id: Optional[int], db: Session) -> dict:
             voted = vote.option_id
     return {
         "id": poll.id,
+        "creator_id": poll.creator_id,
         "question": poll.question,
         "is_active": poll.is_active,
         "created_at": poll.created_at,
@@ -226,6 +227,26 @@ def cast_vote(
     db.add(vote)
     db.commit()
     return {"message": "Vote cast"}
+
+
+@router.delete("/polls/{poll_id}")
+def delete_poll(
+    poll_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    poll = db.query(PollModel).filter(PollModel.id == poll_id).first()
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    if poll.creator_id != current_user.id and current_user.role.name not in ["Admin", "Super Admin"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this poll")
+    
+    db.query(PollVote).filter(PollVote.poll_id == poll_id).delete()
+    db.query(PollOption).filter(PollOption.poll_id == poll_id).delete()
+    db.delete(poll)
+    db.commit()
+    return {"message": "Poll deleted"}
+
 
 
 # ── Q&A ───────────────────────────────────────────────────────────────────────
