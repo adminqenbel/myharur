@@ -253,7 +253,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppTheme.bg,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: Text(l(ref, 'Marketplace')),
           bottom: TabBar(

@@ -50,46 +50,41 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      extendBody: true, // Allows body to flow underneath
-      body: Stack(
-        children: [
-          widget.child,
-          if (!isKeyboardOpen)
-            Positioned(
-              left: 24,
-              right: 24,
-              bottom: 24 + MediaQuery.of(context).padding.bottom,
+      body: widget.child,
+      bottomNavigationBar: isKeyboardOpen
+          ? null
+          : SafeArea(
+              top: false,
+              minimum: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               child: Container(
                 height: 64,
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: isDark ? Theme.of(context).colorScheme.surface.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                    color: isDark ? Theme.of(context).dividerColor.withOpacity(0.7) : Colors.black.withOpacity(0.05),
                     width: 1,
                   ),
                 ),
                 child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                    child: Container(
-                      color: isDark ? AppTheme.surface.withOpacity(0.7) : Theme.of(context).colorScheme.surface.withOpacity(0.85),
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildNavItem(0, Icons.explore_rounded, l(ref, 'Explore'), selectedIndex, isDark),
-                          _buildNavItem(1, Icons.storefront_rounded, l(ref, 'Market'), selectedIndex, isDark),
-                          _buildNavItem(2, Icons.forum_rounded, l(ref, 'Community'), selectedIndex, isDark),
-                          _buildNavItem(3, Icons.campaign_rounded, l(ref, 'Report'), selectedIndex, isDark),
-                          _buildNavItem(4, Icons.person_rounded, l(ref, 'Profile'), selectedIndex, isDark),
-                        ],
-                      ),
+                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                  child: Container(
+                    color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.92 : 0.85),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildNavItem(0, Icons.explore_rounded, l(ref, 'Explore'), selectedIndex, isDark),
+                        _buildNavItem(1, Icons.storefront_rounded, l(ref, 'Market'), selectedIndex, isDark),
+                        _buildNavItem(2, Icons.forum_rounded, l(ref, 'Community'), selectedIndex, isDark),
+                        _buildNavItem(3, Icons.campaign_rounded, l(ref, 'Report'), selectedIndex, isDark),
+                        _buildNavItem(4, Icons.person_rounded, l(ref, 'Profile'), selectedIndex, isDark),
+                      ],
                     ),
                   ),
                 ),
               ),
-        ],
-      ),
+            ),
     );
   }
 
