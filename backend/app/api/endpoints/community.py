@@ -414,7 +414,7 @@ def get_messages(
             **m.__dict__,
             "sender_name": _get_name(db, m.sender_id),
             "sender_role": _get_role(db, m.sender_id),
-            "sender_avatar": profile.avatar_url if profile else None,
+            "sender_avatar": profile.avatar_url if profile and profile.avatar_url else None,
             "username": user_info["username"],
             "display_name": user_info["display_name"],
             "mentions": m.mentions or [],
