@@ -514,7 +514,13 @@ def keep_alive_loop():
 @app.get("/api/v1/fix-db")
 def fix_database_schema():
     from sqlalchemy import text
-    from app.db.session import SessionLocal
+    from app.db.session import SessionLocal, engine
+    from app.models.user import Base
+    from app.models import ai, support, gamification, marketplace, community, jobs, news, v4_extensions
+    
+    # Create any entirely missing tables
+    Base.metadata.create_all(bind=engine)
+    
     db = SessionLocal()
     try:
         db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS category VARCHAR;"))
