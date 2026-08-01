@@ -3,28 +3,34 @@ import shutil
 import subprocess
 
 def main():
-    # 1. Copy Beta APK
+    manifest_path = r"d:\harur\frontend\android\app\src\main\AndroidManifest.xml"
     src_apk = r"d:\harur\frontend\build\app\outputs\flutter-apk\app-release.apk"
+    
+    # Helper to update label
+    def update_label(new_label):
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        import re
+        content = re.sub(r'android:label="[^"]+"', f'android:label="{new_label}"', content)
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    # 1. Build Beta APK
+    print("Setting label to MyHarur Beta...")
+    update_label("MyHarur Beta")
+    print("Building Beta APK...")
+    subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
+    
     beta_apk = r"d:\harur\myharur-beta.apk"
     print("Copying beta APK...")
     shutil.copy2(src_apk, beta_apk)
 
-    # 2. Update AndroidManifest.xml to production name
-    manifest_path = r"d:\harur\frontend\android\app\src\main\AndroidManifest.xml"
-    with open(manifest_path, "r", encoding="utf-8") as f:
-        content = f.read()
-    
-    content = content.replace('android:label="MyHarur Beta"', 'android:label="MyHarur"')
-    
-    with open(manifest_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    print("Updated AndroidManifest.xml to production label")
-
-    # 3. Build Production APK
+    # 2. Build Production APK
+    print("Setting label to MyHarur...")
+    update_label("MyHarur")
     print("Building production APK...")
     subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
 
-    # 4. Copy Production APK
     prod_apk = r"d:\harur\myharur.apk"
     print("Copying production APK...")
     shutil.copy2(src_apk, prod_apk)
@@ -34,7 +40,7 @@ def main():
     if os.path.exists(os.path.dirname(static_apk)):
         shutil.copy2(src_apk, static_apk)
 
-    # 5. Git commit and push
+    # 3. Git commit and push
     print("Committing and pushing to git...")
     subprocess.run(["git", "add", "."], cwd=r"d:\harur", check=True)
     subprocess.run(["git", "commit", "-m", "Version 2026.1.0: Add dedicated beta and prod APKs"], cwd=r"d:\harur")
