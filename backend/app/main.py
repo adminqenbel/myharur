@@ -544,6 +544,7 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS status VARCHAR;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS translated_text VARCHAR;"))
+        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
         db.commit()
         return {"status": "success", "message": "Columns added successfully"}
     except Exception as e:
