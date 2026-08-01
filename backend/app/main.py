@@ -518,7 +518,19 @@ def fix_database_schema():
     db = SessionLocal()
     try:
         db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS category VARCHAR;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS condition VARCHAR;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS price FLOAT;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS image_url VARCHAR;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS video_url VARCHAR;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS contact_phone VARCHAR;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS location_lat FLOAT;"))
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS location_lng FLOAT;"))
+        
+        db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS company_name VARCHAR;"))
+        db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS salary_range VARCHAR;"))
         db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS contact_phone VARCHAR;"))
+        db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS location_lat FLOAT;"))
+        db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS location_lng FLOAT;"))
         db.commit()
         return {"status": "success", "message": "Columns added successfully"}
     except Exception as e:
