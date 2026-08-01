@@ -325,12 +325,12 @@ def approve_tournament(
 def _seed_default_rooms(db: Session):
     """Ensure default chat rooms exist."""
     defaults = [
-        {"name": "General", "description": "Public town chat", "icon": "chat"},
-        {"name": "Announcements", "description": "Official updates & alerts", "icon": "campaign"},
-        {"name": "Government Updates", "description": "Info from local authorities", "icon": "account_balance"},
-        {"name": "Marketplace", "description": "Buy and sell discussions", "icon": "shopping_bag"},
-        {"name": "Events", "description": "Upcoming events & meetups", "icon": "event"},
-        {"name": "Help & Support", "description": "Ask for help from the community", "icon": "help"},
+        {"name": "General", "description": "Public town chat", "icon": "chat", "is_public": True},
+        {"name": "Announcements", "description": "Official updates & alerts", "icon": "campaign", "is_public": True},
+        {"name": "Government Updates", "description": "Info from local authorities", "icon": "account_balance", "is_public": True},
+        {"name": "Marketplace", "description": "Buy and sell discussions", "icon": "shopping_bag", "is_public": True},
+        {"name": "Events", "description": "Upcoming events & meetups", "icon": "event", "is_public": True},
+        {"name": "Help & Support", "description": "Ask for help from the community", "icon": "help", "is_public": True},
     ]
     for d in defaults:
         exists = db.query(ChatRoom).filter(ChatRoom.name == d["name"]).first()

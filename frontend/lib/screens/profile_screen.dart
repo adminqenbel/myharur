@@ -48,45 +48,87 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       backgroundColor: AppTheme.bgLight,
       body: CustomScrollView(
         slivers: [
-          // Hero App Bar
+          // Hero App Bar with Cover + Avatar overlap
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 260,
             pinned: true,
-            backgroundColor: AppTheme.primary,
+            backgroundColor: AppTheme.bgLight,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppTheme.primary, AppTheme.secondary],
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
-                    MHAvatar(url: avatarUrl, radius: 45, fallback: fullName.isNotEmpty ? fullName[0] : null),
-                    const SizedBox(height: 12),
-                    Text(
-                      fullName.isEmpty
-                          ? (displayName ?? (username != null ? '@$username' : (isSetup ? email : 'Complete Your Profile')))
-                          : fullName,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
-                    ),
-                    if (username != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text('@$username', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+              background: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Cover Image
+                  Container(
+                    height: 180,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppTheme.primary, AppTheme.secondary],
                       ),
-                    const SizedBox(height: 8),
-                    MHBadge(text: roleName, color: auth.isSuperAdmin ? AppTheme.accent : AppTheme.info),
-                  ],
-                ),
+                    ),
+                  ),
+                  // Avatar Overlap
+                  Positioned(
+                    top: 130,
+                    left: 24,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.bgLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: MHAvatar(url: avatarUrl, radius: 50, fallback: fullName.isNotEmpty ? fullName[0] : null),
+                    ),
+                  ),
+                  // User Details next to Avatar
+                  Positioned(
+                    top: 190,
+                    left: 140,
+                    right: 24,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fullName.isEmpty
+                              ? (displayName ?? (username != null ? '@$username' : (isSetup ? email : 'Complete Your Profile')))
+                              : fullName,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textPrimaryLight),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (username != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text('@$username', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondaryLight)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Status Chip top right
+                  Positioned(
+                    top: 48,
+                    right: 16,
+                    child: MHBadge(
+                      text: roleName,
+                      color: auth.isSuperAdmin ? AppTheme.accent : AppTheme.info,
+                    ),
+                  ),
+                ],
               ),
             ),
             actions: [
-              IconButton(icon: const Icon(Icons.settings, color: Colors.white), onPressed: () => context.push('/settings')),
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), shape: BoxShape.circle),
+                  child: const Icon(Icons.settings_rounded, color: Colors.white, size: 20),
+                ),
+                onPressed: () => context.push('/settings'),
+              ),
+              const SizedBox(width: 8),
             ],
           ),
 
@@ -102,11 +144,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _stat('${streak}', 'Day Streak', Icons.local_fire_department, AppTheme.accent),
+                        _stat('${streak}', 'Day Streak', Icons.local_fire_department_rounded, AppTheme.accent),
                         Container(width: 1, height: 40, color: AppTheme.divider),
-                        _stat('${rewards}', 'Reputation', Icons.workspace_premium, AppTheme.accent),
+                        _stat('${rewards}', 'Reputation', Icons.workspace_premium_rounded, AppTheme.accent),
                         Container(width: 1, height: 40, color: AppTheme.divider),
-                        _stat(roleName, 'Role', Icons.shield, AppTheme.info),
+                        _stat(roleName, 'Role', Icons.shield_rounded, AppTheme.info),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Member ID (MID) Callout
+                  MHCard(
+                    padding: const EdgeInsets.all(16),
+                    onTap: () {
+                      // copy to clipboard logic could go here
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Member ID copied')));
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: AppTheme.info.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                          child: const Icon(Icons.badge_rounded, color: AppTheme.info, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Member ID', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondaryLight)),
+                              Text(mid, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.copy_rounded, color: AppTheme.textSecondaryLight, size: 20),
                       ],
                     ),
                   ),
@@ -114,31 +186,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   // Profile Details
                   _section('Personal Info', [
-                    _tile(Icons.email_outlined, 'Email', email),
-                    _tile(Icons.phone_outlined, 'Phone', phone),
-                    _tile(Icons.home_outlined, 'Address', address),
-                    _tile(Icons.badge_outlined, 'Member ID (MID)', mid),
+                    _tile(Icons.email_rounded, 'Email', email),
+                    _tile(Icons.phone_rounded, 'Phone', phone),
+                    _tile(Icons.home_rounded, 'Address', address),
                   ]),
                   const SizedBox(height: 16),
 
                   // Account Actions
                   _section('Account', [
-                    _actionTile(Icons.edit, 'Edit Profile', AppTheme.info, () => context.push('/edit-profile')),
+                    _actionTile(Icons.edit_rounded, 'Edit Profile', AppTheme.info, () => context.push('/edit-profile')),
                     if (provider != 'google')
-                      _actionTile(Icons.lock_outline, 'Change Password', AppTheme.accent, () => context.push('/change-password')),
+                      _actionTile(Icons.lock_outline_rounded, 'Change Password', AppTheme.accent, () => context.push('/change-password')),
                     if (provider == 'google')
-                      _actionTile(Icons.lock_open, 'Set Password', Colors.purple, () => context.push('/set-password')),
+                      _actionTile(Icons.lock_open_rounded, 'Set Password', Colors.purple, () => context.push('/set-password')),
                     if (auth.isAdmin)
-                      _actionTile(Icons.admin_panel_settings, 'Admin Dashboard', AppTheme.danger, () => context.push('/admin')),
+                      _actionTile(Icons.admin_panel_settings_rounded, 'Admin Dashboard', AppTheme.danger, () => context.push('/admin')),
                   ]),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   _section('Preferences', [
-                    _actionTile(Icons.translate, 'Language Settings', AppTheme.success, () => context.push('/settings')),
+                    _actionTile(Icons.translate_rounded, 'Language Settings', AppTheme.success, () => context.push('/settings')),
                     _actionTile(Icons.notifications_outlined, 'Notifications', AppTheme.info, () {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon!')));
                     }),
-                    _actionTile(Icons.help_outline, 'Help & Support', AppTheme.success, () {
+                    _actionTile(Icons.help_outline_rounded, 'Help & Support', AppTheme.success, () {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Help & Support coming soon!')));
                     }),
                   ]),

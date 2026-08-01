@@ -29,7 +29,7 @@ class AppTheme {
   static const double radiusSm  = 8.0;
   static const double radiusMd  = 12.0;
   static const double radiusLg  = 16.0;
-  static const double radiusXl  = 24.0;
+  static const double radiusXl  = 20.0;
 
   // ── Card Decoration ────────────────────────────────────────────────────────
   static BoxDecoration card({double radius = radiusMd, Color color = surface}) {

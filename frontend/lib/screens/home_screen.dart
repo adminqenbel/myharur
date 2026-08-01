@@ -114,46 +114,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
+        return MHBottomSheet(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.location_off, size: 64, color: Colors.red),
+              const Icon(Icons.location_off_rounded, size: 56, color: AppTheme.danger),
               const SizedBox(height: 16),
-              Text(l(ref, 'Outside Service Area'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(l(ref, 'Outside Service Area'), style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
-              const Text('You seem to be outside the Dharmapuri/Harur region. You can continue as a guest or set a manual location to access local services.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 14)),
+              Text('You seem to be outside the Dharmapuri/Harur region. You can continue as a guest or set a manual location to access local services.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.map, color: Colors.white),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showManualLocationPicker();
-                  },
-                  label: const Text('Pick Manual Location', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
+              MHButton(
+                text: 'Pick Manual Location',
+                icon: Icons.map_rounded,
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showManualLocationPicker();
+                },
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Continue Anyway', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
+              const SizedBox(height: 16),
+              MHOutlinedButton(
+                text: 'Continue Anyway',
+                onPressed: () => Navigator.pop(context),
               )
             ],
           ),
@@ -166,46 +150,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+        return MHBottomSheet(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Select Region', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              Text('Select Region', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 24),
               ListTile(
-                leading: const Icon(Icons.location_city, color: Colors.blue),
-                title: const Text('Harur Town'),
+                leading: const Icon(Icons.location_city_rounded, color: AppTheme.info),
+                title: const Text('Harur Town', style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: const Text('Dharmapuri District'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade300)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppTheme.divider)),
                 onTap: () async {
                   await LocationPrefs.saveManualLocation(12.0620, 78.4975, 'Harur Town');
                   if (context.mounted) Navigator.pop(context);
                   _determinePosition();
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.location_city, color: Colors.green),
-                title: const Text('Dharmapuri City'),
+                leading: const Icon(Icons.location_city_rounded, color: AppTheme.success),
+                title: const Text('Dharmapuri City', style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: const Text('Dharmapuri District'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade300)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppTheme.divider)),
                 onTap: () async {
                   await LocationPrefs.saveManualLocation(12.1211, 78.1582, 'Dharmapuri City');
                   if (context.mounted) Navigator.pop(context);
                   _determinePosition();
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               TextButton(
                 onPressed: () async {
                   await LocationPrefs.clearManualLocation();
                   if (context.mounted) Navigator.pop(context);
                   _determinePosition();
                 },
-                child: const Text('Clear Manual Location'),
+                child: const Text('Clear Manual Location', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.w600)),
               )
             ],
           ),
@@ -249,31 +232,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildServiceIcon(IconData icon, String label, Color color, VoidCallback onTap) {
-    return GestureDetector(
+    return MHCard(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 26),
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 8),
-            Text(l(ref, label), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF16324F)), textAlign: TextAlign.center),
-          ],
-        ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(l(ref, label), style: Theme.of(context).textTheme.labelLarge, textAlign: TextAlign.center),
+        ],
       ),
     );
   }
@@ -294,13 +269,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           slivers: [
             // ── Custom Header (SliverAppBar) ───────────────────────────────
             SliverAppBar(
-              expandedHeight: 110.0,
+              expandedHeight: 70.0,
               floating: true,
               pinned: true,
               backgroundColor: const Color(0xFF081C2D), // Primary Dark
               elevation: 0,
               shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
@@ -346,38 +321,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // ── Location Badge ──────────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: InkWell(
+                    child: MHCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       onTap: _showManualLocationPicker,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.location_on_rounded, color: _isInsideDharmapuri ? const Color(0xFF06D6A0) : const Color(0xFFEF233C), size: 24),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF081C2D)),
-                                  ),
-                                  Text(
-                                    _locationName,
-                                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                                  ),
-                                ],
-                              ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on_rounded, color: _isInsideDharmapuri ? AppTheme.success : AppTheme.danger, size: 28),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  _locationName,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
                             ),
-                            const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                          ],
-                        ),
+                          ),
+                          const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        ],
                       ),
                     ),
                   ),
@@ -442,10 +409,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       children: [
-                        _buildQuickAction(Icons.newspaper_rounded, 'News', const Color(0xFF3A86FF), () => _navigateTo(const NewsScreen())),
-                        _buildQuickAction(Icons.sos_rounded, 'Emergency', const Color(0xFFEF233C), () => _navigateTo(const EmergencyScreen())),
-                        _buildQuickAction(Icons.storefront_rounded, 'Shops', const Color(0xFF06D6A0), () => _navigateTo(const ShopsScreen())),
-                        _buildQuickAction(Icons.shopping_bag_rounded, 'Market', const Color(0xFFFFB703), () => context.go('/market')),
+                        _buildQuickAction(Icons.newspaper_rounded, 'News', AppTheme.info, () => _navigateTo(const NewsScreen())),
+                        _buildQuickAction(Icons.sos_rounded, 'Emergency', AppTheme.danger, () => _navigateTo(const EmergencyScreen())),
+                        _buildQuickAction(Icons.storefront_rounded, 'Shops', AppTheme.success, () => _navigateTo(const ShopsScreen())),
+                        _buildQuickAction(Icons.shopping_bag_rounded, 'Market', AppTheme.accent, () => context.go('/market')),
                       ],
                     ),
                   ),
@@ -531,19 +498,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: 8),
 
                   if (_newsLoading)
-                    const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
-                  else if (_latestNews.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          children: [
-                            Icon(Icons.article_rounded, size: 64, color: Colors.grey.shade300),
-                            const SizedBox(height: 12),
-                            const Text('No news available right now.', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: 3,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16, left: 24, right: 24),
+                        child: MHSkeletonLoader(width: double.infinity, height: 280, borderRadius: 16),
                       ),
+                    )
+                  else if (_latestNews.isEmpty)
+                    const MHEmptyState(
+                      icon: Icons.article_rounded, 
+                      title: 'No News Available', 
+                      description: 'Check back later for local updates.',
                     )
                   else
                     ListView.builder(

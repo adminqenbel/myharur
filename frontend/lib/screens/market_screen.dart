@@ -36,7 +36,17 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     setState(() => _loadingListings = true);
     try {
       final r = await ApiClient.dio.get('/marketplace/');
-      setState(() => _listings = r.data);
+      final List<dynamic> data = r.data;
+      
+      // Deduplicate items that have same title and price
+      final Map<String, dynamic> uniqueMap = {};
+      for (var item in data) {
+        final key = '${item['title']}_${item['price']}';
+        if (!uniqueMap.containsKey(key)) {
+          uniqueMap[key] = item;
+        }
+      }
+      setState(() => _listings = uniqueMap.values.toList());
     } catch (_) {} finally {
       setState(() => _loadingListings = false);
     }

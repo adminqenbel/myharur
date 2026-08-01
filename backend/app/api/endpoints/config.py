@@ -22,8 +22,8 @@ def get_config(db: Session = Depends(deps.get_db)):
     is_maintenance = setting.value.lower() == "true" if setting else False
 
     return AppConfig(
-        min_version="2.0.0",
-        latest_version="2.1.0",
+        min_version="2026.1.0",
+        latest_version="2026.1.0",
         update_url="https://myharur.onrender.com",
         maintenance_mode=is_maintenance
     )

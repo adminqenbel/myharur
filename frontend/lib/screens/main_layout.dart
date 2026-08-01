@@ -50,50 +50,55 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      extendBody: true, // Allows body to flow underneath the transparent nav bar
-      body: widget.child,
-      bottomNavigationBar: isKeyboardOpen ? null : SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-          child: Container(
-            height: 72,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-                  blurRadius: 20,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 8),
-                )
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Container(
-                  color: isDark ? AppTheme.surface.withOpacity(0.7) : Colors.white.withOpacity(0.85),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildNavItem(0, Icons.explore_rounded, l(ref, 'Explore'), selectedIndex, isDark),
-                      _buildNavItem(1, Icons.storefront_rounded, l(ref, 'Market'), selectedIndex, isDark),
-                      _buildNavItem(2, Icons.forum_rounded, l(ref, 'Community'), selectedIndex, isDark),
-                      _buildNavItem(3, Icons.campaign_rounded, l(ref, 'Report'), selectedIndex, isDark),
-                      _buildNavItem(4, Icons.person_rounded, l(ref, 'Profile'), selectedIndex, isDark),
-                    ],
+      extendBody: true, // Allows body to flow underneath
+      body: Stack(
+        children: [
+          widget.child,
+          if (!isKeyboardOpen)
+            Positioned(
+              left: 24,
+              right: 24,
+              bottom: 24 + MediaQuery.of(context).padding.bottom,
+              child: Container(
+                height: 64,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                      blurRadius: 20,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 8),
+                    )
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                    child: Container(
+                      color: isDark ? AppTheme.surface.withOpacity(0.7) : Colors.white.withOpacity(0.85),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildNavItem(0, Icons.explore_rounded, l(ref, 'Explore'), selectedIndex, isDark),
+                          _buildNavItem(1, Icons.storefront_rounded, l(ref, 'Market'), selectedIndex, isDark),
+                          _buildNavItem(2, Icons.forum_rounded, l(ref, 'Community'), selectedIndex, isDark),
+                          _buildNavItem(3, Icons.campaign_rounded, l(ref, 'Report'), selectedIndex, isDark),
+                          _buildNavItem(4, Icons.person_rounded, l(ref, 'Profile'), selectedIndex, isDark),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -136,8 +141,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 label,
                 style: TextStyle(
                   color: activeColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
                 ),
               ),
             ]

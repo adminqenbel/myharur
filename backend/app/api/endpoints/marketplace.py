@@ -39,7 +39,7 @@ def get_listings(
     else:
         q = q.order_by(MarketplaceModel.created_at.desc())
         
-    return q.offset(skip).limit(limit).all()
+    return q.distinct().offset(skip).limit(limit).all()
 
 @router.post("/", response_model=MarketplaceListing)
 def create_listing(

@@ -6,6 +6,8 @@ import '../providers/auth_provider.dart';
 import '../l10n/translations.dart';
 import '../services/socket_service.dart';
 import 'chat_room_screen.dart';
+import '../widgets/design_system.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -26,6 +28,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
     _fetchAll();
   }
 
@@ -51,28 +56,39 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9), // Light background theme
       appBar: AppBar(
-        title: Text(l(ref, 'Community Hub'), style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
-        backgroundColor: Colors.white,
+        title: Text(l(ref, 'Community Hub'), style: Theme.of(context).textTheme.headlineMedium),
+        backgroundColor: isDark ? AppTheme.surface : Colors.white,
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF081C2D)),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: const Color(0xFF007AFF),
-          unselectedLabelColor: const Color(0xFF64748B),
-          indicatorColor: const Color(0xFF007AFF),
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          tabs: const [
-            Tab(icon: Icon(Icons.how_to_vote_rounded, size: 20), text: 'Polls'),
-            Tab(icon: Icon(Icons.event_rounded, size: 20), text: 'Events'),
-            Tab(icon: Icon(Icons.forum_rounded, size: 20), text: 'Q&A'),
-            Tab(icon: Icon(Icons.chat_bubble_outline_rounded, size: 20), text: 'Chat'),
-          ],
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.textPrimaryLight),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            color: isDark ? AppTheme.surface : Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelColor: AppTheme.accent,
+              unselectedLabelColor: isDark ? Colors.white60 : AppTheme.textSecondaryLight,
+              indicator: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              indicatorPadding: const EdgeInsets.symmetric(horizontal: -12, vertical: 8),
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              tabs: const [
+                Tab(icon: Icon(Icons.how_to_vote_rounded, size: 20), text: 'Polls'),
+                Tab(icon: Icon(Icons.event_rounded, size: 20), text: 'Events'),
+                Tab(icon: Icon(Icons.forum_rounded, size: 20), text: 'Q&A'),
+                Tab(icon: Icon(Icons.chat_bubble_outline_rounded, size: 20), text: 'Chat'),
+              ],
+            ),
+          ),
         ),
       ),
       floatingActionButton: _buildFAB(),
@@ -101,7 +117,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     if (_tabController.index == 3 && !canCreateRoom) return null;
 
     return FloatingActionButton(
-      backgroundColor: const Color(0xFF081C2D),
+      backgroundColor: AppTheme.accent,
       onPressed: () {
         switch (_tabController.index) {
           case 0: _showCreatePollDialog(); break;
@@ -110,13 +126,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
           case 3: _showCreateChatRoomDialog(); break;
         }
       },
-      child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      child: const Icon(Icons.add_rounded, color: AppTheme.primary, size: 28),
     );
   }
 
   // ── Polls ──────────────────────────────────────────────────────────────────
   Widget _buildPolls() {
-    if (_polls.isEmpty) return _emptyState(Icons.how_to_vote_rounded, 'No polls yet');
+    if (_polls.isEmpty) return const MHEmptyState(icon: Icons.how_to_vote_rounded, title: 'No Polls Yet', description: 'Check back later or start a new poll.');
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
@@ -132,19 +148,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final totalVotes = options.fold<int>(0, (sum, o) => sum + (o['vote_count'] as int? ?? 0));
     final votedId = poll['user_voted_option_id'] as int?;
 
-    return Container(
+    return MHCard(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(poll['question'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D))),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(poll['question'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ...options.map<Widget>((opt) {
               final votes = opt['vote_count'] as int? ?? 0;
@@ -247,7 +257,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   // ── Events ─────────────────────────────────────────────────────────────────
   Widget _buildEvents() {
-    if (_events.isEmpty) return _emptyState(Icons.event_rounded, 'No events yet');
+    if (_events.isEmpty) return const MHEmptyState(icon: Icons.event_rounded, title: 'No Events Yet', description: 'Be the first to create an event!');
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
@@ -255,41 +265,36 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
         itemCount: _events.length,
         itemBuilder: (ctx, i) {
           final event = _events[i];
-          return Container(
+          return MHCard(
             margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
-            ),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (event['image_url'] != null)
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    child: Image.network(event['image_url'], width: double.infinity, height: 160, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox()),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: CachedNetworkImage(imageUrl: event['image_url'], width: double.infinity, height: 160, fit: BoxFit.cover, errorWidget: (_, __, ___) => const SizedBox()),
                   ),
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(event['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF081C2D))),
+                    Text(event['title'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     if (event['event_date'] != null)
                       Row(children: [
-                        const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF007AFF)),
+                        const Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.info),
                         const SizedBox(width: 8),
-                        Text(event['event_date'].toString().substring(0, 10), style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                        Text(event['event_date'].toString().substring(0, 10), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                       ]),
                     const SizedBox(height: 8),
                     if (event['location_name'] != null)
                       Row(children: [
-                        const Icon(Icons.location_on_rounded, size: 16, color: Color(0xFFEF233C)),
+                        const Icon(Icons.location_on_rounded, size: 16, color: AppTheme.danger),
                         const SizedBox(width: 8),
-                        Text(event['location_name'], style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                        Text(event['location_name'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
                       ]),
-                    if (event['description'] != null) ...[const SizedBox(height: 16), Text(event['description'], style: const TextStyle(color: Color(0xFF081C2D), height: 1.5))],
+                    if (event['description'] != null) ...[const SizedBox(height: 16), Text(event['description'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5))],
                   ]),
                 ),
               ],
@@ -359,7 +364,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
 
   // ── Q&A ────────────────────────────────────────────────────────────────────
   Widget _buildQA() {
-    if (_questions.isEmpty) return _emptyState(Icons.forum_rounded, 'No questions yet');
+    if (_questions.isEmpty) return const MHEmptyState(icon: Icons.forum_rounded, title: 'No Questions Yet', description: 'Be the first to ask a question!');
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
@@ -368,32 +373,28 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
         itemBuilder: (ctx, i) {
           final q = _questions[i];
           final answers = q['answers'] as List? ?? [];
-          return Container(
+          return MHCard(
             margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
-            ),
+            padding: EdgeInsets.zero,
             child: ExpansionTile(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               leading: Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF).withOpacity(0.1),
+                  color: AppTheme.info.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16)
                 ),
-                child: const Center(child: Text('Q', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800, fontSize: 18))),
+                child: const Center(child: Text('Q', style: TextStyle(color: AppTheme.info, fontWeight: FontWeight.w800, fontSize: 18))),
               ),
-              title: Text(q['text'] ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF081C2D))),
+              title: Text(q['text'] ?? '', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(q['author_name'] ?? 'Anonymous', style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text(q['author_name'] ?? 'Anonymous', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
                     if (q['author_role'] != null && q['author_role'] != 'User')
                       Container(
                         margin: const EdgeInsets.only(top: 4),
