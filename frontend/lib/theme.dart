@@ -2,29 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // ── Brand Colors ───────────────────────────────────────────────────────────
-  static const Color primary    = Color(0xFF081C2D);  // Dark Navy
-  static const Color secondary  = Color(0xFF102A43);  
-  static const Color surface    = Color(0xFF16324F);  
-  static const Color accent     = Color(0xFFF4B400);  // Yellow Accent
-  static const Color success    = Color(0xFF06D6A0);  
-  static const Color danger     = Color(0xFFEF233C);  
-  static const Color info       = Color(0xFF3A86FF);  
+  // ── Single Source of Truth Brand Colors ────────────────────────────────────
+  static const Color accent     = Color(0xFFF4B400);  // Amber Accent (Always)
   
+  // Light Theme Colors
   static const Color bgLight    = Color(0xFFFFFFFF);
-  static const Color bgDark     = Color(0xFF000000);
-  static const Color textPrimaryLight = Color(0xFF081C2D);
+  static const Color surfaceLight = Color(0xFFF5F5F7);
+  static const Color textPrimaryLight = Color(0xFF081C2D); // Dark Navy
   static const Color textSecondaryLight = Color(0xFF64748B);
   
+  // Dark Theme Colors
+  static const Color bgDark     = Color(0xFF000000);
+  static const Color surfaceDark = Color(0xFF121212);
   static const Color textPrimaryDark = Color(0xFFFFFFFF);
   static const Color textSecondaryDark = Color(0xFFB0BEC5);
 
-  // Aliases for compatibility
-  static const Color textSecondary = textSecondaryLight;
+  // Status Colors (Shared)
+  static const Color success    = Color(0xFF06D6A0);  
+  static const Color danger     = Color(0xFFEF233C);  
+  static const Color info       = Color(0xFF3A86FF);  
+
+  static const Color dividerLight = Color(0xFFE8EDF2);
+  static const Color dividerDark  = Color(0xFF2C2C2E);
+
+  // Fallback aliases (to be removed eventually, kept for compatibility if absolutely needed)
+  static const Color primary = textPrimaryLight;
+  static const Color surface = surfaceLight;
   static const Color bg = bgLight;
-  static const Color accentDark = Color(0xFFD49C00);
-  
-  static const Color divider    = Color(0xFFE8EDF2);
+  static const Color textSecondary = textSecondaryLight;
+  static const Color divider = dividerLight;
+  static const Color secondary = textPrimaryLight;
 
   // ── Border Radius ──────────────────────────────────────────────────────────
   static const double radiusSm  = 8.0;
@@ -59,49 +66,50 @@ class AppTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: bgLight,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
-        primary: primary,
+        primary: textPrimaryLight,
         secondary: accent,
-        surface: bgLight,
+        surface: surfaceLight,
         background: bgLight,
         error: danger,
         onPrimary: Colors.white,
-        onSecondary: primary,
+        onSecondary: textPrimaryLight,
         onSurface: textPrimaryLight,
         onBackground: textPrimaryLight,
       ),
 
       // AppBar
       appBarTheme: AppBarTheme(
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
+        backgroundColor: bgLight,
+        foregroundColor: textPrimaryLight,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: GoogleFonts.plusJakartaSans(
-          color: Colors.white,
+          color: textPrimaryLight,
           fontSize: 17,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.2,
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: textPrimaryLight),
+        actionsIconTheme: const IconThemeData(color: textPrimaryLight),
       ),
 
       // Navigation Bar (bottom)
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surface,
+        backgroundColor: surfaceLight,
         indicatorColor: accent.withOpacity(0.2),
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: primary);
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: textPrimaryLight);
           }
-          return GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w500, color: textSecondary);
+          return GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w500, color: textSecondaryLight);
         }),
-        iconTheme: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return const IconThemeData(color: primary, size: 24);
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: textPrimaryLight, size: 24);
           }
-          return const IconThemeData(color: textSecondary, size: 22);
+          return const IconThemeData(color: textSecondaryLight, size: 22);
         }),
         elevation: 8,
         shadowColor: Colors.black.withOpacity(0.1),
@@ -110,7 +118,7 @@ class AppTheme {
       // TabBar
       tabBarTheme: const TabBarThemeData(
         labelColor: accent,
-        unselectedLabelColor: Colors.white60,
+        unselectedLabelColor: textSecondaryLight,
         indicatorColor: accent,
         dividerColor: Colors.transparent,
       ),
@@ -119,7 +127,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accent,
-          foregroundColor: primary,
+          foregroundColor: textPrimaryLight,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -130,8 +138,8 @@ class AppTheme {
       // Outlined Button
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          side: const BorderSide(color: divider),
+          foregroundColor: textPrimaryLight,
+          side: const BorderSide(color: dividerLight),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 15),
@@ -149,10 +157,10 @@ class AppTheme {
       // Card
       cardTheme: CardThemeData(
         elevation: 0,
-        color: surface,
+        color: surfaceLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          side: const BorderSide(color: divider, width: 1),
+          side: const BorderSide(color: dividerLight, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -160,41 +168,41 @@ class AppTheme {
       // Input / TextField
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: bg,
+        fillColor: bgLight,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: divider),
+          borderSide: const BorderSide(color: dividerLight),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: divider),
+          borderSide: const BorderSide(color: dividerLight),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: info, width: 1.5),
         ),
-        labelStyle: GoogleFonts.plusJakartaSans(color: textSecondary, fontSize: 14),
-        hintStyle: GoogleFonts.plusJakartaSans(color: textSecondary, fontSize: 14),
+        labelStyle: GoogleFonts.plusJakartaSans(color: textSecondaryLight, fontSize: 14),
+        hintStyle: GoogleFonts.plusJakartaSans(color: textSecondaryLight, fontSize: 14),
       ),
 
       // Chip
       chipTheme: ChipThemeData(
-        backgroundColor: bg,
-        labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600),
-        side: const BorderSide(color: divider),
+        backgroundColor: bgLight,
+        labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimaryLight),
+        side: const BorderSide(color: dividerLight),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
       // List Tile
       listTileTheme: ListTileThemeData(
-        tileColor: surface,
+        tileColor: surfaceLight,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
 
       // Divider
-      dividerTheme: const DividerThemeData(color: divider, thickness: 1, space: 1),
+      dividerTheme: const DividerThemeData(color: dividerLight, thickness: 1, space: 1),
 
       // Text
       textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
@@ -216,36 +224,85 @@ class AppTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: bgDark,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      brightness: Brightness.dark,
       colorScheme: const ColorScheme.dark(
-        primary: primary,
+        primary: textPrimaryDark,
         secondary: accent,
-        surface: surface,
+        surface: surfaceDark,
         background: bgDark,
         error: danger,
-        onPrimary: Colors.white,
-        onSecondary: primary,
-        onSurface: Colors.white,
-        onBackground: Colors.white,
+        onPrimary: Colors.black,
+        onSecondary: Colors.black,
+        onSurface: textPrimaryDark,
+        onBackground: textPrimaryDark,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
+        backgroundColor: bgDark,
+        foregroundColor: textPrimaryDark,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: 0.2),
-        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: GoogleFonts.plusJakartaSans(color: textPrimaryDark, fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+        iconTheme: const IconThemeData(color: textPrimaryDark),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: surface,
+        color: surfaceDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: secondary,
+        backgroundColor: surfaceDark,
         selectedItemColor: accent,
         unselectedItemColor: textSecondaryDark,
       ),
+
+      // Elevated Button
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          foregroundColor: Colors.black, // Dark theme amber button has black text
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+      ),
+
+      // Outlined Button
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: textPrimaryDark,
+          side: const BorderSide(color: dividerDark),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 15),
+        ),
+      ),
+
+      // Input / TextField
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surfaceDark,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: const BorderSide(color: dividerDark),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: const BorderSide(color: dividerDark),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: const BorderSide(color: info, width: 1.5),
+        ),
+        labelStyle: GoogleFonts.plusJakartaSans(color: textSecondaryDark, fontSize: 14),
+        hintStyle: GoogleFonts.plusJakartaSans(color: textSecondaryDark, fontSize: 14),
+      ),
+
+      // Divider
+      dividerTheme: const DividerThemeData(color: dividerDark, thickness: 1, space: 1),
+
       textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
         displayLarge: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: textPrimaryDark),
         headlineLarge: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimaryDark),

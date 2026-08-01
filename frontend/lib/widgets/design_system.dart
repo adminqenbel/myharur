@@ -25,17 +25,18 @@ class MHButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = isSecondary ? Colors.transparent : AppTheme.accent;
-    final textColor = isSecondary ? theme.colorScheme.onSurface : AppTheme.primary;
+    final color = isSecondary ? Colors.transparent : theme.colorScheme.secondary;
+    final textColor = isSecondary ? theme.colorScheme.onSurface : theme.colorScheme.onSecondary;
+    final borderColor = theme.dividerTheme.color ?? theme.dividerColor;
     final isDisabled = onPressed == null || isLoading;
     
     return Container(
       decoration: BoxDecoration(
         color: isDisabled && !isSecondary ? color.withOpacity(0.5) : color,
-        border: isSecondary ? Border.all(color: AppTheme.divider) : null,
+        border: isSecondary ? Border.all(color: borderColor) : null,
         borderRadius: BorderRadius.circular(16),
         boxShadow: isSecondary || isDisabled ? null : [
-          BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 4))
+          BoxShadow(color: theme.colorScheme.secondary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 4))
         ]
       ),
       child: Material(
@@ -474,7 +475,7 @@ class MHEmergencyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = item['status'] ?? 'pending';
-    final color = isGovt ? AppTheme.accentDark : AppTheme.danger;
+    final color = isGovt ? AppTheme.accent : AppTheme.danger;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),

@@ -188,7 +188,10 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
-        if (snapshot.hasError) return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('Failed to load.')));
+        if (snapshot.hasError) {
+          final e = snapshot.error;
+          return MHErrorState(message: e.toString(), onRetry: _fetchEmergencies);
+        }
         final items = snapshot.data ?? [];
         if (items.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('No active records.', style: TextStyle(color: Colors.grey))));
 
@@ -300,7 +303,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: MHButton(
                   onPressed: isSubmitting ? null : () async {
                     if (descCtrl.text.isEmpty) return;
                     setMBS(() => isSubmitting = true);
@@ -315,12 +318,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchEmergencies();
                     } catch (e) {
-                      if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                      }
                       setMBS(() => isSubmitting = false);
                     }
                   },
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                  child: isSubmitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Submit Report', style: TextStyle(fontSize: 16)),
+                  isLoading: isSubmitting,
+                  text: 'Submit Report',
                 ),
               ),
             ],

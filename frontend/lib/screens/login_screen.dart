@@ -7,6 +7,7 @@ import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../utils/update_manager.dart';
 import '../theme.dart';
+import '../widgets/design_system.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -258,9 +259,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
+                        child: MHButton(
                           onPressed: _handleAdminLogin,
-                          child: const Text('Login', style: TextStyle(fontSize: 15)),
+                          text: 'Login',
+                          isLoading: _isLoading,
                         ),
                       ),
                     ],

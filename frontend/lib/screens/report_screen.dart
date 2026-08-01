@@ -6,6 +6,7 @@ import '../l10n/translations.dart';
 import '../api_client.dart';
 import 'package:dio/dio.dart';
 import '../theme.dart';
+import '../widgets/design_system.dart';
 
 class ReportScreen extends ConsumerStatefulWidget {
   const ReportScreen({super.key});
@@ -38,7 +39,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Successfully reported: $category! Alerting network...')));
     } on DioException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: ${e.message}')));
+      final msg = e.error != null ? e.error.toString() : 'Failed to report.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -102,17 +107,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             const SizedBox(height: 16),
             const Text('Emergency SOS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.local_police, size: 28),
-              label: Text(l(ref, 'Police SOS Alert'), style: const TextStyle(fontSize: 18)),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, foregroundColor: AppTheme.primary, padding: const EdgeInsets.symmetric(vertical: 16)),
+            MHButton(
+              icon: Icons.local_police,
+              text: l(ref, 'Police SOS Alert'),
               onPressed: () => _reportEmergency('citizen_sos', 'medical'), // Mapped to general SOS
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.bloodtype, size: 28),
-              label: Text(l(ref, 'Urgent Blood Required'), style: const TextStyle(fontSize: 18)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade900, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
+            MHButton(
+              icon: Icons.bloodtype,
+              text: l(ref, 'Urgent Blood Required'),
               onPressed: () => _reportEmergency('citizen_sos', 'blood'),
             ),
             const SizedBox(height: 48),
@@ -122,10 +125,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             const SizedBox(height: 8),
             const Text('Report garbage, potholes, or broken streetlights to the community.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.report_problem),
-              label: Text(l(ref, 'Report Govt Grievance')),
-              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            MHOutlinedButton(
+              icon: Icons.report_problem,
+              text: l(ref, 'Report Govt Grievance'),
               onPressed: _showGrievanceDialog,
             ),
           ],

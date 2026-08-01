@@ -215,7 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: color.withOpacity(0.2), width: 1.5),
                 boxShadow: [
@@ -225,7 +225,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 10),
-            Text(l(ref, label), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0D1B2A)), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(l(ref, label), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -258,9 +258,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final displayName = auth.user?['display_name'] ?? auth.user?['username'] ?? 'Citizen';
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9), // Light background theme
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: () async {
           await _fetchLatestNews();
@@ -273,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               expandedHeight: 70.0,
               floating: true,
               pinned: true,
-              backgroundColor: const Color(0xFF081C2D), // Primary Dark
+              backgroundColor: theme.appBarTheme.backgroundColor,
               elevation: 0,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
@@ -284,14 +285,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Hello,", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-                    Text(displayName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+                    Text("Hello,", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w500)),
+                    Text(displayName, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
                   ],
                 ),
                 background: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF081C2D),
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                  decoration: BoxDecoration(
+                    color: theme.appBarTheme.backgroundColor,
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
                   ),
                 ),
               ),

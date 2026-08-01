@@ -61,6 +61,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               bottom: 24 + MediaQuery.of(context).padding.bottom,
               child: Container(
                 height: 64,
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
@@ -68,9 +69,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                     width: 1,
                   ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: BackdropFilter(
+                child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                     child: Container(
                       color: isDark ? AppTheme.surface.withOpacity(0.7) : Colors.white.withOpacity(0.85),
@@ -89,7 +88,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   ),
                 ),
               ),
-            ),
         ],
       ),
     );
