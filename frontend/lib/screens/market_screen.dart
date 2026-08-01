@@ -38,15 +38,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       final r = await ApiClient.dio.get('/marketplace/');
       final List<dynamic> data = r.data;
       
-      // Deduplicate items that have same title and price
-      final Map<String, dynamic> uniqueMap = {};
-      for (var item in data) {
-        final key = '${item['title']}_${item['price']}';
-        if (!uniqueMap.containsKey(key)) {
-          uniqueMap[key] = item;
-        }
-      }
-      setState(() => _listings = uniqueMap.values.toList());
+      setState(() => _listings = data);
     } catch (_) {} finally {
       setState(() => _loadingListings = false);
     }
@@ -264,17 +256,20 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           ),
         ),
         floatingActionButton: auth.isLoggedIn
-            ? Builder(
-                builder: (ctx) {
-                  final tab = DefaultTabController.of(ctx);
-                  return FloatingActionButton.extended(
-                    onPressed: () => tab.index == 0 ? _showCreateListingDialog() : _showCreateJobDialog(),
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: AppTheme.primary,
-                    icon: Icon(Icons.add),
-                    label: Text('Post', style: TextStyle(fontWeight: FontWeight.w700)),
-                  );
-                },
+            ? Padding(
+                padding: const EdgeInsets.only(bottom: 100),
+                child: Builder(
+                  builder: (ctx) {
+                    final tab = DefaultTabController.of(ctx);
+                    return FloatingActionButton.extended(
+                      onPressed: () => tab.index == 0 ? _showCreateListingDialog() : _showCreateJobDialog(),
+                      backgroundColor: AppTheme.accent,
+                      foregroundColor: AppTheme.textPrimaryLight,
+                      icon: Icon(Icons.add),
+                      label: Text('Post', style: TextStyle(fontWeight: FontWeight.w700)),
+                    );
+                  },
+                ),
               )
             : null,
         body: TabBarView(

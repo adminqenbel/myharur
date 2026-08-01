@@ -66,7 +66,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [AppTheme.primary, AppTheme.secondary],
+                        colors: [Theme.of(context).colorScheme.primary, AppTheme.secondary],
                       ),
                     ),
                   ),

@@ -127,7 +127,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
             case 3: _showCreateChatRoomDialog(); break;
           }
         },
-        child: Icon(Icons.add_rounded, color: AppTheme.primary, size: 28),
+        child: Icon(Icons.add_rounded, color: AppTheme.textPrimaryLight, size: 28),
       ),
     );
   }

@@ -151,12 +151,12 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
       ),
       floatingActionButton: auth.isLoggedIn
           ? Padding(
-              padding: EdgeInsets.only(bottom: 80),
+              padding: EdgeInsets.only(bottom: 100),
               child: FloatingActionButton.extended(
                 onPressed: _showSubmitNewsDialog,
                 backgroundColor: AppTheme.accent,
-                icon: Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
-                label: Text('Post News', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                icon: Icon(Icons.add_circle_outline_rounded, color: AppTheme.textPrimaryLight),
+                label: Text('Post News', style: TextStyle(color: AppTheme.textPrimaryLight, fontWeight: FontWeight.bold)),
               ),
             )
           : null,
@@ -215,8 +215,8 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                         SizedBox(height: 24),
                         ElevatedButton.icon(
                           onPressed: () => setState(() => _fetchData()),
-                          icon: Icon(Icons.refresh_rounded, color: AppTheme.primary),
-                          label: Text('Try Again', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                          icon: Icon(Icons.refresh_rounded, color: AppTheme.textPrimaryLight),
+                          label: Text('Try Again', style: TextStyle(color: AppTheme.textPrimaryLight, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.accent, 
                             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14), 

@@ -36,11 +36,15 @@ class _ShopsScreenState extends State<ShopsScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.search_rounded),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Search coming soon!')));
+            },
           ),
           IconButton(
             icon: Icon(Icons.filter_list_rounded),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filters coming soon!')));
+            },
           )
         ],
       ),
@@ -170,7 +174,9 @@ class _ShopsScreenState extends State<ShopsScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {}, // Navigate to shop details
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shop details coming soon!')));
+          }, // Navigate to shop details
           child: Padding(
             padding: EdgeInsets.all(16.0),
             child: Column(
@@ -266,7 +272,9 @@ class _ShopsScreenState extends State<ShopsScreen> {
 
   Widget _buildActionButton(IconData icon, String label, Color color) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label coming soon!')));
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),

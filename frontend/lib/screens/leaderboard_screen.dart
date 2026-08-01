@@ -61,7 +61,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
       height: 120,
       padding: EdgeInsets.only(top: 40, left: 16, right: 24, bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.primary : AppTheme.bg,
+        color: isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
         boxShadow: [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
@@ -76,7 +76,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           Text(
             'Leaderboard',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              color: isDark ? Theme.of(context).colorScheme.surface : AppTheme.primary,
+              color: isDark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.primary,
             ),
           ),
         ],

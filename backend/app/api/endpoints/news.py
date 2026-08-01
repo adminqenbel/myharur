@@ -156,6 +156,7 @@ def create_news(
         verified_at=datetime.utcnow() if auto_approve else None,
     )
     db.add(news)
+    db.commit()
     db.refresh(news)
     return news
     

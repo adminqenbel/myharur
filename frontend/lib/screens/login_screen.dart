@@ -121,7 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -135,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  color: AppTheme.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 4))],
                 ),
@@ -167,7 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: AppTheme.divider, width: 1.5),
-                      backgroundColor: AppTheme.surface,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
                     ),
                     child: Row(
@@ -199,7 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: AppTheme.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.surface,
                     ),
                     child: Text('Browse as Guest', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -219,7 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: () => setState(() => _isAdminMode = true),
                   icon: Icon(Icons.admin_panel_settings_outlined, size: 18),
                   label: Text('Admin / Staff Login'),
-                  style: TextButton.styleFrom(foregroundColor: AppTheme.textSecondary),
+                  style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
                 ),
 
               ] else ...[
@@ -232,7 +232,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.admin_panel_settings, color: AppTheme.primary),
+                          Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.primary),
                           SizedBox(width: 8),
                           Text('Admin Login', style: Theme.of(context).textTheme.titleLarge),
                         ],
@@ -278,7 +278,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               SizedBox(height: 40),
               Text('© 2026 MyHarur • Powered by Qenbel',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
             ],
           ),
         ),

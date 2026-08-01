@@ -27,8 +27,8 @@ class ListingUpdate(BaseModel):
 class Listing(ListingBase):
     id: int
     seller_id: int
-    is_sold: bool
-    is_active: bool
+    is_sold: bool = False
+    is_active: bool = True
     created_at: datetime
     class Config:
         from_attributes = True
@@ -51,7 +51,7 @@ class JobPostingCreate(JobPostingBase):
 class JobPosting(JobPostingBase):
     id: int
     poster_id: int
-    is_active: bool
+    is_active: bool = True
     created_at: datetime
     class Config:
         from_attributes = True
@@ -74,9 +74,9 @@ class EventCreate(EventBase):
 class Event(EventBase):
     id: int
     organizer_id: int
-    is_approved: bool
-    is_featured: bool
-    current_attendees: int
+    is_approved: bool = False
+    is_featured: bool = False
+    current_attendees: int = 0
     created_at: datetime
     class Config:
         from_attributes = True
@@ -112,7 +112,7 @@ class PollOptionOut(BaseModel):
 class PollOut(BaseModel):
     id: int
     question: str
-    is_active: bool
+    is_active: bool = True
     created_at: datetime
     options: List[PollOptionOut] = []
     user_voted_option_id: Optional[int] = None
@@ -134,7 +134,7 @@ class AnswerOut(BaseModel):
     id: int
     author_id: int
     text: str
-    is_accepted: bool
+    is_accepted: bool = False
     created_at: datetime
     author_name: Optional[str] = None
     author_role: Optional[str] = None
@@ -145,7 +145,7 @@ class QuestionOut(BaseModel):
     id: int
     author_id: int
     text: str
-    is_resolved: bool
+    is_resolved: bool = False
     created_at: datetime
     answers: List[AnswerOut] = []
     author_name: Optional[str] = None
@@ -170,7 +170,7 @@ class ChatMessageOut(BaseModel):
     sender_id: int
     content: Optional[str] = None
     reply_to_id: Optional[int] = None
-    is_voice_note: bool
+    is_voice_note: bool = False
     audio_url: Optional[str] = None
     image_urls: List[str] = []
     video_urls: List[str] = []
@@ -195,6 +195,6 @@ class ChatRoomOut(BaseModel):
     name: str
     description: Optional[str]
     icon: Optional[str]
-    is_secure: bool
+    is_secure: bool = False
     class Config:
         from_attributes = True
