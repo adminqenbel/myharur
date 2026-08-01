@@ -505,19 +505,59 @@ def send_message(
     }
     
     # Auto AI/Bot Responses for System Mentions
-    system_mentions = [m.lower() for m in mentions]
-    if any(m in ["support", "help", "news", "weather", "admin", "hospital", "police"] for m in system_mentions):
-        bot_user = db.query(UserModel).filter(UserModel.username == "system_bot").first()
-        if bot_user:
-            bot_msg = ChatMessage(
-                room_id=room_id,
-                sender_id=bot_user.id,
-                content=f"Hello! I am the automated assistant. I have notified the requested department ({', '.join(system_mentions)}) and logged your request. A human agent will take over if unresolved.",
-                reply_to_id=msg.id
-            )
-            db.add(bot_msg)
-            db.commit()
+    if mentions:
+        try:
+            from app.core.ai_router import IntelligentRouter
+            ai_router = IntelligentRouter(db)
+            session_id = f"room_{room_id}_{current_user.id}"
+            is_handled, ai_text = ai_router.process_message(current_user.id, msg_in.content, session_id)
             
+            if is_handled and ai_text:
+                system_user = db.query(UserModel).filter(UserModel.username == "system").first()
+                if not system_user:
+                    from app.models.user import Role
+                    role = db.query(Role).filter(Role.name == "Super Admin").first()
+                    system_user = UserModel(
+                        username="system", email="system@myharur.com", hashed_password="pw",
+                        role_id=role.id if role else None, is_active=True
+                    )
+                    db.add(system_user)
+                    db.commit()
+                    db.refresh(system_user)
+                
+                bot_msg = ChatMessage(room_id=room_id, sender_id=system_user.id, content=ai_text, reply_to_id=msg.id)
+                db.add(bot_msg)
+                db.commit()
+                db.refresh(bot_msg)
+                
+                # We also need to emit the bot's message! This is handled below alongside the user's message.
+                import asyncio
+                from app.main import sio
+                
+                bot_response_dict = {
+                    **bot_msg.__dict__,
+                    "sender_name": "Intelligent Assistant",
+                    "sender_role": "AI Bot",
+                    "sender_avatar": None,
+                    "username": "system",
+                    "display_name": "Intelligent Assistant",
+                    "reactions": {},
+                    "mentions": [],
+                    "image_urls": [], "video_urls": [], "file_urls": [], "translated_text": {}
+                }
+                
+                async def broadcast_bot():
+                    await asyncio.sleep(1) # simulate typing
+                    await sio.emit('new_message', bot_response_dict, room=f'chat_room_{room_id}')
+                
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(broadcast_bot())
+                except RuntimeError:
+                    pass # Not in an async loop context
+                    
+        except Exception as e:
+            print(f"REST API AI routing error: {e}")
     # Broadcast to Socket.IO
     import asyncio
     try:

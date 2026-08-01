@@ -290,7 +290,22 @@ async def _ai_reply(room_id: int, original_msg_data: dict, response_text: str):
         try:
             # We use @system or a generic AI bot user for the response
             system_user = db.query(UserModel).filter(UserModel.username == "system").first()
-            if not system_user: return None
+            if not system_user:
+                # Create the system user dynamically if it doesn't exist
+                from app.models.user import Role
+                role = db.query(Role).filter(Role.name == "Super Admin").first()
+                role_id = role.id if role else None
+                
+                system_user = UserModel(
+                    username="system",
+                    email="system@myharur.com",
+                    hashed_password="placeholder_password_no_login",
+                    role_id=role_id,
+                    is_active=True
+                )
+                db.add(system_user)
+                db.commit()
+                db.refresh(system_user)
             
             msg = ChatMessage(room_id=room_id, sender_id=system_user.id, content=response_text)
             db.add(msg)
