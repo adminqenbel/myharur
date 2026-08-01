@@ -124,11 +124,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: AppTheme.bg,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // Logo
               Container(
@@ -144,17 +144,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Image.asset('assets/logo.png', fit: BoxFit.cover),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               Text('Welcome to MyHarur',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text('Your Hyperlocal Town Super App',
                   style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 48),
+              SizedBox(height: 48),
 
               if (_isLoading)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 32),
                   child: CircularProgressIndicator(),
                 )
@@ -165,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: OutlinedButton(
                     onPressed: _handleGoogleSignIn,
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: AppTheme.divider, width: 1.5),
                       backgroundColor: AppTheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
@@ -177,17 +177,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Container(
                           width: 22,
                           height: 22,
-                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
-                          child: const Icon(Icons.g_mobiledata_rounded, color: Colors.red, size: 28),
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
+                          child: Icon(Icons.g_mobiledata_rounded, color: AppTheme.danger, size: 28),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Text('Continue with Google',
                             style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 15)),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
 
                 // Guest
                 SizedBox(
@@ -198,27 +198,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (context.mounted) context.go('/home');
                     },
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.surface,
                     ),
-                    child: const Text('Browse as Guest', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    child: Text('Browse as Guest', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 // Divider
                 Row(children: [
-                  const Expanded(child: Divider()), 
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('or', style: Theme.of(context).textTheme.bodySmall)),
-                  const Expanded(child: Divider()),
+                  Expanded(child: Divider()), 
+                  Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('or', style: Theme.of(context).textTheme.bodySmall)),
+                  Expanded(child: Divider()),
                 ]),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 TextButton.icon(
                   onPressed: () => setState(() => _isAdminMode = true),
-                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-                  label: const Text('Admin / Staff Login'),
+                  icon: Icon(Icons.admin_panel_settings_outlined, size: 18),
+                  label: Text('Admin / Staff Login'),
                   style: TextButton.styleFrom(foregroundColor: AppTheme.textSecondary),
                 ),
 
@@ -226,29 +226,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Admin Login Card
                 Container(
                   decoration: AppTheme.card(),
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.admin_panel_settings, color: AppTheme.primary),
-                          const SizedBox(width: 8),
+                          Icon(Icons.admin_panel_settings, color: AppTheme.primary),
+                          SizedBox(width: 8),
                           Text('Admin Login', style: Theme.of(context).textTheme.titleLarge),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       TextField(
                         controller: _emailController,
                         decoration: const InputDecoration(labelText: 'Username or Email', prefixIcon: Icon(Icons.person_outline, size: 18)),
                         keyboardType: TextInputType.text,
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: 14),
                       TextField(
                         controller: _passwordController,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                          prefixIcon: Icon(Icons.lock_outline, size: 18),
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePwd ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 18),
                             onPressed: () => setState(() => _obscurePwd = !_obscurePwd),
@@ -256,7 +256,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         obscureText: _obscurePwd,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
                         child: MHButton(
@@ -268,15 +268,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextButton.icon(
                   onPressed: () => setState(() => _isAdminMode = false),
-                  icon: const Icon(Icons.arrow_back_ios, size: 14),
-                  label: const Text('Back to User Login'),
+                  icon: Icon(Icons.arrow_back_ios, size: 14),
+                  label: Text('Back to User Login'),
                 ),
               ],
 
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               Text('© 2026 MyHarur • Powered by Qenbel',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
             ],

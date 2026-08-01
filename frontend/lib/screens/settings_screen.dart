@@ -17,21 +17,21 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text('Select Language', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               ListTile(
-                title: const Text('English'),
-                trailing: ref.watch(isEnglishProvider) ? const Icon(Icons.check, color: AppTheme.accent) : null,
+                title: Text('English'),
+                trailing: ref.watch(isEnglishProvider) ? Icon(Icons.check, color: AppTheme.accent) : null,
                 onTap: () {
                   ref.read(isEnglishProvider.notifier).state = true;
                   Navigator.pop(ctx);
                 },
               ),
               ListTile(
-                title: const Text('Tamil'),
-                trailing: !ref.watch(isEnglishProvider) ? const Icon(Icons.check, color: AppTheme.accent) : null,
+                title: Text('Tamil'),
+                trailing: !ref.watch(isEnglishProvider) ? Icon(Icons.check, color: AppTheme.accent) : null,
                 onTap: () {
                   ref.read(isEnglishProvider.notifier).state = false;
                   Navigator.pop(ctx);
@@ -54,29 +54,29 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text('Select Theme', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               ListTile(
-                title: const Text('System Default'),
-                trailing: ref.watch(themeProvider) == ThemeMode.system ? const Icon(Icons.check, color: AppTheme.accent) : null,
+                title: Text('System Default'),
+                trailing: ref.watch(themeProvider) == ThemeMode.system ? Icon(Icons.check, color: AppTheme.accent) : null,
                 onTap: () {
                   ref.read(themeProvider.notifier).setTheme(ThemeMode.system);
                   Navigator.pop(ctx);
                 },
               ),
               ListTile(
-                title: const Text('Light'),
-                trailing: ref.watch(themeProvider) == ThemeMode.light ? const Icon(Icons.check, color: AppTheme.accent) : null,
+                title: Text('Light'),
+                trailing: ref.watch(themeProvider) == ThemeMode.light ? Icon(Icons.check, color: AppTheme.accent) : null,
                 onTap: () {
                   ref.read(themeProvider.notifier).setTheme(ThemeMode.light);
                   Navigator.pop(ctx);
                 },
               ),
               ListTile(
-                title: const Text('Dark'),
-                trailing: ref.watch(themeProvider) == ThemeMode.dark ? const Icon(Icons.check, color: AppTheme.accent) : null,
+                title: Text('Dark'),
+                trailing: ref.watch(themeProvider) == ThemeMode.dark ? Icon(Icons.check, color: AppTheme.accent) : null,
                 onTap: () {
                   ref.read(themeProvider.notifier).setTheme(ThemeMode.dark);
                   Navigator.pop(ctx);
@@ -97,27 +97,27 @@ class SettingsScreen extends ConsumerWidget {
     if (themeMode == ThemeMode.dark) themeLabel = 'Dark';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         children: [
           ListTile(
-            leading: const Icon(Icons.language),
-            title: const Text('Language'),
+            leading: Icon(Icons.language),
+            title: Text('Language'),
             subtitle: Text(ref.watch(isEnglishProvider) ? 'English' : 'Tamil'),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Icon(Icons.chevron_right),
             onTap: () => _showLanguagePicker(context, ref),
           ),
-          const Divider(),
+          Divider(),
           ListTile(
-            leading: const Icon(Icons.brightness_6),
-            title: const Text('Theme'),
+            leading: Icon(Icons.brightness_6),
+            title: Text('Theme'),
             subtitle: Text(themeLabel),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Icon(Icons.chevron_right),
             onTap: () => _showThemePicker(context, ref),
           ),
-          const Divider(),
-          const ListTile(
+          Divider(),
+          ListTile(
             leading: Icon(Icons.notifications),
             title: Text('Push Notifications'),
             trailing: Switch(

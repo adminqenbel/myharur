@@ -21,11 +21,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
         'new_password': _newCtrl.text,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password set successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Password set successfully')));
         context.pop();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to set password.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to set password.')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -34,15 +34,15 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Set Password')),
+      appBar: AppBar(title: Text('Set Password')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         children: [
-          const Text('Since you logged in with Google, you can set a password to also log in with your email.', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 24),
+          Text('Since you logged in with Google, you can set a password to also log in with your email.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+          SizedBox(height: 24),
           TextField(controller: _newCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'New Password', border: OutlineInputBorder())),
-          const SizedBox(height: 24),
-          ElevatedButton(onPressed: _isLoading ? null : _submit, child: const Text('Set Password')),
+          SizedBox(height: 24),
+          ElevatedButton(onPressed: _isLoading ? null : _submit, child: Text('Set Password')),
         ],
       ),
     );

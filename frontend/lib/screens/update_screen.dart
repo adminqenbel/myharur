@@ -11,30 +11,30 @@ class UpdateScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.system_update, size: 80, color: Colors.blue),
-              const SizedBox(height: 24),
-              const Text(
+              Icon(Icons.system_update, size: 80, color: Colors.blue),
+              SizedBox(height: 24),
+              Text(
                 'Update Required',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 'A new version of MyHarur is available. You must update to continue using the app and access the latest features.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: 48),
               ElevatedButton.icon(
-                icon: const Icon(Icons.download),
-                label: const Text('Download Update'),
+                icon: Icon(Icons.download),
+                label: Text('Download Update'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () async {
                   final url = Uri.parse(updateUrl);

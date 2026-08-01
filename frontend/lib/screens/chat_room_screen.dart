@@ -4,6 +4,7 @@ import 'dart:async';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../services/socket_service.dart';
+import '../theme.dart';
 
 // ─── ChatRoomScreen ─────────────────────────────────────────────────────────
 class ChatRoomScreen extends ConsumerStatefulWidget {
@@ -197,20 +198,20 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(widget.room['name'] ?? 'Chat', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(widget.room['name'] ?? 'Chat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           if (widget.room['description'] != null)
-            Text(widget.room['description'] ?? '', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal)),
+            Text(widget.room['description'] ?? '', style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal)),
         ]),
-        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchMessages)],
+        actions: [IconButton(icon: Icon(Icons.refresh), onPressed: _fetchMessages)],
       ),
       body: Column(children: [
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator())
               : ListView.builder(
                   controller: _scrollCtrl,
                   reverse: true,
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                  padding: EdgeInsets.fromLTRB(8, 4, 8, 4),
                   itemCount: _messages.length,
                   itemBuilder: (ctx, i) {
                     final msg = _messages[_messages.length - 1 - i];
@@ -221,20 +222,20 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         if (_typingText.isNotEmpty)
           Container(
             width: double.infinity,
-            color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(_typingText, style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontStyle: FontStyle.italic)),
+            color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(_typingText, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontStyle: FontStyle.italic)),
           ),
         if (_mentionSuggestions.isNotEmpty)
           Container(
-            color: isDark ? Colors.grey.shade900 : Colors.white,
+            color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
             constraints: const BoxConstraints(maxHeight: 160),
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: _mentionSuggestions.length,
               itemBuilder: (ctx, i) => ListTile(
                 dense: true,
-                leading: const Icon(Icons.alternate_email, size: 18),
+                leading: Icon(Icons.alternate_email, size: 18),
                 title: Text('@${_mentionSuggestions[i]}'),
                 onTap: () => _applyMention(_mentionSuggestions[i]),
               ),
@@ -244,8 +245,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           SafeArea(
             top: false,
             child: Container(
-              color: isDark ? Colors.grey.shade900 : Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(children: [
                 Expanded(
                   child: TextField(
@@ -253,27 +254,27 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     decoration: InputDecoration(
                       hintText: 'Message… (@ to mention)',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       isDense: true,
                     ),
                     maxLines: null,
                     keyboardType: TextInputType.multiline,
                   ),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 FloatingActionButton.small(
                   heroTag: 'chat_send',
                   onPressed: _send,
-                  child: const Icon(Icons.send, size: 20),
+                  child: Icon(Icons.send, size: 20),
                 ),
               ]),
             ),
           )
         else
           Container(
-            color: Colors.grey.shade100,
-            padding: const EdgeInsets.all(12),
-            child: const Text('Login to send messages', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            padding: EdgeInsets.all(12),
+            child: Text('Login to send messages', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
           ),
       ]),
     );
@@ -296,7 +297,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       return raw.length >= 16 ? raw.substring(11, 16) : '';
     }();
     Color? roleBadgeColor;
-    if (role == 'Super Admin') roleBadgeColor = Colors.red;
+    if (role == 'Super Admin') roleBadgeColor = AppTheme.danger;
     else if (role == 'Admin') roleBadgeColor = Colors.orange;
     else if (role == 'Moderator') roleBadgeColor = Colors.purple;
 
@@ -311,18 +312,18 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             CircleAvatar(
               radius: 16,
               backgroundImage: msg['sender_avatar'] != null ? NetworkImage(msg['sender_avatar']) : null,
-              backgroundColor: Colors.blueGrey.shade200,
-              child: msg['sender_avatar'] == null ? const Icon(Icons.person, size: 16) : null,
+              backgroundColor: Colors.blueGrey,
+              child: msg['sender_avatar'] == null ? Icon(Icons.person, size: 16) : null,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
           ],
           Flexible(
             child: Container(
               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: EdgeInsets.only(bottom: 6),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isMe ? Theme.of(context).colorScheme.primary : (isDark ? Colors.grey.shade800 : Colors.white),
+                color: isMe ? Theme.of(context).colorScheme.primary : (isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16), topRight: const Radius.circular(16),
                   bottomLeft: Radius.circular(isMe ? 16 : 4), bottomRight: Radius.circular(isMe ? 4 : 16),
@@ -332,68 +333,68 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 if (isPinned) ...[
                   Row(children: [
-                    Icon(Icons.push_pin, size: 12, color: isMe ? Colors.white70 : Colors.blueGrey),
-                    const SizedBox(width: 4),
-                    Text('Pinned', style: TextStyle(color: isMe ? Colors.white70 : Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Icon(Icons.push_pin, size: 12, color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Colors.blueGrey),
+                    SizedBox(width: 4),
+                    Text('Pinned', style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Colors.blueGrey, fontSize: 10, fontWeight: FontWeight.bold)),
                   ]),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                 ],
                 
                 if (!isMe) ...[
                   Row(mainAxisSize: MainAxisSize.min, children: [
-                    if (username != null) Text('@$username', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 11)),
+                    if (username != null) Text('@$username', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 11)),
                     if (username != null && senderName.isNotEmpty && senderName != username)
-                      Text(' · $senderName', style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+                      Text(' · $senderName', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 11)),
                     if (roleBadgeColor != null) ...[
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(color: roleBadgeColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4), border: Border.all(color: roleBadgeColor, width: 0.5)),
                         child: Text(role!, style: TextStyle(color: roleBadgeColor, fontSize: 9, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ]),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                 ],
                 
                 if (image_urls.isNotEmpty) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(image_urls[0], height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image)),
+                    child: Image.network(image_urls[0], height: 120, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.broken_image)),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                 ],
                 
                 if ((msg['content'] ?? '').isNotEmpty)
                   _buildContent(msg['content'] ?? '', isMe, mentions),
                   
                 if (translated_text.isNotEmpty && translated_text['en'] != null && translated_text['en'] != msg['content']) ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
-                    child: Text(translated_text['en'], style: TextStyle(color: isMe ? Colors.white70 : Colors.grey.shade700, fontSize: 12, fontStyle: FontStyle.italic)),
+                    child: Text(translated_text['en'], style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontStyle: FontStyle.italic)),
                   ),
                 ],
                 
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(timeStr, style: TextStyle(color: isMe ? Colors.white60 : Colors.grey.shade500, fontSize: 10)),
-                  if (isPending) ...[const SizedBox(width: 4), Icon(Icons.access_time, size: 10, color: isMe ? Colors.white60 : Colors.grey)],
+                  Text(timeStr, style: TextStyle(color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 10)),
+                  if (isPending) ...[SizedBox(width: 4), Icon(Icons.access_time, size: 10, color: isMe ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5))],
                   if (!isPending && isMe) ...[
-                    const SizedBox(width: 4),
-                    Icon(status == 'seen' ? Icons.done_all : Icons.check, size: 12, color: status == 'seen' ? Colors.blue.shade200 : Colors.white60)
+                    SizedBox(width: 4),
+                    Icon(status == 'seen' ? Icons.done_all : Icons.check, size: 12, color: status == 'seen' ? Colors.blue : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))
                   ],
                 ]),
                 
                 if (reactions.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Wrap(
                     spacing: 4,
                     children: reactions.entries.map((e) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: Colors.black.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                      child: Text('${e.key} ${(e.value as List).length}', style: TextStyle(fontSize: 10, color: isMe ? Colors.white : Colors.black87)),
+                      child: Text('${e.key} ${(e.value as List).length}', style: TextStyle(fontSize: 10, color: isMe ? Theme.of(context).colorScheme.surface : Colors.black87)),
                     )).toList(),
                   )
                 ],
@@ -406,7 +407,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   }
 
   Widget _buildContent(String content, bool isMe, List<String> mentions) {
-    if (mentions.isEmpty) return Text(content, style: TextStyle(color: isMe ? Colors.white : null));
+    if (mentions.isEmpty) return Text(content, style: TextStyle(color: isMe ? Theme.of(context).colorScheme.surface : null));
     final spans = <TextSpan>[];
     final parts = content.split(RegExp(r'(@\w+)'));
     for (final part in parts) {
@@ -414,8 +415,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       spans.add(TextSpan(
         text: part,
         style: isMention
-            ? TextStyle(color: isMe ? Colors.yellowAccent : Colors.blue.shade700, fontWeight: FontWeight.bold)
-            : TextStyle(color: isMe ? Colors.white : null),
+            ? TextStyle(color: isMe ? Colors.yellowAccent : Colors.blue, fontWeight: FontWeight.bold)
+            : TextStyle(color: isMe ? Theme.of(context).colorScheme.surface : null),
       ));
     }
     return RichText(text: TextSpan(children: spans));

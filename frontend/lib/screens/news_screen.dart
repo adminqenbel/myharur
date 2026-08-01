@@ -59,10 +59,10 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
           builder: (_, sc) => Padding(
             padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
             child: ListView(controller: sc, children: [
-              const Text('Submit News', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text('Share local news or updates. It will be public after moderation.', style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
+              Text('Submit News', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text('Share local news or updates. It will be public after moderation.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+              SizedBox(height: 16),
               
               // Image Upload Section
               GestureDetector(
@@ -78,30 +78,30 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                 child: Container(
                   height: 140,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(12),
                     image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover) : null,
                   ),
                   child: isUploadingImage
-                      ? const Center(child: CircularProgressIndicator())
+                      ? Center(child: CircularProgressIndicator())
                       : imageUrl == null
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                              children: [
+                                Icon(Icons.add_a_photo, size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                                 SizedBox(height: 8),
-                                Text('Add Photo', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                                Text('Add Photo', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.bold)),
                               ],
                             )
-                          : const SizedBox(),
+                          : SizedBox(),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'News Headline *', border: OutlineInputBorder())),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Details / Content *', border: OutlineInputBorder()), maxLines: 5),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
                   if (titleCtrl.text.isEmpty || descCtrl.text.isEmpty) return;
@@ -112,13 +112,13 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                       'image_url': imageUrl,
                     });
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('News submitted for moderation.')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('News submitted for moderation.')));
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 },
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: const Text('Submit for Review', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
+                child: Text('Submit for Review', style: TextStyle(fontSize: 16)),
               ),
             ]),
           ),
@@ -131,32 +131,32 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9), // Light background theme
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Light background theme
       appBar: AppBar(
-        title: const Text('Trending News', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
-        backgroundColor: Colors.white,
+        title: Text('Trending News', style: TextStyle(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF081C2D)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded),
+            icon: Icon(Icons.search_rounded),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded),
             onPressed: () => setState(() => _fetchData()),
           )
         ],
       ),
       floatingActionButton: auth.isLoggedIn
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 80),
+              padding: EdgeInsets.only(bottom: 80),
               child: FloatingActionButton.extended(
                 onPressed: _showSubmitNewsDialog,
                 backgroundColor: AppTheme.accent,
-                icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
-                label: const Text('Post News', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                icon: Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
+                label: Text('Post News', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
               ),
             )
           : null,
@@ -166,25 +166,25 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
           FutureBuilder<Map<String, dynamic>>(
             future: _ratesFuture,
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+              if (!snapshot.hasData || snapshot.data!.isEmpty) return SizedBox.shrink();
               final rates = snapshot.data!;
               return Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1)),
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), width: 1)),
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       _buildRateChip('Gold 22K', rates['gold_22k'], Icons.monetization_on_rounded),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildRateChip('Gold 24K', rates['gold_24k'], Icons.monetization_on_rounded),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildRateChip('Silver', rates['silver'], Icons.view_headline_rounded),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildRateChip('Diamond', rates['diamond'], Icons.diamond_rounded),
                     ],
                   ),
@@ -197,29 +197,29 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
               future: _newsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppTheme.accent));
+                  return Center(child: CircularProgressIndicator(color: AppTheme.accent));
                 }
                 if (snapshot.hasError) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.cloud_off_rounded, size: 64, color: Color(0xFFEF233C)),
-                        const SizedBox(height: 16),
-                        const Text('Failed to load news', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
-                        const SizedBox(height: 8),
+                        Icon(Icons.cloud_off_rounded, size: 64, color: AppTheme.danger),
+                        SizedBox(height: 16),
+                        Text('Failed to load news', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                        SizedBox(height: 8),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                          child: Text('We could not reach the news server. Please try again.', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+                          padding: EdgeInsets.symmetric(horizontal: 32.0),
+                          child: Text('We could not reach the news server. Please try again.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14)),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         ElevatedButton.icon(
                           onPressed: () => setState(() => _fetchData()),
-                          icon: const Icon(Icons.refresh_rounded, color: AppTheme.primary),
-                          label: const Text('Try Again', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                          icon: Icon(Icons.refresh_rounded, color: AppTheme.primary),
+                          label: Text('Try Again', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.accent, 
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
+                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
                           ),
                         ),
@@ -230,20 +230,20 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
 
                 final news = snapshot.data ?? [];
                 if (news.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.article_rounded, size: 64, color: Colors.grey),
+                        Icon(Icons.article_rounded, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                         SizedBox(height: 16),
-                        Text('No news available yet.', style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w600)),
+                        Text('No news available yet.', style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.w600)),
                       ],
                     ),
                   );
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, bottom: 100), // padding for FAB/nav
+                  padding: EdgeInsets.only(top: 16, bottom: 100), // padding for FAB/nav
                   itemCount: news.length,
                   itemBuilder: (context, index) {
                     final post = news[index];
@@ -263,9 +263,9 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
     final bool isVerified = post['source'] == 'Harur News Feed'; // Dummy logic for verified badge
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
       ),
@@ -293,13 +293,13 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                         width: double.infinity,
                         height: 200,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                        errorBuilder: (context, error, stackTrace) => SizedBox(),
                       ),
                       Positioned(
                         top: 12,
                         left: 12,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.6),
                             borderRadius: BorderRadius.circular(12),
@@ -307,9 +307,9 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                              const SizedBox(width: 4),
-                              Text(post['location'] ?? 'Dharmapuri', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                              Icon(Icons.location_on_rounded, color: Theme.of(context).colorScheme.surface, size: 14),
+                              SizedBox(width: 4),
+                              Text(post['location'] ?? 'Dharmapuri', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 11, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -317,48 +317,48 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                     ],
                   ),
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(color: const Color(0xFFF4F6F9), borderRadius: BorderRadius.circular(10)),
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(10)),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(post['source'] ?? 'Local News', style: const TextStyle(color: Color(0xFF3A86FF), fontWeight: FontWeight.w700, fontSize: 12)),
+                                Text(post['source'] ?? 'Local News', style: TextStyle(color: AppTheme.info, fontWeight: FontWeight.w700, fontSize: 12)),
                                 if (isVerified) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.verified_rounded, color: Color(0xFF3A86FF), size: 14),
+                                  SizedBox(width: 4),
+                                  Icon(Icons.verified_rounded, color: AppTheme.info, size: 14),
                                 ]
                               ],
                             ),
                           ),
-                          const Spacer(),
+                          Spacer(),
                           Text(
                             post['created_at'] != null ? post['created_at'].toString().substring(0, 10) : '',
-                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: 14),
                       Text(
                         post['title'] ?? 'News Update',
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF081C2D), height: 1.3),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Theme.of(context).colorScheme.onSurface, height: 1.3),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         post['content'] ?? '...',
-                        style: const TextStyle(color: Color(0xFF64748B), fontSize: 15, height: 1.5),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 15, height: 1.5),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 20),
-                      Divider(color: Colors.grey.shade200),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 20),
+                      Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                      SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -386,13 +386,13 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: const Color(0xFF64748B)),
-            const SizedBox(width: 6),
-            Text(label, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
+            Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+            SizedBox(width: 6),
+            Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -401,19 +401,19 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
 
   Widget _buildRateChip(String label, String? value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.amber),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.amber.shade800),
-          const SizedBox(width: 6),
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          Text(value ?? '...', style: const TextStyle(color: Colors.black87, fontSize: 12)),
+          Icon(icon, size: 16, color: Colors.amber),
+          SizedBox(width: 6),
+          Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(value ?? '...', style: TextStyle(color: Colors.black87, fontSize: 12)),
         ],
       ),
     );

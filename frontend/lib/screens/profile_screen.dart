@@ -62,7 +62,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     height: 180,
                     width: double.infinity,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -75,8 +75,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     top: 130,
                     left: 24,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
                         color: AppTheme.bgLight,
                         shape: BoxShape.circle,
                       ),
@@ -101,7 +101,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         if (username != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 2),
+                            padding: EdgeInsets.only(top: 2),
                             child: Text('@$username', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondaryLight)),
                           ),
                       ],
@@ -122,25 +122,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             actions: [
               IconButton(
                 icon: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), shape: BoxShape.circle),
-                  child: const Icon(Icons.settings_rounded, color: Colors.white, size: 20),
+                  child: Icon(Icons.settings_rounded, color: Theme.of(context).colorScheme.surface, size: 20),
                 ),
                 onPressed: () => context.push('/settings'),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
           ),
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   // Stats Row
                   MHCard(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    padding: EdgeInsets.symmetric(vertical: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -152,23 +152,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Member ID (MID) Callout
                   MHCard(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     onTap: () {
                       // copy to clipboard logic could go here
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Member ID copied')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Member ID copied')));
                     },
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(color: AppTheme.info.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                          child: const Icon(Icons.badge_rounded, color: AppTheme.info, size: 24),
+                          child: Icon(Icons.badge_rounded, color: AppTheme.info, size: 24),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,11 +178,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ],
                           ),
                         ),
-                        const Icon(Icons.copy_rounded, color: AppTheme.textSecondaryLight, size: 20),
+                        Icon(Icons.copy_rounded, color: AppTheme.textSecondaryLight, size: 20),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Profile Details
                   _section('Personal Info', [
@@ -190,7 +190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     _tile(Icons.phone_rounded, 'Phone', phone),
                     _tile(Icons.home_rounded, 'Address', address),
                   ]),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Account Actions
                   _section('Account', [
@@ -202,26 +202,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     if (auth.isAdmin)
                       _actionTile(Icons.admin_panel_settings_rounded, 'Admin Dashboard', AppTheme.danger, () => context.push('/admin')),
                   ]),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   _section('Preferences', [
                     _actionTile(Icons.translate_rounded, 'Language Settings', AppTheme.success, () => context.push('/settings')),
                     _actionTile(Icons.notifications_outlined, 'Notifications', AppTheme.info, () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon!')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Notifications coming soon!')));
                     }),
                     _actionTile(Icons.help_outline_rounded, 'Help & Support', AppTheme.success, () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Help & Support coming soon!')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Help & Support coming soon!')));
                     }),
                   ]),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.logout, color: AppTheme.danger),
-                      label: const Text('Logout', style: TextStyle(color: AppTheme.danger, fontSize: 16)),
+                      icon: Icon(Icons.logout, color: AppTheme.danger),
+                      label: Text('Logout', style: TextStyle(color: AppTheme.danger, fontSize: 16)),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(color: AppTheme.danger),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
                       ),
@@ -231,7 +231,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 100), // padding for nav bar
+                  SizedBox(height: 100), // padding for nav bar
                 ],
               ),
             ),
@@ -245,9 +245,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Column(
       children: [
         Icon(icon, color: color),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        SizedBox(height: 4),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12)),
       ],
     );
   }
@@ -259,7 +259,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondaryLight, letterSpacing: 0.5)),
           ),
           ...tiles,
@@ -270,17 +270,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _tile(IconData icon, String label, String value) {
     return ListTile(
-      leading: Icon(icon, color: Colors.grey),
-      title: Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+      title: Text(label, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+      subtitle: Text(value, style: TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
     );
   }
 
   Widget _actionTile(IconData icon, String label, Color color, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: color),
-      title: Text(label, style: const TextStyle(fontSize: 15)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      title: Text(label, style: TextStyle(fontSize: 15)),
+      trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
       onTap: onTap,
     );
   }

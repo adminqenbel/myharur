@@ -121,12 +121,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.location_off_rounded, size: 56, color: AppTheme.danger),
-              const SizedBox(height: 16),
+              Icon(Icons.location_off_rounded, size: 56, color: AppTheme.danger),
+              SizedBox(height: 16),
               Text(l(ref, 'Outside Service Area'), style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text('You seem to be outside the Dharmapuri/Harur region. You can continue as a guest or set a manual location to access local services.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               MHButton(
                 text: 'Pick Manual Location',
                 icon: Icons.map_rounded,
@@ -135,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _showManualLocationPicker();
                 },
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               MHOutlinedButton(
                 text: 'Continue Anyway',
                 onPressed: () => Navigator.pop(context),
@@ -158,11 +158,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Select Region', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               ListTile(
-                leading: const Icon(Icons.location_city_rounded, color: AppTheme.info),
-                title: const Text('Harur Town', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Dharmapuri District'),
+                leading: Icon(Icons.location_city_rounded, color: AppTheme.info),
+                title: Text('Harur Town', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Dharmapuri District'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppTheme.divider)),
                 onTap: () async {
                   await LocationPrefs.saveManualLocation(12.0620, 78.4975, 'Harur Town');
@@ -170,11 +170,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _determinePosition();
                 },
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.location_city_rounded, color: AppTheme.success),
-                title: const Text('Dharmapuri City', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Dharmapuri District'),
+                leading: Icon(Icons.location_city_rounded, color: AppTheme.success),
+                title: Text('Dharmapuri City', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Dharmapuri District'),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppTheme.divider)),
                 onTap: () async {
                   await LocationPrefs.saveManualLocation(12.1211, 78.1582, 'Dharmapuri City');
@@ -182,14 +182,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _determinePosition();
                 },
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               TextButton(
                 onPressed: () async {
                   await LocationPrefs.clearManualLocation();
                   if (context.mounted) Navigator.pop(context);
                   _determinePosition();
                 },
-                child: const Text('Clear Manual Location', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.w600)),
+                child: Text('Clear Manual Location', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.w600)),
               )
             ],
           ),
@@ -207,7 +207,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onTap: onTap,
       child: Container(
         width: 80,
-        margin: const EdgeInsets.only(right: 12),
+        margin: EdgeInsets.only(right: 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -224,7 +224,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: Icon(icon, color: color, size: 28),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(l(ref, label), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
@@ -240,14 +240,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 28),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(l(ref, label), style: Theme.of(context).textTheme.labelLarge, textAlign: TextAlign.center),
         ],
       ),
@@ -280,7 +280,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+                titlePadding: EdgeInsets.only(left: 24, bottom: 16),
                 title: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,19 +298,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 28),
+                  icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.surface, size: 28),
                   onPressed: () {},
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => context.go('/profile'),
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 18,
                     backgroundColor: Color(0xFF16324F),
-                    child: Icon(Icons.person, color: Colors.white),
+                    child: Icon(Icons.person, color: Theme.of(context).colorScheme.surface),
                   ),
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: 24),
               ],
             ),
             
@@ -318,18 +318,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   
                   // ── Location Badge ──────────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: 24),
                     child: MHCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       onTap: _showManualLocationPicker,
                       child: Row(
                         children: [
                           Icon(Icons.location_on_rounded, color: _isInsideDharmapuri ? AppTheme.success : AppTheme.danger, size: 28),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,28 +345,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ],
                             ),
                           ),
-                          const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                          Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   
                   // ── Weather Widget ──────────────────────────────────────────
                   if (_weatherData != null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [Color(0xFF3A86FF), Color(0xFF00B4D8)],
+                            colors: [AppTheme.info, Color(0xFF00B4D8)],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
-                            BoxShadow(color: const Color(0xFF3A86FF).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
+                            BoxShadow(color: AppTheme.info.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
                           ],
                         ),
                         child: Row(
@@ -377,14 +377,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               children: [
                                 Text(
                                   _weatherData!['condition'] ?? 'Clear',
-                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.water_drop_rounded, color: Colors.white70, size: 14),
-                                    const SizedBox(width: 4),
-                                    Text('Humidity: ${_weatherData!['humidity']}%', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                                    Icon(Icons.water_drop_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 14),
+                                    SizedBox(width: 4),
+                                    Text('Humidity: ${_weatherData!['humidity']}%', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 13)),
                                   ],
                                 ),
                               ],
@@ -394,21 +394,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               children: [
                                 Text(
                                   '${_weatherData!['temperature']}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w800, height: 1),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 42, fontWeight: FontWeight.w800, height: 1),
                                 ),
-                                const Text('°C', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text('°C', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 18, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ],
                         ),
                       ),
                     ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // ── Quick Access Bar ──────────────────────────────────────────
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       children: [
                         _buildQuickAction(Icons.newspaper_rounded, 'News', AppTheme.info, () => _navigateTo(const NewsScreen())),
@@ -418,18 +418,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // ── Top Banner (Emergency) ────────────────────────────────────
                   if (_latestNews.any((n) => n['is_breaking'] == true))
                     ..._latestNews.where((n) => n['is_breaking'] == true).map((news) => 
                       Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                        padding: const EdgeInsets.all(18),
+                        margin: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        padding: EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          gradient: const LinearGradient(colors: [Color(0xFFEF233C), Color(0xFFD90429)]),
-                          boxShadow: [BoxShadow(color: const Color(0xFFEF233C).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+                          gradient: LinearGradient(colors: [AppTheme.danger, Color(0xFFD90429)]),
+                          boxShadow: [BoxShadow(color: AppTheme.danger.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
                         ),
                         child: Row(
                           children: [
@@ -437,13 +437,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(news['title'] ?? 'Breaking Alert', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                                  const SizedBox(height: 6),
-                                  Text(news['description'] ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                                  Text(news['title'] ?? 'Breaking Alert', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.w800, fontSize: 18)),
+                                  SizedBox(height: 6),
+                                  Text(news['description'] ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 14)),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.warning_rounded, color: Colors.white, size: 42),
+                            Icon(Icons.warning_rounded, color: Theme.of(context).colorScheme.surface, size: 42),
                           ],
                         ),
                       )
@@ -451,12 +451,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   
                   // ── Services Grid ─────────────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Discover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
-                        const SizedBox(height: 16),
+                        Text('Discover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                        SizedBox(height: 16),
                         GridView.count(
                           crossAxisCount: 3,
                           childAspectRatio: 0.9,
@@ -465,46 +465,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           mainAxisSpacing: 16,
                           crossAxisSpacing: 16,
                           children: [
-                            _buildServiceIcon(Icons.work_rounded, 'Jobs', const Color(0xFF3A86FF), () => context.go('/market')),
+                            _buildServiceIcon(Icons.work_rounded, 'Jobs', AppTheme.info, () => context.go('/market')),
                             _buildServiceIcon(Icons.festival_rounded, 'Events', const Color(0xFF8338EC), () => context.go('/community')),
                             _buildServiceIcon(Icons.handyman_rounded, 'Services', const Color(0xFFFB5607), () => _navigateTo(const ShopsScreen())),
                             _buildServiceIcon(Icons.emoji_events_rounded, 'Rankings', const Color(0xFFFFBE0B), () => _navigateTo(const LeaderboardScreen())),
-                            _buildServiceIcon(Icons.map_rounded, 'Map', const Color(0xFF06D6A0), () {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Town Map coming soon!')));
+                            _buildServiceIcon(Icons.map_rounded, 'Map', AppTheme.success, () {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Town Map coming soon!')));
                             }),
-                            _buildServiceIcon(Icons.forum_rounded, 'Community', const Color(0xFF3A86FF), () => context.go('/community')),
+                            _buildServiceIcon(Icons.forum_rounded, 'Community', AppTheme.info, () => context.go('/community')),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   
                   // ── Latest News Section ───────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           l(ref, 'Trending News'),
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF081C2D)),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                         ),
                         TextButton(
                           onPressed: () => _navigateTo(const NewsScreen()),
-                          child: Text(l(ref, 'View All'), style: const TextStyle(color: Color(0xFF3A86FF), fontWeight: FontWeight.bold)),
+                          child: Text(l(ref, 'View All'), style: TextStyle(color: AppTheme.info, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
 
                   if (_newsLoading)
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: 3,
-                      itemBuilder: (context, index) => const Padding(
+                      itemBuilder: (context, index) => Padding(
                         padding: EdgeInsets.only(bottom: 16, left: 24, right: 24),
                         child: MHSkeletonLoader(width: double.infinity, height: 280, borderRadius: 16),
                       ),
@@ -525,7 +525,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         onTap: () => _navigateTo(const NewsScreen()),
                       ),
                     ),
-                  const SizedBox(height: 100), // padding for bottom nav
+                  SizedBox(height: 100), // padding for bottom nav
                 ],
               ),
             ),

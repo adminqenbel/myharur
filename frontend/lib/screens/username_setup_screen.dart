@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../utils/username_validation.dart';
+import '../theme.dart';
 
 /// Mandatory screen shown when user logs in without a username.
 /// Cannot be dismissed — user must pick a valid username to continue.
@@ -107,35 +108,35 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       child: Scaffold(
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
+                SizedBox(height: 40),
                 Text('Choose your username', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Your username is used for @mentions in chat and is unique on MyHarur.',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                 ),
                 if (mid != null) ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.badge_outlined, size: 18, color: Colors.blue.shade700),
-                        const SizedBox(width: 8),
-                        Text('Your Member ID: $mid', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.w600)),
+                        Icon(Icons.badge_outlined, size: 18, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text('Your Member ID: $mid', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
                 ],
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 TextField(
                   controller: _usernameCtrl,
@@ -144,8 +145,8 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                     prefixText: '@',
                     border: const OutlineInputBorder(),
                     suffixIcon: _checking != null
-                        ? const SizedBox(width: 20, height: 20, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)))
-                        : (_available && _error == null ? const Icon(Icons.check_circle, color: Colors.green) : null),
+                        ? SizedBox(width: 20, height: 20, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)))
+                        : (_available && _error == null ? Icon(Icons.check_circle, color: Colors.green) : null),
                     errorText: _error,
                     helperText: _available && _error == null ? 'Available!' : '3–30 chars, letters/numbers/underscore',
                     helperStyle: TextStyle(color: _available ? Colors.green : null),
@@ -153,7 +154,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                   onChanged: _validateLocally,
                   textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 TextField(
                   controller: _displayCtrl,
@@ -167,24 +168,24 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _submit(),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _loading || _error != null || !_available || _usernameCtrl.text.trim().isEmpty ? null : _submit,
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                    style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)),
                     child: _loading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Continue', style: TextStyle(fontSize: 16)),
+                        ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2))
+                        : Text('Continue', style: TextStyle(fontSize: 16)),
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Center(
                   child: Text(
                     'Username cannot be changed frequently.',
-                    style: TextStyle(color: Colors.red.shade300, fontSize: 12),
+                    style: TextStyle(color: AppTheme.danger, fontSize: 12),
                   ),
                 ),
               ],

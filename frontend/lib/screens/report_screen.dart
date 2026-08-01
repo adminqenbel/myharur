@@ -63,7 +63,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 DropdownButton<String>(
                   value: selectedCategory,
                   isExpanded: true,
-                  items: const [
+                  items: [
                     DropdownMenuItem(value: 'road', child: Text('Road/Pothole')),
                     DropdownMenuItem(value: 'water', child: Text('Water Supply')),
                     DropdownMenuItem(value: 'electricity', child: Text('Electricity')),
@@ -73,13 +73,13 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
                   _reportEmergency('govt_grievance', selectedCategory);
                 },
-                child: const Text('Submit'),
+                child: Text('Submit'),
               )
             ],
           );
@@ -93,38 +93,38 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l(ref, 'Citizen Report & SOS')),
-        backgroundColor: Colors.redAccent,
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.danger,
+        foregroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: _isLoading 
-        ? const Center(child: CircularProgressIndicator()) 
+        ? Center(child: CircularProgressIndicator()) 
         : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.emergency, size: 80, color: Colors.red),
-            const SizedBox(height: 16),
-            const Text('Emergency SOS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-            const SizedBox(height: 24),
+            Icon(Icons.emergency, size: 80, color: AppTheme.danger),
+            SizedBox(height: 16),
+            Text('Emergency SOS', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            SizedBox(height: 24),
             MHButton(
               icon: Icons.local_police,
               text: l(ref, 'Police SOS Alert'),
               onPressed: () => _reportEmergency('citizen_sos', 'medical'), // Mapped to general SOS
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             MHButton(
               icon: Icons.bloodtype,
               text: l(ref, 'Urgent Blood Required'),
               onPressed: () => _reportEmergency('citizen_sos', 'blood'),
             ),
-            const SizedBox(height: 48),
-            const Divider(),
-            const SizedBox(height: 24),
-            const Text('Citizen Reporting', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            const Text('Report garbage, potholes, or broken streetlights to the community.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-            const SizedBox(height: 16),
+            SizedBox(height: 48),
+            Divider(),
+            SizedBox(height: 24),
+            Text('Citizen Reporting', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            SizedBox(height: 8),
+            Text('Report garbage, potholes, or broken streetlights to the community.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+            SizedBox(height: 16),
             MHOutlinedButton(
               icon: Icons.report_problem,
               text: l(ref, 'Report Govt Grievance'),

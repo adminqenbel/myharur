@@ -59,11 +59,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 120,
-      padding: const EdgeInsets.only(top: 40, left: 16, right: 24, bottom: 16),
+      padding: EdgeInsets.only(top: 40, left: 16, right: 24, bottom: 16),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.primary : AppTheme.bg,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
-        boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -72,11 +72,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
             icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).iconTheme.color),
             onPressed: () => Navigator.pop(context),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             'Leaderboard',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              color: isDark ? Colors.white : AppTheme.primary,
+              color: isDark ? Theme.of(context).colorScheme.surface : AppTheme.primary,
             ),
           ),
         ],
@@ -109,7 +109,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
     switch(level) {
       case 'Government':
       case 'Police':
-        return Colors.red;
+        return AppTheme.danger;
       case 'Business':
       case 'Hospital':
         return Colors.green;
@@ -117,7 +117,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
       case 'Volunteer':
         return Colors.blue;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
     }
   }
 
@@ -129,7 +129,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (rank == 1) const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFD700), size: 40),
+        if (rank == 1) Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFD700), size: 40),
         AnimatedBuilder(
           animation: _glowAnimation,
           builder: (context, child) {
@@ -152,9 +152,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
             );
           }
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             gradient: LinearGradient(colors: [color.withOpacity(0.2), color.withOpacity(0.05)]),
             borderRadius: BorderRadius.circular(12),
@@ -162,33 +162,33 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           ),
           child: Text('#$rank', style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(child: Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis)),
             if (user['verification_level'] != 'Citizen') ...[
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Icon(Icons.verified, size: 14, color: _getVerificationColor(user['verification_level'])),
             ]
           ],
         ),
         Text('${user['tier_badge'] ?? 'Bronze'} Tier', style: TextStyle(color: tierColor, fontSize: 10, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text('${user['reputation_score']?.toStringAsFixed(0) ?? 0} pts', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text('${user['reputation_score']?.toStringAsFixed(0) ?? 0} pts', style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold)),
       ],
     );
   }
 
   Widget _buildTopThree() {
-    if (_leaderboard.isEmpty) return const SizedBox();
+    if (_leaderboard.isEmpty) return SizedBox();
     
     final first = _leaderboard.isNotEmpty ? _leaderboard[0] : null;
     final second = _leaderboard.length > 1 ? _leaderboard[1] : null;
     final third = _leaderboard.length > 2 ? _leaderboard[2] : null;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: EdgeInsets.symmetric(vertical: 32),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -204,21 +204,21 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
   Widget _buildListRank(Map<String, dynamic> user, int index) {
     final tierColor = _getTierColor(user['tier_badge']);
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
         border: Border.all(color: tierColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           SizedBox(
             width: 32,
-            child: Text('#${index + 1}', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+            child: Text('#${index + 1}', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -233,7 +233,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
                   : null,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +242,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
                   children: [
                     Flexible(child: Text(user['display_name'] ?? 'User', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis)),
                     if (user['verification_level'] != 'Citizen') ...[
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Icon(Icons.verified, size: 14, color: _getVerificationColor(user['verification_level'])),
                     ]
                   ],
@@ -254,7 +254,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${user['reputation_score']?.toStringAsFixed(0) ?? 0}', style: const TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('${user['reputation_score']?.toStringAsFixed(0) ?? 0}', style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 18)),
               Text('pts', style: Theme.of(context).textTheme.labelSmall),
             ],
           )
@@ -273,17 +273,17 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           // Filters
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 _buildFilterChip('Community', 'community', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildFilterChip('Emergency', 'emergency', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildFilterChip('Volunteer', 'volunteer', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildFilterChip('Business', 'business', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildFilterChip('Government', 'government', _category, (val) => setState((){ _category = val; _fetchLeaderboard(); })),
               ],
             ),
@@ -291,20 +291,20 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
           
           Expanded(
             child: _isLoading 
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
+              ? Center(child: CircularProgressIndicator(color: AppTheme.accent))
               : RefreshIndicator(
                   color: AppTheme.accent,
                   onRefresh: _fetchLeaderboard,
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: 24),
                     children: [
                       _buildTopThree(),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       if (_leaderboard.length > 3)
                         ..._leaderboard.sublist(3).asMap().entries.map((entry) {
                           return _buildListRank(entry.value, entry.key + 3);
                         }).toList(),
-                      const SizedBox(height: 80),
+                      SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -320,7 +320,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
       selected: isSelected,
       onSelected: (s) => onSelected(value),
       selectedColor: AppTheme.accent.withOpacity(0.2),
-      labelStyle: TextStyle(color: isSelected ? AppTheme.accent : Colors.grey),
+      labelStyle: TextStyle(color: isSelected ? AppTheme.accent : Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
     );
   }
 }

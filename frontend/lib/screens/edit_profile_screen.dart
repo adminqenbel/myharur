@@ -50,7 +50,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       });
       await ref.read(authProvider.notifier).refreshUser();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated successfully')));
         context.pop();
       }
     } catch (e) {
@@ -65,21 +65,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: Text('Edit Profile')),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               children: [
                 TextField(controller: _firstNameCtrl, decoration: const InputDecoration(labelText: 'First Name', border: OutlineInputBorder())),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(controller: _lastNameCtrl, decoration: const InputDecoration(labelText: 'Last Name', border: OutlineInputBorder())),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder())),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(controller: _addressCtrl, decoration: const InputDecoration(labelText: 'Address', border: OutlineInputBorder())),
-                const SizedBox(height: 24),
-                ElevatedButton(onPressed: _save, child: const Text('Save Changes')),
+                SizedBox(height: 24),
+                ElevatedButton(onPressed: _save, child: Text('Save Changes')),
               ],
             ),
     );

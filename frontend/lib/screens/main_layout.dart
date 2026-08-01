@@ -65,15 +65,15 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                    color: isDark ? Theme.of(context).colorScheme.surface.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                     width: 1,
                   ),
                 ),
                 child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                     child: Container(
-                      color: isDark ? AppTheme.surface.withOpacity(0.7) : Colors.white.withOpacity(0.85),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      color: isDark ? AppTheme.surface.withOpacity(0.7) : Theme.of(context).colorScheme.surface.withOpacity(0.85),
+                      padding: EdgeInsets.symmetric(horizontal: 4),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -96,7 +96,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isDark) {
     final bool isSelected = index == selectedIndex;
     final Color activeColor = AppTheme.accent; // Yellow from spec
-    final Color inactiveColor = isDark ? Colors.white60 : AppTheme.textSecondaryLight;
+    final Color inactiveColor = isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : AppTheme.textSecondaryLight;
     
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -126,7 +126,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               ),
             ),
             if (isSelected) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(

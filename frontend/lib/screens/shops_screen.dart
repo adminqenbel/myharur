@@ -26,20 +26,20 @@ class _ShopsScreenState extends State<ShopsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9), // Light background theme
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Light background theme
       appBar: AppBar(
-        title: const Text('Local Businesses', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
-        backgroundColor: Colors.white,
+        title: Text('Local Businesses', style: TextStyle(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF081C2D)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded),
+            icon: Icon(Icons.search_rounded),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
+            icon: Icon(Icons.filter_list_rounded),
             onPressed: () {},
           )
         ],
@@ -48,24 +48,24 @@ class _ShopsScreenState extends State<ShopsScreen> {
         children: [
           // ── Category Chips ───────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1)),
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), width: 1)),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   _buildCategoryChip('All Categories', true),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildCategoryChip('Food & Dining', false),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildCategoryChip('Groceries', false),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildCategoryChip('Services', false),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildCategoryChip('Electronics', false),
                 ],
               ),
@@ -76,29 +76,29 @@ class _ShopsScreenState extends State<ShopsScreen> {
               future: _shopsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3A86FF)));
+                  return Center(child: CircularProgressIndicator(color: AppTheme.info));
                 }
                 if (snapshot.hasError) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.store_mall_directory_rounded, size: 64, color: Color(0xFFEF233C)),
-                        const SizedBox(height: 16),
-                        const Text('Failed to load shops', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF081C2D))),
-                        const SizedBox(height: 8),
+                        Icon(Icons.store_mall_directory_rounded, size: 64, color: AppTheme.danger),
+                        SizedBox(height: 16),
+                        Text('Failed to load shops', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                        SizedBox(height: 8),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                          child: Text('We could not reach the directory server. Please try again.', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+                          padding: EdgeInsets.symmetric(horizontal: 32.0),
+                          child: Text('We could not reach the directory server. Please try again.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14)),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         ElevatedButton.icon(
                           onPressed: () => setState(() => _shopsFuture = _fetchShops()),
-                          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                          label: const Text('Try Again', style: TextStyle(color: Colors.white)),
+                          icon: Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.surface),
+                          label: Text('Try Again', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.accent, 
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
+                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
                           ),
                         ),
@@ -109,20 +109,20 @@ class _ShopsScreenState extends State<ShopsScreen> {
 
                 final shops = snapshot.data ?? [];
                 if (shops.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.storefront_rounded, size: 64, color: Colors.grey),
+                        Icon(Icons.storefront_rounded, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                         SizedBox(height: 16),
-                        Text('No businesses listed yet.', style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.w600)),
+                        Text('No businesses listed yet.', style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.w600)),
                       ],
                     ),
                   );
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, bottom: 100), // padding for FAB/nav
+                  padding: EdgeInsets.only(top: 16, bottom: 100), // padding for FAB/nav
                   itemCount: shops.length,
                   itemBuilder: (context, index) {
                     final shop = shops[index];
@@ -139,16 +139,16 @@ class _ShopsScreenState extends State<ShopsScreen> {
 
   Widget _buildCategoryChip(String label, bool isSelected) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF081C2D) : const Color(0xFFF4F6F9),
+        color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(20),
-        border: isSelected ? null : Border.all(color: Colors.grey.shade300, width: 1),
+        border: isSelected ? null : Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), width: 1),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.white : const Color(0xFF64748B),
+          color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
           fontSize: 13,
         ),
@@ -160,9 +160,9 @@ class _ShopsScreenState extends State<ShopsScreen> {
     final bool isOpen = (shop['is_open'] as bool?) ?? true; // Dummy logic
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
       ),
@@ -172,7 +172,7 @@ class _ShopsScreenState extends State<ShopsScreen> {
           borderRadius: BorderRadius.circular(20),
           onTap: () {}, // Navigate to shop details
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0),
             child: Column(
               children: [
                 Row(
@@ -182,13 +182,13 @@ class _ShopsScreenState extends State<ShopsScreen> {
                       width: 70,
                       height: 70,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F6F9),
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                       ),
-                      child: const Center(child: Icon(Icons.storefront_rounded, size: 36, color: Color(0xFF3A86FF))),
+                      child: Center(child: Icon(Icons.storefront_rounded, size: 36, color: AppTheme.info)),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,21 +199,21 @@ class _ShopsScreenState extends State<ShopsScreen> {
                               Expanded(
                                 child: Text(
                                   shop['name'] ?? 'Local Business',
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF081C2D)),
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Theme.of(context).colorScheme.onSurface),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: isOpen ? const Color(0xFF06D6A0).withOpacity(0.1) : const Color(0xFFEF233C).withOpacity(0.1),
+                                  color: isOpen ? AppTheme.success.withOpacity(0.1) : AppTheme.danger.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   isOpen ? 'OPEN' : 'CLOSED',
                                   style: TextStyle(
-                                    color: isOpen ? const Color(0xFF06D6A0) : const Color(0xFFEF233C),
+                                    color: isOpen ? AppTheme.success : AppTheme.danger,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -221,23 +221,23 @@ class _ShopsScreenState extends State<ShopsScreen> {
                               )
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Text(
                             shop['description'] ?? 'Supporting local economy in Harur.',
-                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.4),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 13, height: 1.4),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10),
                           Row(
                             children: [
-                              const Icon(Icons.star_rounded, color: Color(0xFFFFB703), size: 16),
-                              const SizedBox(width: 4),
-                              const Text('4.8', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              const SizedBox(width: 16),
-                              const Icon(Icons.location_on_rounded, color: Color(0xFF64748B), size: 14),
-                              const SizedBox(width: 4),
-                              const Text('0.5 km away', style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+                              Icon(Icons.star_rounded, color: AppTheme.accent, size: 16),
+                              SizedBox(width: 4),
+                              Text('4.8', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              SizedBox(width: 16),
+                              Icon(Icons.location_on_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 14),
+                              SizedBox(width: 4),
+                              Text('0.5 km away', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12)),
                             ],
                           )
                         ],
@@ -245,15 +245,15 @@ class _ShopsScreenState extends State<ShopsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Divider(color: Colors.grey.shade100, height: 1),
-                const SizedBox(height: 12),
+                SizedBox(height: 16),
+                Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), height: 1),
+                SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildActionButton(Icons.call_rounded, 'Call', const Color(0xFF3A86FF)),
-                    _buildActionButton(Icons.directions_rounded, 'Directions', const Color(0xFF06D6A0)),
-                    _buildActionButton(Icons.chat_bubble_rounded, 'WhatsApp', const Color(0xFF06D6A0)),
+                    _buildActionButton(Icons.call_rounded, 'Call', AppTheme.info),
+                    _buildActionButton(Icons.directions_rounded, 'Directions', AppTheme.success),
+                    _buildActionButton(Icons.chat_bubble_rounded, 'WhatsApp', AppTheme.success),
                   ],
                 )
               ],
@@ -269,7 +269,7 @@ class _ShopsScreenState extends State<ShopsScreen> {
       onTap: () {},
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -277,7 +277,7 @@ class _ShopsScreenState extends State<ShopsScreen> {
         child: Row(
           children: [
             Icon(icon, size: 18, color: color),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),

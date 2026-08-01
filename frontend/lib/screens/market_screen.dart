@@ -86,8 +86,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           builder: (_, sc) => Padding(
             padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
             child: ListView(controller: sc, children: [
-              const Text('Post a Listing', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              Text('Post a Listing', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              SizedBox(height: 16),
               
               // Image Upload Section
               GestureDetector(
@@ -103,48 +103,48 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 child: Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(12),
                     image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover) : null,
                   ),
                   child: isUploadingImage
-                      ? const Center(child: CircularProgressIndicator())
+                      ? Center(child: CircularProgressIndicator())
                       : imageUrl == null
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                              children: [
+                                Icon(Icons.add_a_photo, size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                                 SizedBox(height: 8),
-                                Text('Add Photo', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                                Text('Add Photo', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.bold)),
                               ],
                             )
-                          : const SizedBox(),
+                          : SizedBox(),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title *', border: OutlineInputBorder())),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLines: 3),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: 'Price (₹) *', border: OutlineInputBorder(), prefixIcon: Icon(Icons.currency_rupee)), keyboardType: TextInputType.number),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                 items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setMBS(() => selectedCategory = v!),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: selectedCondition,
                 decoration: const InputDecoration(labelText: 'Condition', border: OutlineInputBorder()),
                 items: conditions.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setMBS(() => selectedCondition = v!),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Contact Phone', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone)), keyboardType: TextInputType.phone),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: isSubmitting ? null : () async {
                   if (titleCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
@@ -167,8 +167,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     setMBS(() => isSubmitting = false);
                   }
                 },
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Listing', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
+                child: isSubmitting ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.surface)) : Text('Post Listing', style: TextStyle(fontSize: 16)),
               ),
             ]),
           ),
@@ -198,25 +198,25 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           builder: (_, sc) => Padding(
             padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
             child: ListView(controller: sc, children: [
-              const Text('Post a Job', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              Text('Post a Job', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              SizedBox(height: 16),
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Job Title *', border: OutlineInputBorder())),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: companyCtrl, decoration: const InputDecoration(labelText: 'Company / Name', border: OutlineInputBorder())),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Job Description', border: OutlineInputBorder()), maxLines: 3),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: selectedType,
                 decoration: const InputDecoration(labelText: 'Job Type', border: OutlineInputBorder()),
                 items: types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                 onChanged: (v) => setMBS(() => selectedType = v!),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: salaryCtrl, decoration: const InputDecoration(labelText: 'Salary Range (e.g. ₹8k-12k/month)', border: OutlineInputBorder())),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Contact Phone *', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: isSubmitting ? null : () async {
                   if (titleCtrl.text.isEmpty) return;
@@ -237,8 +237,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     setMBS(() => isSubmitting = false);
                   }
                 },
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: isSubmitting ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Post Job', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
+                child: isSubmitting ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.surface)) : Text('Post Job', style: TextStyle(fontSize: 16)),
               ),
             ]),
           ),
@@ -256,7 +256,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         backgroundColor: AppTheme.bg,
         appBar: AppBar(
           title: Text(l(ref, 'Marketplace')),
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
               Tab(icon: Icon(Icons.handshake_outlined, size: 18), text: 'Buy & Sell'),
               Tab(icon: Icon(Icons.work_outline, size: 18), text: 'Jobs'),
@@ -271,8 +271,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                     onPressed: () => tab.index == 0 ? _showCreateListingDialog() : _showCreateJobDialog(),
                     backgroundColor: AppTheme.accent,
                     foregroundColor: AppTheme.primary,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Post', style: TextStyle(fontWeight: FontWeight.w700)),
+                    icon: Icon(Icons.add),
+                    label: Text('Post', style: TextStyle(fontWeight: FontWeight.w700)),
                   );
                 },
               )
@@ -288,12 +288,12 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   }
 
   Widget _buildListings() {
-    if (_loadingListings) return const Center(child: CircularProgressIndicator());
+    if (_loadingListings) return Center(child: CircularProgressIndicator());
     if (_listings.isEmpty) return _emptyState(Icons.handshake, 'No listings yet', 'Be the first to post!');
     return RefreshIndicator(
       onRefresh: _fetchListings,
       child: GridView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.75, crossAxisSpacing: 12, mainAxisSpacing: 12),
         itemCount: _listings.length,
         itemBuilder: (ctx, i) {
@@ -312,27 +312,27 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item['title'] ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('₹${item['price']}', style: const TextStyle(fontSize: 24, color: Colors.green, fontWeight: FontWeight.bold)),
-            if (item['description'] != null) ...[const SizedBox(height: 12), Text(item['description'])],
-            const SizedBox(height: 12),
+            Text(item['title'] ?? '', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text('₹${item['price']}', style: TextStyle(fontSize: 24, color: Colors.green, fontWeight: FontWeight.bold)),
+            if (item['description'] != null) ...[SizedBox(height: 12), Text(item['description'])],
+            SizedBox(height: 12),
             Row(children: [
               Chip(label: Text(item['category'] ?? '')),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Chip(label: Text(item['condition'] ?? '')),
             ]),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             if (item['contact_phone'] != null)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.phone),
+                  icon: Icon(Icons.phone),
                   label: Text('Call ${item['contact_phone']}'),
                   onPressed: () async {
                     final url = Uri.parse('tel:${item['contact_phone']}');
@@ -347,32 +347,32 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   }
 
   Widget _buildJobs() {
-    if (_loadingJobs) return const Center(child: CircularProgressIndicator());
+    if (_loadingJobs) return Center(child: CircularProgressIndicator());
     if (_jobs.isEmpty) return _emptyState(Icons.work, 'No jobs posted', 'Post a vacancy above!');
     return RefreshIndicator(
       onRefresh: _fetchJobs,
       child: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         itemCount: _jobs.length,
         itemBuilder: (ctx, i) {
           final job = _jobs[i];
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: EdgeInsets.only(bottom: 12),
             child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.work, color: Colors.white)),
-              title: Text(job['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+              contentPadding: EdgeInsets.all(16),
+              leading: CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.work, color: Theme.of(context).colorScheme.surface)),
+              title: Text(job['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (job['company_name'] != null) Text(job['company_name'], style: const TextStyle(color: Colors.grey)),
-                  if (job['salary_range'] != null) Text(job['salary_range'], style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  Container(margin: const EdgeInsets.only(top: 4), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)), child: Text(job['job_type'] ?? '', style: TextStyle(color: Colors.blue.shade900, fontSize: 11))),
+                  if (job['company_name'] != null) Text(job['company_name'], style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                  if (job['salary_range'] != null) Text(job['salary_range'], style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  Container(margin: EdgeInsets.only(top: 4), padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)), child: Text(job['job_type'] ?? '', style: TextStyle(color: Colors.blue, fontSize: 11))),
                 ],
               ),
               trailing: job['contact_phone'] != null
                   ? IconButton(
-                      icon: const Icon(Icons.phone, color: Colors.green),
+                      icon: Icon(Icons.phone, color: Colors.green),
                       onPressed: () async {
                         final url = Uri.parse('tel:${job['contact_phone']}');
                         if (await canLaunchUrl(url)) await launchUrl(url);
@@ -388,10 +388,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
 
   Widget _emptyState(IconData icon, String title, String sub) {
     return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(icon, size: 64, color: Colors.grey.shade300),
-      const SizedBox(height: 16),
-      Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
-      Text(sub, style: const TextStyle(color: Colors.grey)),
+      Icon(icon, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+      SizedBox(height: 16),
+      Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+      Text(sub, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
     ]));
   }
 }

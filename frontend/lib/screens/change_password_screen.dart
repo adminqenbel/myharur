@@ -23,11 +23,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         'new_password': _newCtrl.text,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password changed successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Password changed successfully')));
         context.pop();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to change password. Check current password.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to change password. Check current password.')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -36,15 +36,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Change Password')),
+      appBar: AppBar(title: Text('Change Password')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         children: [
           TextField(controller: _oldCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Current Password', border: OutlineInputBorder())),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextField(controller: _newCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'New Password', border: OutlineInputBorder())),
-          const SizedBox(height: 24),
-          ElevatedButton(onPressed: _isLoading ? null : _submit, child: const Text('Update Password')),
+          SizedBox(height: 24),
+          ElevatedButton(onPressed: _isLoading ? null : _submit, child: Text('Update Password')),
         ],
       ),
     );
