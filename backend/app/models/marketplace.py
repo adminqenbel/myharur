@@ -15,6 +15,7 @@ class MarketplaceListing(Base):
     price = Column(Float, nullable=True)
     image_url = Column(String, nullable=True)
     video_url = Column(String, nullable=True)
+    contact_phone = Column(String, nullable=True)
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)
     status = Column(String, default="active", index=True)

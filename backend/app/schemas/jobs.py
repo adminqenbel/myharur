@@ -11,6 +11,7 @@ class JobListingBase(BaseModel):
     location: Optional[str] = None
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
+    contact_phone: Optional[str] = None
 
 class JobListingCreate(JobListingBase):
     pass

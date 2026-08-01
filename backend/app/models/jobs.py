@@ -15,6 +15,7 @@ class JobListing(Base):
     location = Column(String, nullable=True)
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)
+    contact_phone = Column(String, nullable=True)
     is_employer_verified = Column(Boolean, default=False)
     status = Column(String, default="active") # active, filled, closed
     created_at = Column(DateTime(timezone=True), server_default=func.now())

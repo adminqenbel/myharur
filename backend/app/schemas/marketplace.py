@@ -13,6 +13,7 @@ class MarketplaceListingBase(BaseModel):
     video_url: Optional[str] = None
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
+    contact_phone: Optional[str] = None
     status: Optional[str] = "active"
 
 class MarketplaceListingCreate(MarketplaceListingBase):
