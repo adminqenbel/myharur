@@ -144,7 +144,16 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     try {
       final r = await ApiClient.dio.get('/community/chat/rooms/${widget.room['id']}/messages');
       if (mounted) setState(() { _messages = r.data; _loading = false; });
-    } catch (_) { if (mounted) setState(() => _loading = false); }
+    } catch (e) { 
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to load messages: $e', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 10),
+        ));
+      }
+    }
   }
 
   Future<void> _send() async {
