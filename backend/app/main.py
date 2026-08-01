@@ -511,6 +511,18 @@ def keep_alive_loop():
 
 
 # ── Startup ──────────────────────────────────────────────────────────────────
+@app.get("/api/v1/fix-db")
+def fix_database_schema(db: Session = Depends(deps.get_db)):
+    from sqlalchemy import text
+    try:
+        db.execute(text("ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS category VARCHAR;"))
+        db.execute(text("ALTER TABLE job_listings ADD COLUMN IF NOT EXISTS contact_phone VARCHAR;"))
+        db.commit()
+        return {"status": "success", "message": "Columns added successfully"}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+
 @app.on_event("startup")
 async def startup_event():
     from app.db.session import engine, SessionLocal
