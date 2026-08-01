@@ -575,7 +575,7 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS current_attendees INTEGER DEFAULT 0;"))
         db.execute(text("ALTER TABLE events ADD COLUMN IF NOT EXISTS chat_room_id INTEGER;"))
         
-        db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS translated_text VARCHAR;"))
+        db.execute(text("ALTER TABLE chat_messages ALTER COLUMN translated_text TYPE JSONB USING translated_text::jsonb;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
         
         db.execute(text("ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS trust_score FLOAT DEFAULT 0.0;"))
