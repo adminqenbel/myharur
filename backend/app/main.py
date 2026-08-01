@@ -516,7 +516,7 @@ def fix_database_schema():
     from sqlalchemy import text
     from app.db.session import SessionLocal, engine
     from app.models.user import Base
-    from app.models import ai, support, gamification, marketplace, community, jobs, news, v4_extensions
+    from app.models import ai, support, gamification, marketplace, community, jobs, news, v4_extensions, emergency_platform
     
     # Create any entirely missing tables
     Base.metadata.create_all(bind=engine)
