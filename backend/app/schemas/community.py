@@ -178,7 +178,7 @@ class ChatMessageOut(BaseModel):
     file_urls: List[str] = []
     reactions: dict = {}
     is_pinned: bool = False
-    status: str = "sent"
+    status: Optional[str] = "sent"
     translated_text: Any = {}
     created_at: datetime
     updated_at: Optional[datetime] = None
