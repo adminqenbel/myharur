@@ -365,7 +365,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 margin: EdgeInsets.only(bottom: 6),
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isMe ? Theme.of(context).colorScheme.primary : (isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface),
+                  color: isMe ? const Color(0xFF007AFF) : (isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA)),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16), topRight: const Radius.circular(16),
                     bottomLeft: Radius.circular(isMe ? 16 : 4), bottomRight: Radius.circular(isMe ? 4 : 16),

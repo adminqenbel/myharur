@@ -199,8 +199,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.surface,
+                      backgroundColor: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA),
+                      foregroundColor: isDark ? Colors.white : Colors.black,
                     ),
                     child: Text('Browse as Guest', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
