@@ -549,6 +549,22 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS status VARCHAR;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS description TEXT;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'general';"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS photo_url VARCHAR;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS video_url VARCHAR;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS voice_url VARCHAR;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS escalation_level VARCHAR DEFAULT '1km';"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS assigned_to INTEGER;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS eta_minutes INTEGER;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
+        db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP WITH TIME ZONE;"))
+        
+        db.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS assigned_admin_id INTEGER;"))
+        db.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS priority VARCHAR DEFAULT 'normal';"))
+        db.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS ai_confidence_score FLOAT;"))
+        db.execute(text("ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
+        
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS translated_text VARCHAR;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;"))
         
