@@ -266,7 +266,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   if (isLoading) const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
                   Container(
-                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16, top: 8),
+                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 110, top: 8),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],

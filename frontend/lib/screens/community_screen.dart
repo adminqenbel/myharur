@@ -70,9 +70,6 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
             color: theme.colorScheme.surface,
             child: TabBar(
               controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 20),
               labelColor: AppTheme.accent,
               unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
               indicator: BoxDecoration(
