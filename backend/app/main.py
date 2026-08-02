@@ -499,8 +499,8 @@ def scrape_rates():
 def keep_alive_loop():
     scrape_rates()
     try:
-        from app.api.endpoints.news import bg_fetch_news
-        bg_fetch_news()
+        from app.tasks.crawler import sync_trigger_crawlers
+        sync_trigger_crawlers()
     except Exception as e:
         print(f"[News] Background fetch error: {e}")
         
@@ -512,8 +512,8 @@ def keep_alive_loop():
             if loops % 12 == 0:  # Every 2 hours
                 scrape_rates()
                 try:
-                    from app.api.endpoints.news import bg_fetch_news
-                    bg_fetch_news()
+                    from app.tasks.crawler import sync_trigger_crawlers
+                    sync_trigger_crawlers()
                 except Exception:
                     pass
 
@@ -644,6 +644,9 @@ def fix_database_schema():
 
 @app.on_event("startup")
 async def startup_event():
+    import threading
+    threading.Thread(target=keep_alive_loop, daemon=True).start()
+    
     from app.db.session import engine, SessionLocal
     import app.models
     from app.db.session import Base

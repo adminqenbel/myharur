@@ -105,6 +105,24 @@ def trigger_crawlers():
     finally:
         db.close()
 
+def sync_trigger_crawlers():
+    logger.info("Triggering crawlers synchronously (No Celery)...")
+    db = SessionLocal()
+    try:
+        sources = db.query(NewsSource).filter(NewsSource.is_active == True).all()
+        for source in sources:
+            try:
+                asyncio.run(async_crawl_source(source.id))
+            except Exception as e:
+                logger.error(f"Error in sync crawl: {e}")
+                
+        try:
+            asyncio.run(async_fetch_weather())
+        except Exception as e:
+            logger.error(f"Error in sync weather: {e}")
+    finally:
+        db.close()
+
 @shared_task(name="app.tasks.crawler.fetch_weather")
 def fetch_weather():
     asyncio.run(async_fetch_weather())

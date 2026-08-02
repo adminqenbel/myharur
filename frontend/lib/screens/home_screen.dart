@@ -14,6 +14,7 @@ import 'shops_screen.dart';
 import 'leaderboard_screen.dart';
 import '../widgets/design_system.dart';
 import '../theme.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -440,9 +441,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               actions: [
                 IconButton(
-                  icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.surface, size: 28),
+                  icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface, size: 28),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon!')));
+                    _navigateTo(const NotificationsScreen());
                   },
                 ),
                 SizedBox(width: 8),
