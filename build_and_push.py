@@ -29,7 +29,7 @@ def main():
     print("Setting label to MyHarur...")
     update_label("MyHarur")
     print("Building APK...")
-    # subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
+    subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
 
     prod_apk = r"d:\harur\myharur.apk"
     beta_apk = r"d:\harur\myharur-beta.apk"
@@ -48,7 +48,7 @@ def main():
     # 3. Git commit and push
     print("Committing and pushing to git...")
     subprocess.run(["git", "add", "."], cwd=r"d:\harur", check=True)
-    subprocess.run(["git", "commit", "-m", "Fix community tab spacing and AI chat bottom padding"], cwd=r"d:\harur")
+    subprocess.run(["git", "commit", "-m", "Fix location picker bottom padding"], cwd=r"d:\harur")
     subprocess.run(["git", "push"], cwd=r"d:\harur", check=True)
     
     print("All done!")

@@ -143,7 +143,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               MHOutlinedButton(
                 text: 'Continue Anyway',
                 onPressed: () => Navigator.pop(context),
-              )
+              ),
+              const SizedBox(height: 100),
             ],
           ),
         );
@@ -195,7 +196,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _determinePosition();
                 },
                 child: Text('Clear Manual Location', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.w600)),
-              )
+              ),
+              const SizedBox(height: 100),
             ],
           ),
         );
