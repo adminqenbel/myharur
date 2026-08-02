@@ -149,7 +149,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.waving_hand, size: 48, color: Colors.amber),
+          Icon(Icons.waving_hand, size: 48, color: AppTheme.appleBlue),
           SizedBox(height: 16),
           Text('Welcome to MyHarur!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           SizedBox(height: 8),

@@ -465,7 +465,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       spans.add(TextSpan(
         text: part,
         style: isMention
-            ? TextStyle(color: isMe ? Colors.yellowAccent : Colors.blue, fontWeight: FontWeight.bold)
+            ? TextStyle(color: isMe ? Colors.lightBlueAccent : Colors.blue, fontWeight: FontWeight.bold)
             : TextStyle(color: isMe ? Theme.of(context).colorScheme.surface : null),
       ));
     }

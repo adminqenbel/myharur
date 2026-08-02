@@ -90,7 +90,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isDark) {
     final bool isSelected = index == selectedIndex;
-    final Color activeColor = AppTheme.accent; // Yellow from spec
+    final Color activeColor = AppTheme.appleBlue; // Apple Blue
     final Color inactiveColor = isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : AppTheme.textSecondaryLight;
     
     return GestureDetector(

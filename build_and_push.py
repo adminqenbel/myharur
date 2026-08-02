@@ -45,7 +45,7 @@ def main():
     # 3. Git commit and push
     print("Committing and pushing to git...")
     subprocess.run(["git", "add", "."], cwd=r"d:\harur", check=True)
-    subprocess.run(["git", "commit", "-m", "Fix AI news processing and Gold Rates scraping logic"], cwd=r"d:\harur")
+    subprocess.run(["git", "commit", "-m", "Transition entirely to Apple Blue UI, remove yellow, reposition Market POST button"], cwd=r"d:\harur")
     subprocess.run(["git", "push"], cwd=r"d:\harur", check=True)
     
     print("All done!")

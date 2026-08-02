@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // ── Single Source of Truth Brand Colors ────────────────────────────────────
-  static const Color accent     = Color(0xFFF4B400);  // Retained Amber Accent
+  static const Color accent     = appleBlue;  // Apple Blue Accent
   static const Color appleBlue  = Color(0xFF007AFF);  // Apple Interactive Blue
   
   // Light Theme Colors (Apple UI Inspired)

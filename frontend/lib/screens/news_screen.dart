@@ -405,12 +405,12 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.amber),
+        border: Border.all(color: AppTheme.appleBlue),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.amber),
+          Icon(icon, size: 16, color: AppTheme.appleBlue),
           SizedBox(width: 6),
           Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           Text(value ?? '...', style: TextStyle(color: Colors.black87, fontSize: 12)),
