@@ -205,7 +205,23 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
-            return MHEmergencyCard(item: item, isGovt: isGovt);
+            return MHEmergencyCard(
+              item: item, 
+              isGovt: isGovt,
+              onStatusUpdate: (newStatus) async {
+                try {
+                  await ApiClient.dio.put('/emergency/${item['id']}/status', queryParameters: {'status': newStatus});
+                  _fetchEmergencies();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Status updated to $newStatus')));
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+                  }
+                }
+              },
+            );
           },
         );
       },

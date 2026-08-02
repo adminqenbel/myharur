@@ -18,10 +18,12 @@ class EmergencyCreate(EmergencyBase):
 class EmergencyOut(EmergencyBase):
     id: int
     user_id: int
+    user_name: Optional[str] = None
     status: str
     escalation_level: str
     eta_minutes: Optional[int] = None
     assigned_to: Optional[int] = None
+    responder_name: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None

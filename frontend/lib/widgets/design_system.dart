@@ -467,39 +467,105 @@ class MHNewsCard extends StatelessWidget {
 class MHEmergencyCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isGovt;
+  final Function(String)? onStatusUpdate;
 
-  const MHEmergencyCard({super.key, required this.item, this.isGovt = false});
+  const MHEmergencyCard({super.key, required this.item, this.isGovt = false, this.onStatusUpdate});
 
   @override
   Widget build(BuildContext context) {
-    final status = item['status'] ?? 'pending';
+    final status = item['status']?.toString().replaceAll('_', ' ') ?? 'pending';
+    final userName = item['user_name'] ?? 'Citizen';
+    final lat = item['lat'] != null ? double.parse(item['lat'].toString()).toStringAsFixed(4) : '';
+    final lng = item['lng'] != null ? double.parse(item['lng'].toString()).toStringAsFixed(4) : '';
+    final locationText = (lat.isNotEmpty && lng.isNotEmpty) ? '$lat, $lng' : 'Location unknown';
     final color = isGovt ? AppTheme.accent : AppTheme.danger;
+    
+    // Status color logic
+    Color badgeColor = AppTheme.info;
+    if (status.toLowerCase().contains('resolved') || status.toLowerCase().contains('completed')) badgeColor = AppTheme.success;
+    if (status.toLowerCase().contains('action') || status.toLowerCase().contains('progress')) badgeColor = Colors.orange;
 
     return Padding(
       padding: EdgeInsets.only(bottom: 16),
       child: MHCard(
         padding: EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-              child: Icon(isGovt ? Icons.account_balance_rounded : Icons.warning_rounded, color: color, size: 28),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Icon(isGovt ? Icons.account_balance_rounded : Icons.warning_rounded, color: color, size: 20),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isGovt ? 'GOVT GRIEVANCE' : 'EMERGENCY SOS', 
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color, letterSpacing: 1.2)
+                      ),
+                      Text(item['category']?.toString().toUpperCase() ?? 'REPORT', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                MHBadge(text: status.toUpperCase(), color: badgeColor),
+              ],
             ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item['category']?.toString().toUpperCase() ?? 'REPORT', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 4),
-                  Text(item['description'] ?? 'No description provided.', maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
-                  SizedBox(height: 12),
-                  MHBadge(text: status.toString().toUpperCase(), color: status == 'resolved' ? AppTheme.success : AppTheme.info),
-                ],
+            SizedBox(height: 12),
+            Text(item['description'] ?? 'No description provided.', maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
+            SizedBox(height: 16),
+            Divider(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.person_outline_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                SizedBox(width: 4),
+                Text(userName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
+                Spacer(),
+                Icon(Icons.location_on_outlined, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                SizedBox(width: 4),
+                Text(locationText, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
+              ],
+            ),
+            if (onStatusUpdate != null) ...[
+              SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                      builder: (ctx) => Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Update Tracking Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            SizedBox(height: 16),
+                            ListTile(title: Text('Responded'), leading: Icon(Icons.check_circle_outline, color: AppTheme.info), onTap: () { Navigator.pop(ctx); onStatusUpdate!('Responded'); }),
+                            ListTile(title: Text('Searching for Help'), leading: Icon(Icons.search_rounded, color: Colors.orange), onTap: () { Navigator.pop(ctx); onStatusUpdate!('Searching for Help'); }),
+                            ListTile(title: Text('In Action'), leading: Icon(Icons.directions_run_rounded, color: AppTheme.danger), onTap: () { Navigator.pop(ctx); onStatusUpdate!('In Action'); }),
+                            ListTile(title: Text('Completed'), leading: Icon(Icons.done_all_rounded, color: AppTheme.success), onTap: () { Navigator.pop(ctx); onStatusUpdate!('Completed'); }),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.update_rounded, size: 18),
+                  label: Text('Take Action / Update Status'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: color,
+                    side: BorderSide(color: color.withOpacity(0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
               ),
-            ),
+            ]
           ],
         ),
       ),

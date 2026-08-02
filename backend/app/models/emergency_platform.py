@@ -33,3 +33,15 @@ class Emergency(Base):
     
     user = relationship("User", foreign_keys=[user_id])
     responder = relationship("User", foreign_keys=[assigned_to])
+
+    @property
+    def user_name(self):
+        if self.user:
+            return self.user.display_name or self.user.username
+        return "Citizen"
+
+    @property
+    def responder_name(self):
+        if self.responder:
+            return self.responder.display_name or self.responder.username
+        return None

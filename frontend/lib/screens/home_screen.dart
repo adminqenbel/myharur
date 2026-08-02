@@ -564,7 +564,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Row(
                       children: [
                         _buildQuickAction(Icons.newspaper_rounded, 'News', AppTheme.appleBlue, () => _navigateTo(const NewsScreen())),
-                        _buildQuickAction(Icons.sos_rounded, 'Emergency', AppTheme.danger, () => _navigateTo(const EmergencyScreen())),
+                        _buildQuickAction(Icons.sos_rounded, 'Emergency', AppTheme.danger, () => context.go('/report')),
                         _buildQuickAction(Icons.storefront_rounded, 'Shops', AppTheme.appleBlue, () => _navigateTo(const ShopsScreen())),
                         _buildQuickAction(Icons.shopping_bag_rounded, 'Market', AppTheme.appleBlue, () => context.go('/market')),
                       ],
