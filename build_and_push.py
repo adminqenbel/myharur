@@ -16,14 +16,14 @@ def main():
             f.write(content)
 
     # 1. Build Beta APK
-    print("Setting label to MyHarur Beta...")
-    update_label("MyHarur Beta")
-    print("Building Beta APK...")
-    subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
+    # print("Setting label to MyHarur Beta...")
+    # update_label("MyHarur Beta")
+    # print("Building Beta APK...")
+    # subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
     
     beta_apk = r"d:\harur\myharur-beta.apk"
-    print("Copying beta APK...")
-    shutil.copy2(src_apk, beta_apk)
+    # print("Copying beta APK...")
+    # shutil.copy2(src_apk, beta_apk)
 
     # 2. Build Production APK
     print("Setting label to MyHarur...")
@@ -45,7 +45,7 @@ def main():
     # 3. Git commit and push
     print("Committing and pushing to git...")
     subprocess.run(["git", "add", "."], cwd=r"d:\harur", check=True)
-    subprocess.run(["git", "commit", "-m", "Transition entirely to Apple Blue UI, remove yellow, reposition Market POST button"], cwd=r"d:\harur")
+    subprocess.run(["git", "commit", "-m", "Update logo and rebuild apk"], cwd=r"d:\harur")
     subprocess.run(["git", "push"], cwd=r"d:\harur", check=True)
     
     print("All done!")
