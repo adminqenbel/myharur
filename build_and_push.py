@@ -28,19 +28,22 @@ def main():
     # 2. Build Production APK
     print("Setting label to MyHarur...")
     update_label("MyHarur")
-    print("Building production APK...")
-    subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
+    print("Building APK...")
+    # subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
 
     prod_apk = r"d:\harur\myharur.apk"
-    print("Copying production APK...")
+    beta_apk = r"d:\harur\myharur-beta.apk"
+    
+    print("Copying APKs...")
     shutil.copy2(src_apk, prod_apk)
+    shutil.copy2(src_apk, beta_apk)
     
     # Optional: also copy to backend/static if required
     static_apk = r"d:\harur\backend\static\myharur.apk"
     static_beta_apk = r"d:\harur\backend\static\myharur-beta.apk"
     if os.path.exists(os.path.dirname(static_apk)):
         shutil.copy2(src_apk, static_apk)
-        shutil.copy2(beta_apk, static_beta_apk)
+        shutil.copy2(src_apk, static_beta_apk)
 
     # 3. Git commit and push
     print("Committing and pushing to git...")
