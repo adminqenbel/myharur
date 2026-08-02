@@ -87,7 +87,7 @@ class IntelligentRouter:
             import os
             
             # Context regarding the app for the AI
-            system_prompt = \"\"\"You are the MyHarur AI Support Assistant.
+            system_prompt = """You are the MyHarur AI Support Assistant.
 Be concise, helpful, and polite. Handle spelling mistakes gracefully.
 Knowledge Base:
 - Shop Registration: Go to Marketplace tab -> Click '+' -> Fill details -> Upload Trade License (24hr approval).
@@ -96,7 +96,7 @@ Knowledge Base:
 - Reporting Abuse: Tap three dots (...) on a post/message -> Select 'Report'. (2-hour moderator review).
 - Account Deletion: Email admin@myharur.com from registered email (3 business days).
 - Unknown questions: Apologize and state you are an AI still learning about Harur, and an admin will assist shortly.
-User Query: \"\"\"
+User Query: """
             
             # Try Google Gemini AI first
             gemini_key = os.getenv("GEMINI_API_KEY")
