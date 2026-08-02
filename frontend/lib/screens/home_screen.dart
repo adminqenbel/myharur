@@ -416,7 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           slivers: [
             // ── Custom Header (SliverAppBar) ───────────────────────────────
             SliverAppBar(
-              expandedHeight: 70.0,
+              expandedHeight: 120.0,
               floating: true,
               pinned: true,
               backgroundColor: theme.appBarTheme.backgroundColor,
@@ -672,18 +672,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         onTap: () => _navigateTo(const NewsScreen()),
                       ),
                     ),
-                  SizedBox(height: 100), // padding for bottom nav
+                  SizedBox(height: 160), // padding for bottom nav and FAB
                 ],
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAIChatSheet,
-        backgroundColor: const Color(0xFF16324F), // Deep navy
-        icon: const Icon(Icons.support_agent_rounded, color: Colors.white),
-        label: const Text("Ask AI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: FloatingActionButton.extended(
+              onPressed: _showAIChatSheet,
+              backgroundColor: AppTheme.appleBlue.withOpacity(0.85),
+              elevation: 0,
+              highlightElevation: 0,
+              icon: const Icon(Icons.support_agent_rounded, color: Colors.white),
+              label: const Text("Ask AI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ),
       ),
     );
   }
