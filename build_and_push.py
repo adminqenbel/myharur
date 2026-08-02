@@ -45,7 +45,7 @@ def main():
     # 3. Git commit and push
     print("Committing and pushing to git...")
     subprocess.run(["git", "add", "."], cwd=r"d:\harur", check=True)
-    subprocess.run(["git", "commit", "-m", "Update logo and rebuild apk"], cwd=r"d:\harur")
+    subprocess.run(["git", "commit", "-m", "Fix community tab spacing, AI chat visibility, and set default theme to light"], cwd=r"d:\harur")
     subprocess.run(["git", "push"], cwd=r"d:\harur", check=True)
     
     print("All done!")
