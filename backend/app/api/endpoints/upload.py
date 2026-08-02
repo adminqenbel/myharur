@@ -57,11 +57,8 @@ async def upload_image(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Image validation failed: corrupted or malicious file. {str(e)}")
 
-    unique_name = f"{uuid.uuid4().hex}{ext}"
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(UPLOAD_DIR, unique_name)
+    import base64
+    b64_str = base64.b64encode(sanitized_contents).decode('utf-8')
+    data_uri = f"data:image/jpeg;base64,{b64_str}"
 
-    with open(file_path, "wb") as f:
-        f.write(sanitized_contents)
-
-    return {"url": f"/static/uploads/{unique_name}", "filename": unique_name}
+    return {"url": data_uri, "filename": file.filename}

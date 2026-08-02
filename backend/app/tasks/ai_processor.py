@@ -88,6 +88,7 @@ async def async_process_article(raw_article_id: int):
             is_breaking=is_breaking,
             tags=tags_str,
             image_url=img_url,
+            source_url=article.original_url,
             author_id=author_id,
             created_at=created_at
         )

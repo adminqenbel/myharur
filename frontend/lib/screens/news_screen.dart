@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../utils/image_upload_helper.dart';
 import '../theme.dart';
+import '../widgets/design_system.dart';
 
 class NewsScreen extends ConsumerStatefulWidget {
   const NewsScreen({super.key});
@@ -288,12 +289,11 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
                 if (hasImage)
                   Stack(
                     children: [
-                      Image.network(
-                        post['image_url'],
+                      MHImage(
+                        url: post['image_url'],
                         width: double.infinity,
                         height: 200,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => SizedBox(),
                       ),
                       Positioned(
                         top: 12,

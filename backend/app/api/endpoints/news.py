@@ -108,7 +108,7 @@ def read_news(
             "title": n.title,
             "content": n.description,
             "source": source,
-            "url": None,
+            "url": n.source_url,
             "image_url": n.image_url,
             "created_at": n.created_at.isoformat() if n.created_at else None,
             "author_name": author,

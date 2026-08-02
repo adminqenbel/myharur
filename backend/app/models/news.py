@@ -17,6 +17,7 @@ class News(Base):
     description = Column(Text, nullable=False)
     content = Column(Text, nullable=True)  # Extended content / body
     image_url = Column(String, nullable=True)  # Single hero image URL
+    source_url = Column(String, nullable=True)  # Original URL
     location_name = Column(String, nullable=True)
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)

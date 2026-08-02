@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -417,13 +418,11 @@ class MHNewsCard extends StatelessWidget {
             if (hasImage)
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: CachedNetworkImage(
-                  imageUrl: news['image_url'],
+                child: MHImage(
+                  url: news['image_url'],
                   width: double.infinity,
                   height: 180,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => const MHSkeletonLoader(width: double.infinity, height: 180, borderRadius: 0),
-                  errorWidget: (context, url, error) => SizedBox(height: 180, child: Center(child: Icon(Icons.broken_image, size: 48, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)))),
                 ),
               ),
             Padding(
@@ -535,11 +534,11 @@ class MHMarketplaceCard extends StatelessWidget {
             child: imageUrl != null && imageUrl.isNotEmpty
                 ? ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl, 
-                      fit: BoxFit.cover, 
-                      placeholder: (context, url) => const MHSkeletonLoader(width: double.infinity, height: 140, borderRadius: 0),
-                      errorWidget: (context, url, error) => Icon(Icons.image, size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))
+                    child: MHImage(
+                      url: imageUrl, 
+                      width: double.infinity,
+                      height: 140,
+                      fit: BoxFit.cover,
                     ),
                   )
                 : Icon(Icons.image_outlined, size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
@@ -563,6 +562,46 @@ class MHMarketplaceCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class MHImage extends StatelessWidget {
+  final String url;
+  final double width;
+  final double height;
+  final BoxFit fit;
+
+  const MHImage({super.key, required this.url, required this.width, required this.height, this.fit = BoxFit.cover});
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.startsWith('data:image')) {
+      final base64String = url.split(',').last;
+      return Image.memory(
+        base64Decode(base64String),
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _buildError(context),
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (context, url) => MHSkeletonLoader(width: width, height: height, borderRadius: 0),
+        errorWidget: (context, url, error) => _buildError(context),
+      );
+    }
+  }
+
+  Widget _buildError(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Center(child: Icon(Icons.broken_image, size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
     );
   }
 }

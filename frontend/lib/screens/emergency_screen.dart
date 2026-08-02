@@ -57,17 +57,20 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         floatingActionButton: Builder(
           builder: (ctx) {
             final tab = DefaultTabController.of(ctx);
-            return FloatingActionButton.extended(
-              onPressed: () {
-                if (tab.index == 1) {
-                  _showCreateGrievanceDialog();
-                } else {
-                  _showSosOptionsDialog();
-                }
-              },
-              backgroundColor: AppTheme.danger,
-              icon: Icon(Icons.add_alert_rounded, color: Theme.of(context).colorScheme.surface),
-              label: Text(tab.index == 1 ? 'Report Issue' : 'Request Help', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold)),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  if (tab.index == 1) {
+                    _showCreateGrievanceDialog();
+                  } else {
+                    _showSosOptionsDialog();
+                  }
+                },
+                backgroundColor: AppTheme.danger,
+                icon: Icon(Icons.add_alert_rounded, color: Theme.of(context).colorScheme.surface),
+                label: Text(tab.index == 1 ? 'Report Issue' : 'Request Help', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold)),
+              ),
             );
           }
         ),
@@ -210,60 +213,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   }
 
   void _showSosOptionsDialog() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Request Emergency Help', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
-            ListTile(
-              leading: Icon(Icons.local_police, color: Colors.blue),
-              title: Text('Call Police (100)'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final Uri url = Uri(scheme: 'tel', path: '100');
-                if (await canLaunchUrl(url)) await launchUrl(url);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.medical_services, color: AppTheme.danger),
-              title: Text('Call Ambulance (108)'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final Uri url = Uri(scheme: 'tel', path: '108');
-                if (await canLaunchUrl(url)) await launchUrl(url);
-              },
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(Icons.broadcast_on_personal, color: Colors.orange),
-              title: Text('Notify Nearby Volunteers'),
-              subtitle: Text('Alerts people within 1km radius'),
-              onTap: () {
-                Navigator.pop(ctx);
-                // Trigger API /emergency/ type: citizen_sos
-                ApiClient.dio.post('/emergency/', data: {
-                  'type': 'citizen_sos',
-                  'category': 'medical',
-                  'description': 'Immediate assistance needed!',
-                  'lat': 12.0628,
-                  'lng': 78.4950
-                }).then((_) => _fetchEmergencies());
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showCreateGrievanceDialog() {
-    String selectedCategory = 'road';
+    String selectedCategory = 'police';
     final descCtrl = TextEditingController();
     bool isSubmitting = false;
 
@@ -273,7 +223,80 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setMBS) => Padding(
-          padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 100),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Request Emergency Help', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: const InputDecoration(labelText: 'Help Category', border: OutlineInputBorder()),
+                items: [
+                  DropdownMenuItem(value: 'police', child: Text('Police')),
+                  DropdownMenuItem(value: 'fire', child: Text('Fire')),
+                  DropdownMenuItem(value: 'ambulance', child: Text('Ambulance')),
+                  DropdownMenuItem(value: 'custom_help', child: Text('Custom Help (e.g. Look for parent)')),
+                ],
+                onChanged: (v) => setMBS(() => selectedCategory = v!),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Custom Problem / Details', border: OutlineInputBorder(), hintText: 'Explain the emergency...'),
+                maxLines: 3,
+              ),
+              SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: MHButton(
+                  onPressed: isSubmitting ? null : () async {
+                    if (descCtrl.text.isEmpty && selectedCategory == 'custom_help') {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please describe the custom problem.')));
+                      return;
+                    }
+                    setMBS(() => isSubmitting = true);
+                    try {
+                      await ApiClient.dio.post('/emergency/', data: {
+                        'type': 'citizen_sos',
+                        'category': selectedCategory,
+                        'description': descCtrl.text,
+                        'lat': 12.0628,
+                        'lng': 78.4950
+                      });
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      _fetchEmergencies();
+                    } catch (e) {
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                      }
+                      setMBS(() => isSubmitting = false);
+                    }
+                  },
+                  isLoading: isSubmitting,
+                  text: 'Submit Request',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateGrievanceDialog() {
+    String selectedCategory = 'electricity';
+    final descCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setMBS) => Padding(
+          padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 100),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,13 +307,13 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                 value: selectedCategory,
                 decoration: const InputDecoration(labelText: 'Issue Category', border: OutlineInputBorder()),
                 items: [
-                  DropdownMenuItem(value: 'road', child: Text('Road Damage')),
-                  DropdownMenuItem(value: 'garbage', child: Text('Garbage / Illegal Dumping')),
-                  DropdownMenuItem(value: 'light', child: Text('Street Light')),
-                  DropdownMenuItem(value: 'water', child: Text('Water Supply')),
                   DropdownMenuItem(value: 'electricity', child: Text('Electricity')),
-                  DropdownMenuItem(value: 'drainage', child: Text('Drainage')),
-                  DropdownMenuItem(value: 'tree', child: Text('Tree Fall')),
+                  DropdownMenuItem(value: 'light', child: Text('Street Light')),
+                  DropdownMenuItem(value: 'traffic', child: Text('Traffic Issue')),
+                  DropdownMenuItem(value: 'accident', child: Text('Accident')),
+                  DropdownMenuItem(value: 'pothole', child: Text('Pothole / Road Damage')),
+                  DropdownMenuItem(value: 'water', child: Text('Water Supply')),
+                  DropdownMenuItem(value: 'water_stagnation', child: Text('Water Stagnation')),
                 ],
                 onChanged: (v) => setMBS(() => selectedCategory = v!),
               ),

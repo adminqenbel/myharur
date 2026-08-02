@@ -478,3 +478,39 @@ def escalate_ticket(
         
     db.commit()
     return {"message": f"Ticket escalated. New status: {ticket.status}"}
+
+from app.models.community import Event, ChatMessage, Question, Answer, Listing
+
+@router.delete("/content/{content_type}/{item_id}")
+def superadmin_delete_content(
+    content_type: str,
+    item_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Delete")),
+) -> Any:
+    """Super Admin literally option to delete anything."""
+    if current_user.role.name != "Super Admin":
+        raise HTTPException(status_code=403, detail="Only Super Admins can use absolute delete")
+        
+    model = None
+    if content_type == "news":
+        model = NewsModel
+    elif content_type == "event":
+        model = Event
+    elif content_type == "message":
+        model = ChatMessage
+    elif content_type == "post":
+        model = Question
+    elif content_type == "listing":
+        model = Listing
+    else:
+        raise HTTPException(status_code=400, detail="Invalid content type")
+        
+    item = db.query(model).filter(model.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    db.delete(item)
+    db.commit()
+    log_admin_action(db, current_user.id, f"super_delete_{content_type}", target_id=item_id)
+    return {"message": f"Deleted {content_type} with ID {item_id}"}
