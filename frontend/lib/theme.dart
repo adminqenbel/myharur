@@ -16,7 +16,7 @@ class AppTheme {
   static const Color bgDark     = Color(0xFF000000);
   static const Color surfaceDark = Color(0xFF1C1C1E); // Apple Dark Surface
   static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFFEBEBF5).withOpacity(0.6); // Apple Dark Secondary
+  static const Color textSecondaryDark = Color(0x99EBEBF5); // Apple Dark Secondary
 
   // Status Colors
   static const Color success    = Color(0xFF34C759);  // Apple Green

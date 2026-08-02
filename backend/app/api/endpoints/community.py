@@ -341,6 +341,25 @@ def approve_tournament(
     db.commit()
     return {"message": "Tournament chat room created"}
 
+# ── AI Support ──────────────────────────────────────────────────────────────────
+from pydantic import BaseModel
+class AIQuery(BaseModel):
+    query: str
+
+@router.post("/ai/ask")
+def ask_ai(
+    query_in: AIQuery,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    from app.core.ai_router import IntelligentRouter
+    ai_router = IntelligentRouter(db)
+    session_id = f"api_user_{current_user.id}"
+    # Automatically prepend @support so the router handles it
+    is_handled, ai_text = ai_router.process_message(current_user.id, f"@support {query_in.query}", session_id)
+    return {"response": ai_text if is_handled else "Sorry, I could not understand your query."}
+
+
 # ── Chat ──────────────────────────────────────────────────────────────────────
 
 def _seed_default_rooms(db: Session):

@@ -198,6 +198,148 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  void _showAIChatSheet() {
+    final TextEditingController ctrl = TextEditingController();
+    final List<Map<String, dynamic>> messages = [
+      {'sender': 'ai', 'text': 'Hello! I am your MyHarur AI Support. How can I help you today?'}
+    ];
+    bool isLoading = false;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 16),
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
+                  ),
+                  Text("AI Support", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = messages[index];
+                        final isMe = msg['sender'] == 'me';
+                        return Align(
+                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isMe ? AppTheme.info : Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.only(
+                                topLeft: const Radius.circular(16),
+                                topRight: const Radius.circular(16),
+                                bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
+                                bottomRight: isMe ? Radius.zero : const Radius.circular(16),
+                              ),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))],
+                            ),
+                            child: Text(
+                              msg['text'],
+                              style: TextStyle(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  if (isLoading) const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
+                  Container(
+                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16, top: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: ctrl,
+                            decoration: InputDecoration(
+                              hintText: "Type your message...",
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                              filled: true,
+                              fillColor: Theme.of(context).scaffoldBackgroundColor,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            ),
+                            onSubmitted: (text) async {
+                              final trimText = text.trim();
+                              if (trimText.isEmpty) return;
+                              ctrl.clear();
+                              setModalState(() {
+                                messages.add({'sender': 'me', 'text': trimText});
+                                isLoading = true;
+                              });
+                              try {
+                                final r = await ApiClient.dio.post('/community/ai/ask', data: {'query': trimText});
+                                setModalState(() {
+                                  messages.add({'sender': 'ai', 'text': r.data['response']});
+                                  isLoading = false;
+                                });
+                              } catch (e) {
+                                setModalState(() {
+                                  messages.add({'sender': 'ai', 'text': 'Error connecting to AI.'});
+                                  isLoading = false;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        CircleAvatar(
+                          backgroundColor: AppTheme.info,
+                          child: IconButton(
+                            icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                            onPressed: () async {
+                              final text = ctrl.text.trim();
+                              if (text.isEmpty) return;
+                              ctrl.clear();
+                              setModalState(() {
+                                messages.add({'sender': 'me', 'text': text});
+                                isLoading = true;
+                              });
+                              try {
+                                final r = await ApiClient.dio.post('/community/ai/ask', data: {'query': text});
+                                setModalState(() {
+                                  messages.add({'sender': 'ai', 'text': r.data['response']});
+                                  isLoading = false;
+                                });
+                              } catch (e) {
+                                setModalState(() {
+                                  messages.add({'sender': 'ai', 'text': 'Error connecting to AI.'});
+                                  isLoading = false;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
   void _navigateTo(Widget screen) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
@@ -533,6 +675,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAIChatSheet,
+        backgroundColor: const Color(0xFF16324F), // Deep navy
+        icon: const Icon(Icons.support_agent_rounded, color: Colors.white),
+        label: const Text("Ask AI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
