@@ -50,6 +50,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      extendBody: true,
       body: widget.child,
       bottomNavigationBar: isKeyboardOpen
           ? null
@@ -58,19 +59,26 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               minimum: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               child: Container(
                 height: 64,
-                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                    color: isDark ? Theme.of(context).dividerColor.withOpacity(0.7) : Colors.black.withOpacity(0.05),
-                    width: 1,
-                  ),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 30, offset: const Offset(0, 10))
+                  ],
                 ),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.92 : 0.85),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.35 : 0.5),
+                        border: Border.all(
+                          color: isDark ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.4),
+                          width: 1.2,
+                        ),
+                        borderRadius: BorderRadius.circular(32),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -85,6 +93,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 ),
               ),
             ),
+          ),
     );
   }
 

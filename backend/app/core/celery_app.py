@@ -11,6 +11,8 @@ celery_app = Celery(
     include=["app.tasks.crawler", "app.tasks.ai_processor", "app.tasks.notifications"]
 )
 
+from celery.schedules import crontab
+
 celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
@@ -22,6 +24,14 @@ celery_app.conf.update(
         "run-crawlers-every-2-hours": {
             "task": "app.tasks.crawler.trigger_crawlers",
             "schedule": 7200.0, # 2 hours in seconds
+        },
+        "send-morning-notification": {
+            "task": "app.tasks.notifications.send_daily_catchy_notification",
+            "schedule": crontab(hour=10, minute=0),
+        },
+        "send-evening-notification": {
+            "task": "app.tasks.notifications.send_daily_catchy_notification",
+            "schedule": crontab(hour=18, minute=0),
         },
     }
 )

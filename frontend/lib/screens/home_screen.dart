@@ -558,10 +558,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       children: [
-                        _buildQuickAction(Icons.newspaper_rounded, 'News', AppTheme.info, () => _navigateTo(const NewsScreen())),
+                        _buildQuickAction(Icons.newspaper_rounded, 'News', AppTheme.appleBlue, () => _navigateTo(const NewsScreen())),
                         _buildQuickAction(Icons.sos_rounded, 'Emergency', AppTheme.danger, () => _navigateTo(const EmergencyScreen())),
-                        _buildQuickAction(Icons.storefront_rounded, 'Shops', AppTheme.success, () => _navigateTo(const ShopsScreen())),
-                        _buildQuickAction(Icons.shopping_bag_rounded, 'Market', AppTheme.accent, () => context.go('/market')),
+                        _buildQuickAction(Icons.storefront_rounded, 'Shops', AppTheme.appleBlue, () => _navigateTo(const ShopsScreen())),
+                        _buildQuickAction(Icons.shopping_bag_rounded, 'Market', AppTheme.appleBlue, () => context.go('/market')),
                       ],
                     ),
                   ),
@@ -612,14 +612,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           mainAxisSpacing: 16,
                           crossAxisSpacing: 16,
                           children: [
-                            _buildServiceIcon(Icons.work_rounded, 'Jobs', AppTheme.info, () => context.go('/market')),
-                            _buildServiceIcon(Icons.festival_rounded, 'Events', const Color(0xFF8338EC), () => context.go('/community')),
-                            _buildServiceIcon(Icons.handyman_rounded, 'Services', const Color(0xFFFB5607), () => _navigateTo(const ShopsScreen())),
-                            _buildServiceIcon(Icons.emoji_events_rounded, 'Rankings', const Color(0xFFFFBE0B), () => _navigateTo(const LeaderboardScreen())),
-                            _buildServiceIcon(Icons.map_rounded, 'Map', AppTheme.success, () {
+                            _buildServiceIcon(Icons.work_rounded, 'Jobs', AppTheme.appleBlue, () => context.go('/market')),
+                            _buildServiceIcon(Icons.festival_rounded, 'Events', AppTheme.appleBlue, () => context.go('/community')),
+                            _buildServiceIcon(Icons.handyman_rounded, 'Services', AppTheme.appleBlue, () => _navigateTo(const ShopsScreen())),
+                            _buildServiceIcon(Icons.emoji_events_rounded, 'Rankings', AppTheme.appleBlue, () => _navigateTo(const LeaderboardScreen())),
+                            _buildServiceIcon(Icons.map_rounded, 'Map', AppTheme.appleBlue, () {
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Town Map coming soon!')));
                             }),
-                            _buildServiceIcon(Icons.forum_rounded, 'Community', AppTheme.info, () => context.go('/community')),
+                            _buildServiceIcon(Icons.forum_rounded, 'Community', AppTheme.appleBlue, () => context.go('/community')),
                           ],
                         ),
                       ],
