@@ -98,11 +98,14 @@ async def async_process_article(raw_article_id: int):
 
         if priority in ["Critical", "High"]:
             from app.tasks.notifications import push_notification
-            push_notification.delay(
-                title=f"Breaking News: {title}",
-                message=abstract[:100],
-                priority=priority
-            )
+            try:
+                push_notification(
+                    title=f"Breaking News: {title}",
+                    message=abstract[:100],
+                    priority=priority
+                )
+            except Exception as e:
+                logger.error(f"Failed to push notification: {e}")
 
     except Exception as e:
         logger.error(f"Error processing article {raw_article_id}: {e}")

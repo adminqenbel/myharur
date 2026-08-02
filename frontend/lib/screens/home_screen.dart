@@ -15,6 +15,7 @@ import 'leaderboard_screen.dart';
 import '../widgets/design_system.dart';
 import '../theme.dart';
 import 'notifications_screen.dart';
+import '../services/notification_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -36,6 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _determinePosition();
     _fetchLatestNews();
+    NotificationService().requestPermission();
   }
 
   Future<void> _fetchLatestNews() async {

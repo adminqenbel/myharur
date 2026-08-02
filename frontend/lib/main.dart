@@ -23,9 +23,14 @@ import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/username_setup_screen.dart';
 import 'providers/auth_provider.dart';
 
-void main() {
+import 'services/notification_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ApiClient.init();
+  final notificationService = NotificationService();
+  await notificationService.init();
+  notificationService.startSimulatedUpdates();
   runApp(const ProviderScope(child: MyHarurApp()));
 }
 

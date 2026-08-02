@@ -4,7 +4,7 @@ import asyncio
 import aiohttp
 from app.db.session import SessionLocal
 from app.models.ingestion import NewsSource, CrawlerLog, RawArticle
-from app.tasks.ai_processor import process_raw_article
+from app.tasks.ai_processor import process_raw_article, async_process_article
 from datetime import datetime
 from sqlalchemy.sql import func
 from bs4 import BeautifulSoup
@@ -70,7 +70,10 @@ async def async_crawl_source(source_id: int):
             db.commit()
             db.refresh(raw_article)
 
-            process_raw_article.delay(raw_article.id)
+            try:
+                await async_process_article(raw_article.id)
+            except Exception as e:
+                logger.error(f"Failed to process article synchronously: {e}")
 
         log = CrawlerLog(source_id=source.id, status="success", articles_found=len(feed.entries[:20]))
         db.add(log)

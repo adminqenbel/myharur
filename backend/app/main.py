@@ -468,25 +468,38 @@ from app.api.endpoints.rates import current_rates
 
 def scrape_rates():
     try:
+        from bs4 import BeautifulSoup
         url = "https://www.goodreturns.in/gold-rates/dharmapuri.html"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         html = urllib.request.urlopen(req, timeout=10).read().decode('utf-8')
-        matches = re.findall(r'₹\s*([0-9,]+)', html)
-        prev_22k = current_rates.get("gold_22k_raw", 0)
-        prev_24k = current_rates.get("gold_24k_raw", 0)
-        if len(matches) >= 2:
-            raw_22k = int(matches[0].replace(',', ''))
-            raw_24k = int(matches[1].replace(',', ''))
+        soup = BeautifulSoup(html, 'html.parser')
+        tds = [t.text.strip() for t in soup.find_all('td')]
+        
+        # First row usually has '1', then 24K price, 22K price, 18K price
+        if len(tds) > 4 and tds[0] == '1':
+            raw_24k_str = tds[1].replace('\u20b9', '').replace(',', '').strip()
+            raw_22k_str = tds[2].replace('\u20b9', '').replace(',', '').strip()
+            
+            raw_24k = int(raw_24k_str)
+            raw_22k = int(raw_22k_str)
+            
+            prev_22k = current_rates.get("gold_22k_raw", 0)
+            prev_24k = current_rates.get("gold_24k_raw", 0)
+            
             trend_22k = "↑" if raw_22k > prev_22k else ("↓" if raw_22k < prev_22k else "→")
             trend_24k = "↑" if raw_24k > prev_24k else ("↓" if raw_24k < prev_24k else "→")
-            current_rates["gold_22k"] = f"₹{matches[0]}/g"
-            current_rates["gold_24k"] = f"₹{matches[1]}/g"
+            
+            current_rates["gold_22k"] = f"₹{raw_22k:,}/g"
+            current_rates["gold_24k"] = f"₹{raw_24k:,}/g"
             current_rates["gold_22k_raw"] = raw_22k
             current_rates["gold_24k_raw"] = raw_24k
+            
             current_rates["gold_22k_prev"] = f"₹{prev_22k:,}/g" if prev_22k else current_rates["gold_22k"]
             current_rates["gold_24k_prev"] = f"₹{prev_24k:,}/g" if prev_24k else current_rates["gold_24k"]
+            
             current_rates["gold_22k_trend"] = trend_22k
             current_rates["gold_24k_trend"] = trend_24k
+            
         current_rates["silver"] = "₹102/g"
         current_rates["updated_at"] = datetime.utcnow().isoformat()
         print(f"[Rates] Scraped: 22K={current_rates['gold_22k']}, 24K={current_rates['gold_24k']}")
