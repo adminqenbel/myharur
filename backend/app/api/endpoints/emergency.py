@@ -12,13 +12,17 @@ router = APIRouter()
 @router.get("/", response_model=List[EmergencyOut])
 def read_emergencies(
     db: Session = Depends(deps.get_db),
+    type: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
     """
-    Retrieve active emergencies (not resolved).
+    Retrieve active emergencies (not resolved), optionally filtered by type.
     """
-    emergencies = db.query(EmergencyModel).filter(EmergencyModel.status != "resolved").order_by(EmergencyModel.created_at.desc()).offset(skip).limit(limit).all()
+    q = db.query(EmergencyModel).filter(EmergencyModel.status != "resolved")
+    if type:
+        q = q.filter(EmergencyModel.type == type)
+    emergencies = q.order_by(EmergencyModel.created_at.desc()).offset(skip).limit(limit).all()
     return emergencies
 
 @router.post("/", response_model=EmergencyOut)
