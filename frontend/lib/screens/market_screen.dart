@@ -257,7 +257,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         ),
         floatingActionButton: auth.isLoggedIn
             ? Padding(
-                padding: const EdgeInsets.only(bottom: 100),
+                padding: const EdgeInsets.only(bottom: 120),
                 child: Builder(
                   builder: (ctx) {
                     final tab = DefaultTabController.of(ctx);
@@ -288,7 +288,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     return RefreshIndicator(
       onRefresh: _fetchListings,
       child: GridView.builder(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 180),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.75, crossAxisSpacing: 12, mainAxisSpacing: 12),
         itemCount: _listings.length,
         itemBuilder: (ctx, i) {
@@ -347,7 +347,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     return RefreshIndicator(
       onRefresh: _fetchJobs,
       child: ListView.builder(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 180),
         itemCount: _jobs.length,
         itemBuilder: (ctx, i) {
           final job = _jobs[i];

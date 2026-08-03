@@ -126,14 +126,65 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   Widget _buildHelpCategories() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _buildCircleAction(Icons.local_police_rounded, 'Police', Colors.blue),
-          _buildCircleAction(Icons.medical_services_rounded, 'Medical', AppTheme.danger),
-          _buildCircleAction(Icons.bloodtype_rounded, 'Blood', AppTheme.danger),
-          _buildCircleAction(Icons.fire_truck_rounded, 'Fire', Colors.orange),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildCircleAction(Icons.local_police_rounded, 'Police', Colors.blue),
+              _buildCircleAction(Icons.medical_services_rounded, 'Medical', AppTheme.danger),
+              _buildCircleAction(Icons.bloodtype_rounded, 'Blood', AppTheme.danger),
+              _buildCircleAction(Icons.fire_truck_rounded, 'Fire', Colors.orange),
+            ],
+          ),
+          SizedBox(height: 24),
+          Align(alignment: Alignment.centerLeft, child: Text('Local Emergency Contacts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))),
+          SizedBox(height: 12),
+          _buildContactCard('Harur Police Station', '100', Icons.local_police_rounded, Colors.blue),
+          SizedBox(height: 8),
+          _buildContactCard('Govt Hospital Ambulance', '108', Icons.medical_services_rounded, AppTheme.danger),
+          SizedBox(height: 8),
+          _buildContactCard('Fire & Rescue Services', '101', Icons.fire_truck_rounded, Colors.orange),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContactCard(String title, String number, IconData icon, Color color) {
+    return InkWell(
+      onTap: () async {
+        final url = Uri.parse('tel:$number');
+        if (await canLaunchUrl(url)) await launchUrl(url);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+                  SizedBox(height: 4),
+                  Text('Call $number', style: TextStyle(fontWeight: FontWeight.w600, color: color)),
+                ],
+              ),
+            ),
+            Icon(Icons.call_rounded, color: color),
+          ],
+        ),
       ),
     );
   }

@@ -114,7 +114,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     if (_tabController.index == 3 && !canCreateRoom) return null;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 80),
+      padding: EdgeInsets.only(bottom: 120),
       child: FloatingActionButton(
         backgroundColor: AppTheme.accent,
         onPressed: () {
@@ -136,7 +136,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
         itemCount: _polls.length,
         itemBuilder: (ctx, i) => _buildPollCard(_polls[i]),
       ),
@@ -147,6 +147,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final options = (poll['options'] as List? ?? []);
     final totalVotes = options.fold<int>(0, (sum, o) => sum + (o['vote_count'] as int? ?? 0));
     final votedId = poll['user_voted_option_id'] as int?;
+    
+    final endsAt = poll['ends_at'] != null ? DateTime.tryParse(poll['ends_at'].toString()) : null;
+    final isFinished = endsAt != null && endsAt.isBefore(DateTime.now());
 
     List<Widget> optionWidgets = [];
     for (var opt in options) {
@@ -155,7 +158,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
       final isVoted = votedId == opt['id'];
       optionWidgets.add(
         InkWell(
-          onTap: votedId != null ? null : () => _castVote(poll['id'], opt['id']),
+          onTap: (votedId != null || isFinished) ? null : () => _castVote(poll['id'], opt['id']),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             margin: EdgeInsets.only(bottom: 12),
@@ -196,6 +199,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: Text(poll['question'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
+              if (isFinished)
+                Container(
+                  margin: EdgeInsets.only(right: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                  child: Text('FINISHED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                ),
               if (canDelete)
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
@@ -290,7 +300,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
         itemCount: _events.length,
         itemBuilder: (ctx, i) {
           final event = _events[i];
@@ -308,7 +318,17 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                 Padding(
                   padding: EdgeInsets.all(20),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(event['title'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Expanded(child: Text(event['title'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
+                        if (event['event_date'] != null && DateTime.tryParse(event['event_date'].toString())?.isBefore(DateTime.now()) == true)
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                            child: Text('FINISHED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                          ),
+                      ]
+                    ),
                     SizedBox(height: 12),
                     if (event['event_date'] != null)
                       Row(children: [
@@ -397,7 +417,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
         itemCount: _questions.length,
         itemBuilder: (ctx, i) {
           final q = _questions[i];
@@ -590,7 +610,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     }
 
     return ListView.builder(
-      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
       itemCount: _chatRooms.length,
       itemBuilder: (ctx, i) {
         final room = _chatRooms[i];

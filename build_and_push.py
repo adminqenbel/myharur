@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 
 def main():
     manifest_path = r"d:\harur\frontend\android\app\src\main\AndroidManifest.xml"
@@ -47,8 +48,9 @@ def main():
 
     # 3. Git commit and push
     print("Committing and pushing to git...")
+    commit_msg = sys.argv[1] if len(sys.argv) > 1 else "Update app"
     subprocess.run(["git", "add", "."], cwd=r"d:\harur", check=True)
-    subprocess.run(["git", "commit", "-m", "Fix location picker bottom padding"], cwd=r"d:\harur")
+    subprocess.run(["git", "commit", "-m", commit_msg], cwd=r"d:\harur")
     subprocess.run(["git", "push"], cwd=r"d:\harur", check=True)
     
     print("All done!")

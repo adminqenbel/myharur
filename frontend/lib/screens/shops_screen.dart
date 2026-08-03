@@ -111,22 +111,37 @@ class _ShopsScreenState extends State<ShopsScreen> {
                   );
                 }
 
-                final shops = snapshot.data ?? [];
-                if (shops.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.storefront_rounded, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                        SizedBox(height: 16),
-                        Text('No businesses listed yet.', style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  );
-                }
+                final apiShops = snapshot.data ?? [];
+                final shops = apiShops.isEmpty ? [
+                  {
+                    'name': 'Harur Supermarket',
+                    'description': 'Fresh groceries and daily essentials.',
+                    'is_open': true,
+                  },
+                  {
+                    'name': 'Raja Electronics',
+                    'description': 'Mobiles, laptops, and repair services.',
+                    'is_open': true,
+                  },
+                  {
+                    'name': 'Sri Murugan Auto Works',
+                    'description': 'Two-wheeler and four-wheeler service center.',
+                    'is_open': false,
+                  },
+                  {
+                    'name': 'Kannan Medicals',
+                    'description': '24/7 Pharmacy and healthcare products.',
+                    'is_open': true,
+                  },
+                  {
+                    'name': 'Saraswathi Book Store',
+                    'description': 'School books, stationery, and office supplies.',
+                    'is_open': true,
+                  }
+                ] : apiShops;
 
                 return ListView.builder(
-                  padding: EdgeInsets.only(top: 16, bottom: 100), // padding for FAB/nav
+                  padding: EdgeInsets.only(top: 16, bottom: 120), // padding for FAB/nav
                   itemCount: shops.length,
                   itemBuilder: (context, index) {
                     final shop = shops[index];

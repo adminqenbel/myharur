@@ -87,7 +87,12 @@ def create_job(
 
 @router.get("/events", response_model=List[EventSchema])
 def get_events(db: Session = Depends(deps.get_db), skip: int = 0, limit: int = 50) -> Any:
-    return db.query(EventModel).filter(EventModel.is_approved == True).order_by(EventModel.event_date).offset(skip).limit(limit).all()
+    import datetime
+    seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
+    return db.query(EventModel).filter(
+        EventModel.is_approved == True,
+        EventModel.event_date >= seven_days_ago
+    ).order_by(EventModel.event_date).offset(skip).limit(limit).all()
 
 
 @router.post("/events", response_model=EventSchema)
@@ -188,7 +193,12 @@ def get_polls(
     db: Session = Depends(deps.get_db),
     current_user: Optional[UserModel] = Depends(deps.get_optional_current_user),
 ) -> Any:
-    polls = db.query(PollModel).filter(PollModel.is_active == True).order_by(PollModel.created_at.desc()).all()
+    import datetime
+    seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
+    polls = db.query(PollModel).filter(
+        PollModel.is_active == True,
+        (PollModel.ends_at == None) | (PollModel.ends_at >= seven_days_ago)
+    ).order_by(PollModel.created_at.desc()).all()
     uid = current_user.id if current_user else None
     return [_enrich_poll(p, uid, db) for p in polls]
 
