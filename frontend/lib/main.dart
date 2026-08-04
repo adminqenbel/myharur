@@ -12,7 +12,7 @@ import 'screens/update_screen.dart';
 import 'screens/main_layout.dart';
 import 'screens/home_screen.dart';
 import 'screens/community_screen.dart';
-import 'screens/report_screen.dart';
+import 'screens/emergency_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/market_screen.dart';
 import 'screens/settings_screen.dart';
@@ -70,7 +70,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(path: '/market', builder: (context, state) => const MarketScreen()),
         GoRoute(path: '/community', builder: (context, state) => const CommunityScreen()),
-        GoRoute(path: '/report', builder: (context, state) => const ReportScreen()),
+        GoRoute(path: '/report', builder: (context, state) => const EmergencyScreen()),
         GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       ],
     ),
