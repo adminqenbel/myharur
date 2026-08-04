@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/translations.dart';
 import '../utils/update_manager.dart';
 import '../theme.dart';
+import 'dart:async';
+import '../services/socket_service.dart';
+import '../services/notification_service.dart';
 
 class MainLayout extends ConsumerStatefulWidget {
   final Widget child;
@@ -15,12 +18,30 @@ class MainLayout extends ConsumerStatefulWidget {
 }
 
 class _MainLayoutState extends ConsumerState<MainLayout> {
+  StreamSubscription? _mentionSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       UpdateManager.checkUpdate(context);
     });
+    
+    // Listen for socket mentions to trigger push notifications
+    _mentionSub = SocketService().onMention.listen((data) {
+      final senderName = data['sender_name'] ?? 'Someone';
+      final content = data['content'] ?? '';
+      NotificationService().showNotification(
+        title: 'You were mentioned!',
+        body: '$senderName mentioned you: $content',
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _mentionSub?.cancel();
+    super.dispose();
   }
 
   int _calculateSelectedIndex(BuildContext context) {
