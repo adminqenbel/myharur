@@ -150,6 +150,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     
     final endsAt = poll['ends_at'] != null ? DateTime.tryParse(poll['ends_at'].toString()) : null;
     final isFinished = endsAt != null && endsAt.isBefore(DateTime.now());
+    
+    String timeRemaining = '';
+    if (endsAt != null) {
+      if (isFinished) {
+        timeRemaining = 'FINISHED';
+      } else {
+        final diff = endsAt.difference(DateTime.now());
+        if (diff.inDays > 0) timeRemaining = '${diff.inDays}d left';
+        else if (diff.inHours > 0) timeRemaining = '${diff.inHours}h left';
+        else timeRemaining = '${diff.inMinutes}m left';
+      }
+    }
 
     List<Widget> optionWidgets = [];
     for (var opt in options) {
@@ -199,12 +211,21 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: Text(poll['question'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
-              if (isFinished)
+              if (timeRemaining.isNotEmpty)
                 Container(
                   margin: EdgeInsets.only(right: 8),
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                  child: Text('FINISHED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                  decoration: BoxDecoration(
+                    color: isFinished ? Theme.of(context).colorScheme.error.withOpacity(0.1) : const Color(0xFF007AFF).withOpacity(0.1), 
+                    borderRadius: BorderRadius.circular(6)
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.timer_outlined, size: 12, color: isFinished ? Theme.of(context).colorScheme.error : const Color(0xFF007AFF)),
+                      SizedBox(width: 4),
+                      Text(timeRemaining, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isFinished ? Theme.of(context).colorScheme.error : const Color(0xFF007AFF))),
+                    ]
+                  ),
                 ),
               if (canDelete)
                 IconButton(
@@ -321,12 +342,36 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                     Row(
                       children: [
                         Expanded(child: Text(event['title'] ?? '', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
-                        if (event['event_date'] != null && DateTime.tryParse(event['event_date'].toString())?.isBefore(DateTime.now()) == true)
-                          Container(
+                        Builder(builder: (ctx) {
+                          final eventDate = event['event_date'] != null ? DateTime.tryParse(event['event_date'].toString()) : null;
+                          if (eventDate == null) return const SizedBox();
+                          final isFinished = eventDate.isBefore(DateTime.now());
+                          String timeRemaining = '';
+                          if (isFinished) {
+                            timeRemaining = 'FINISHED';
+                          } else {
+                            final diff = eventDate.difference(DateTime.now());
+                            if (diff.inDays > 0) timeRemaining = '${diff.inDays}d left';
+                            else if (diff.inHours > 0) timeRemaining = '${diff.inHours}h left';
+                            else timeRemaining = '${diff.inMinutes}m left';
+                          }
+                          return Container(
+                            margin: EdgeInsets.only(left: 8),
                             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                            child: Text('FINISHED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
-                          ),
+                            decoration: BoxDecoration(
+                              color: isFinished ? Theme.of(context).colorScheme.error.withOpacity(0.1) : const Color(0xFF007AFF).withOpacity(0.1), 
+                              borderRadius: BorderRadius.circular(6)
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.timer_outlined, size: 12, color: isFinished ? Theme.of(context).colorScheme.error : const Color(0xFF007AFF)),
+                                SizedBox(width: 4),
+                                Text(timeRemaining, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isFinished ? Theme.of(context).colorScheme.error : const Color(0xFF007AFF))),
+                              ]
+                            ),
+                          );
+                        }),
                       ]
                     ),
                     SizedBox(height: 12),

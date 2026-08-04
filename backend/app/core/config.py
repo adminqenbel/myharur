@@ -22,8 +22,20 @@ class Settings(BaseSettings):
         if self.DATABASE_URL:
             return self.DATABASE_URL
         from urllib.parse import quote_plus, unquote_plus
+        
+        # Override legacy IPv6-only Supabase URL with the IPv4 Pooler URL
+        # This fixes the socket.gaierror on servers like Hostinger that don't support IPv6
+        server = self.POSTGRES_SERVER
+        user = self.POSTGRES_USER
+        port = self.POSTGRES_PORT
+        
+        if "db.krfzaemoendekexglkfj.supabase.co" in server:
+            server = "aws-0-ap-northeast-1.pooler.supabase.com"
+            user = "postgres.krfzaemoendekexglkfj"
+            port = "6543"
+            
         safe_password = quote_plus(unquote_plus(self.POSTGRES_PASSWORD))
-        return f"postgresql://{self.POSTGRES_USER}:{safe_password}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return f"postgresql://{user}:{safe_password}@{server}:{port}/{self.POSTGRES_DB}"
 
     class Config:
         env_file = ".env"
