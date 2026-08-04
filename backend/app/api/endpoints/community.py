@@ -587,6 +587,21 @@ def send_message(
                     
         except Exception as e:
             print(f"REST API AI routing error: {e}")
+            
+        # Create notifications for actual users tagged
+        for m_tag in mentions:
+            tagged_user = db.query(UserModel).filter(UserModel.username.ilike(m_tag)).first()
+            if tagged_user and tagged_user.id != current_user.id:
+                from app.models.system import NotificationQueue
+                notif = NotificationQueue(
+                    user_id=tagged_user.id,
+                    title="You were mentioned in a chat",
+                    message=f"{_get_name(db, current_user.id)} mentioned you in {room.name}: {msg_in.content[:50]}...",
+                    status="unread",
+                    priority="High"
+                )
+                db.add(notif)
+        db.commit()
     # Broadcast to Socket.IO
     import asyncio
     try:

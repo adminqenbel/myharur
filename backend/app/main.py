@@ -275,8 +275,22 @@ async def _notify_mentions(mentions: list, msg_data: dict):
                 continue # Already handled by AI router
                 
             user = db.query(UserModel).filter(UserModel.username == username.lower()).first()
-            if user:
+            if user and user.id != msg_data.get('sender_id'):
+                from app.models.system import NotificationQueue
+                
+                # Emit real-time notification
                 await sio.emit('mention', msg_data, room=f'user_{user.id}')
+                
+                # Create persistent notification for offline delivery
+                notif = NotificationQueue(
+                    user_id=user.id,
+                    title="You were mentioned in a chat",
+                    message=f"{msg_data.get('sender_name', 'Someone')} mentioned you: {msg_data.get('content', '')[:50]}...",
+                    status="unread",
+                    priority="High"
+                )
+                db.add(notif)
+                db.commit()
     except Exception as e:
         print(f"[Socket.IO] Mention notify error: {e}")
     finally:
