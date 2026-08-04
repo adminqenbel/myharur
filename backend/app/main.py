@@ -72,6 +72,10 @@ async def secure_headers_middleware(request: Request, call_next):
     logger.info(json.dumps(log_dict))
     return response
 
+# Ensure static directory exists
+os.makedirs("static/uploads", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # ── Socket.IO Setup ──────────────────────────────────────────────────────────
 import socketio
 from jose import jwt, JWTError

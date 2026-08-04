@@ -113,8 +113,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     // If on Chat tab and not authorized, hide FAB
     if (_tabController.index == 3 && !canCreateRoom) return null;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: 120),
+    return Container(
+      margin: EdgeInsets.only(bottom: 120),
       child: FloatingActionButton(
         backgroundColor: AppTheme.accent,
         onPressed: () {

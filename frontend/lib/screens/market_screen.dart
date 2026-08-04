@@ -256,8 +256,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           ),
         ),
         floatingActionButton: auth.isLoggedIn
-            ? Padding(
-                padding: const EdgeInsets.only(bottom: 120),
+            ? Container(
+                margin: const EdgeInsets.only(bottom: 120),
                 child: Builder(
                   builder: (ctx) {
                     final tab = DefaultTabController.of(ctx);

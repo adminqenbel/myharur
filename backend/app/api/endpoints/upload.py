@@ -1,9 +1,8 @@
 """Image upload endpoint - stores files to /static/uploads/."""
 import os
 import uuid
-import shutil
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from app.api import deps
 from app.models.user import User as UserModel
 
@@ -13,9 +12,9 @@ UPLOAD_DIR = os.path.join("static", "uploads")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-
 @router.post("/image")
 async def upload_image(
+    request: Request,
     file: UploadFile = File(...),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
@@ -57,8 +56,17 @@ async def upload_image(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Image validation failed: corrupted or malicious file. {str(e)}")
 
-    import base64
-    b64_str = base64.b64encode(sanitized_contents).decode('utf-8')
-    data_uri = f"data:image/jpeg;base64,{b64_str}"
+    filename = f"{uuid.uuid4().hex}.jpg"
+    filepath = os.path.join(UPLOAD_DIR, filename)
 
-    return {"url": data_uri, "filename": file.filename}
+    try:
+        with open(filepath, "wb") as f:
+            f.write(sanitized_contents)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+
+    # Return the static URL that the frontend can use directly
+    base = str(request.base_url).rstrip("/")
+    public_url = f"{base}/static/uploads/{filename}"
+
+    return {"url": public_url, "filename": filename}
