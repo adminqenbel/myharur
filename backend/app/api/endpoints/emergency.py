@@ -60,7 +60,11 @@ def escalate_emergency(
     if not emergency:
         raise HTTPException(status_code=404, detail="Emergency not found")
     
-    if emergency.user_id != current_user.id and current_user.role.name not in ["Admin", "Super Admin", "Emergency Admin"]:
+    role_names = [r.name for r in current_user.roles]
+    if current_user.role:
+        role_names.append(current_user.role.name)
+        
+    if emergency.user_id != current_user.id and not any(r in ["Admin", "Super Admin", "Emergency Admin"] for r in role_names):
         raise HTTPException(status_code=403, detail="Not authorized to escalate this emergency")
 
     levels = ["1km", "5km", "10km", "govt", "police", "hospital"]
@@ -113,7 +117,11 @@ def resolve_emergency(
     if not emergency:
         raise HTTPException(status_code=404, detail="Emergency not found")
         
-    if emergency.user_id != current_user.id and current_user.role.name not in ["Admin", "Super Admin", "Emergency Admin"]:
+    role_names = [r.name for r in current_user.roles]
+    if current_user.role:
+        role_names.append(current_user.role.name)
+        
+    if emergency.user_id != current_user.id and not any(r in ["Admin", "Super Admin", "Emergency Admin"] for r in role_names):
         raise HTTPException(status_code=403, detail="Not authorized")
         
     emergency.status = "resolved"
