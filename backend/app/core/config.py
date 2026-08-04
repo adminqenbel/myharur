@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.DATABASE_URL:
+            if "db.krfzaemoendekexglkfj.supabase.co" in self.DATABASE_URL:
+                uri = self.DATABASE_URL.replace(
+                    "db.krfzaemoendekexglkfj.supabase.co:5432",
+                    "aws-0-ap-northeast-1.pooler.supabase.com:6543"
+                ).replace("postgres:", "postgres.krfzaemoendekexglkfj:")
+                if "?" not in uri:
+                    uri += "?sslmode=require"
+                return uri
             return self.DATABASE_URL
         from urllib.parse import quote_plus, unquote_plus
         
@@ -35,7 +43,10 @@ class Settings(BaseSettings):
             port = "6543"
             
         safe_password = quote_plus(unquote_plus(self.POSTGRES_PASSWORD))
-        return f"postgresql://{user}:{safe_password}@{server}:{port}/{self.POSTGRES_DB}"
+        uri = f"postgresql://{user}:{safe_password}@{server}:{port}/{self.POSTGRES_DB}"
+        if "supabase" in server or "pooler" in server:
+            uri += "?sslmode=require"
+        return uri
 
     class Config:
         env_file = ".env"
