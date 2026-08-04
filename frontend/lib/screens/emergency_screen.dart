@@ -58,7 +58,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           builder: (ctx) {
             final tab = DefaultTabController.of(ctx);
             return Padding(
-              padding: const EdgeInsets.only(bottom: 100),
+              padding: const EdgeInsets.only(bottom: 140),
               child: FloatingActionButton.extended(
                 onPressed: () {
                   if (tab.index == 1) {

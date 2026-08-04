@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme.dart';
 
 // ── BUTTONS ─────────────────────────────────────────────────────────────────
@@ -526,9 +527,34 @@ class MHEmergencyCard extends StatelessWidget {
                 SizedBox(width: 4),
                 Text(userName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
                 Spacer(),
-                Icon(Icons.location_on_outlined, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
-                SizedBox(width: 4),
-                Text(locationText, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
+                if (lat.isNotEmpty && lng.isNotEmpty)
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () async {
+                      final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(Icons.map_rounded, size: 16, color: Colors.blue),
+                          SizedBox(width: 4),
+                          Text('View Map', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue)),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Icon(Icons.location_off_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                      SizedBox(width: 4),
+                      Text('No Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
+                    ],
+                  ),
               ],
             ),
             if (onStatusUpdate != null) ...[
