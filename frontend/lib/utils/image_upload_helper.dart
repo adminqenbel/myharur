@@ -1,7 +1,68 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import '../api_client.dart';
+
+class LocalImageServer {
+  static HttpServer? _server;
+  static String? _localIp;
+  static const int port = 8080;
+
+  static Future<String> getLocalIp() async {
+    if (_localIp != null) return _localIp!;
+    try {
+      for (var interface in await NetworkInterface.list()) {
+        for (var addr in interface.addresses) {
+          if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
+            _localIp = addr.address;
+            return _localIp!;
+          }
+        }
+      }
+    } catch (e) {
+      print('Failed to get IP: $e');
+    }
+    return '127.0.0.1';
+  }
+
+  static Future<void> start() async {
+    if (_server != null) return;
+    try {
+      _server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+      print('Local Image Server running on port $port');
+      _server!.listen((HttpRequest request) async {
+        final uri = request.uri;
+        if (uri.path == '/serve') {
+          final encodedPath = uri.queryParameters['path'];
+          if (encodedPath != null) {
+            try {
+              String base64Str = encodedPath;
+              // Add padding if missing
+              while (base64Str.length % 4 != 0) {
+                base64Str += '=';
+              }
+              final decodedBytes = base64Url.decode(base64Str);
+              final decodedPath = utf8.decode(decodedBytes);
+              final file = File(decodedPath);
+              
+              if (await file.exists()) {
+                request.response.headers.contentType = ContentType('image', 'jpeg');
+                await request.response.addStream(file.openRead());
+                await request.response.close();
+                return;
+              }
+            } catch (e) {
+              print('Serve error: $e');
+            }
+          }
+        }
+        request.response.statusCode = 404;
+        request.response.close();
+      });
+    } catch (e) {
+      print('Local server error: $e');
+    }
+  }
+}
 
 /// Helper class for picking and uploading images.
 class ImageUploadHelper {
@@ -17,33 +78,17 @@ class ImageUploadHelper {
     );
   }
 
-  /// Upload an XFile to the server and return the image URL.
-  /// Returns null if upload fails.
+  /// P2P Upload: Instead of uploading to the backend, serve locally and return the local IP URL.
   static Future<String?> uploadImage(XFile file) async {
     try {
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          file.path,
-          filename: file.name,
-        ),
-      });
-
-      final response = await ApiClient.dio.post(
-        '/upload/image',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
-      );
-
-      if (response.statusCode == 200 && response.data != null) {
-        final url = response.data['url'] as String?;
-        if (url != null) {
-          // Convert relative URL to absolute
-          return 'https://myharur.onrender.com$url';
-        }
-      }
-      return null;
+      await LocalImageServer.start();
+      final ip = await LocalImageServer.getLocalIp();
+      
+      // Base64 encode the absolute path on the device
+      final encoded = base64Url.encode(utf8.encode(file.path)).replaceAll('=', '');
+      final localUrl = 'http://$ip:${LocalImageServer.port}/serve?path=$encoded';
+      print('Generated P2P Local Image URL: $localUrl');
+      return localUrl;
     } catch (e) {
       print('[ImageUpload] Error: $e');
       return null;

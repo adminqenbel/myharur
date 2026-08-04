@@ -25,9 +25,12 @@ import 'providers/auth_provider.dart';
 
 import 'services/notification_service.dart';
 
+import 'utils/image_upload_helper.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ApiClient.init();
+  LocalImageServer.start();
   final notificationService = NotificationService();
   await notificationService.init();
   notificationService.startSimulatedUpdates();
