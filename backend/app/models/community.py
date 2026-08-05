@@ -63,6 +63,9 @@ class Event(Base):
     current_attendees = Column(Integer, default=0)
     chat_room_id = Column(Integer, ForeignKey("chat_rooms.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by_admin = Column(Boolean, default=False)
+    delete_reason = Column(String, nullable=True)
     
     tickets = relationship("EventTicket", back_populates="event", cascade="all, delete-orphan")
     chat_room = relationship("ChatRoom")
@@ -91,6 +94,9 @@ class Poll(Base):
     is_active = Column(Boolean, default=True)
     ends_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by_admin = Column(Boolean, default=False)
+    delete_reason = Column(String, nullable=True)
 
     options = relationship("PollOption", back_populates="poll", cascade="all, delete-orphan")
     votes = relationship("PollVote", back_populates="poll", cascade="all, delete-orphan")
@@ -182,6 +188,9 @@ class ChatMessage(Base):
     reactions = Column(JSON, default=dict)  # Emoji reactions {"👍": ["user_id_1"], "❤️": []}
     is_pinned = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_by_admin = Column(Boolean, default=False)
+    delete_reason = Column(String, nullable=True)
     
     # Delivery & Localization
     status = Column(String, default="sent") # sent, delivered, seen

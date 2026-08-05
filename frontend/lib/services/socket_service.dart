@@ -42,6 +42,7 @@ class SocketService {
       IO.OptionBuilder()
           .setAuth({'token': token})
           .setQuery({'token': token})
+          .setTransports(['websocket'])
           .enableAutoConnect()
           .enableReconnection()
           .setReconnectionDelay(1000)

@@ -78,6 +78,9 @@ class Event(EventBase):
     is_featured: bool = False
     current_attendees: int = 0
     created_at: datetime
+    deleted_at: Optional[datetime] = None
+    deleted_by_admin: bool = False
+    delete_reason: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -115,6 +118,9 @@ class PollOut(BaseModel):
     question: str
     is_active: bool = True
     created_at: datetime
+    deleted_at: Optional[datetime] = None
+    deleted_by_admin: bool = False
+    delete_reason: Optional[str] = None
     options: List[PollOptionOut] = []
     user_voted_option_id: Optional[int] = None
     class Config:
@@ -182,6 +188,9 @@ class ChatMessageOut(BaseModel):
     translated_text: Any = {}
     created_at: datetime
     updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by_admin: bool = False
+    delete_reason: Optional[str] = None
     sender_name: Optional[str] = None
     sender_role: Optional[str] = None
     sender_avatar: Optional[str] = None

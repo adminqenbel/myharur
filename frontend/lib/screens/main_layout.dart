@@ -71,7 +71,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       body: widget.child,
       bottomNavigationBar: isKeyboardOpen
           ? null

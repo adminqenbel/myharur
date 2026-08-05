@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
+import '../api_client.dart';
 
 class LocalImageServer {
   static HttpServer? _server;
@@ -78,19 +80,16 @@ class ImageUploadHelper {
     );
   }
 
-  /// P2P Upload: Instead of uploading to the backend, serve locally and return the local IP URL.
+  /// Uploads image to the FastAPI backend
   static Future<String?> uploadImage(XFile file) async {
     try {
-      await LocalImageServer.start();
-      final ip = await LocalImageServer.getLocalIp();
-      
-      // Base64 encode the absolute path on the device
-      final encoded = base64Url.encode(utf8.encode(file.path)).replaceAll('=', '');
-      final localUrl = 'http://$ip:${LocalImageServer.port}/serve?path=$encoded';
-      print('Generated P2P Local Image URL: $localUrl');
-      return localUrl;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(file.path, filename: file.name),
+      });
+      final response = await ApiClient.dio.post('/upload/image', data: formData);
+      return response.data['url'];
     } catch (e) {
-      print('[ImageUpload] Error: $e');
+      print('[ImageUpload] Error: \$e');
       return null;
     }
   }

@@ -140,6 +140,24 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     super.dispose();
   }
 
+  Future<String?> _showDeleteReasonDialog() async {
+    final ctrl = TextEditingController();
+    return await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete Reason'),
+        content: TextField(
+          controller: ctrl,
+          decoration: InputDecoration(hintText: 'Reason for deletion (optional)'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, null), child: Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text('Delete')),
+        ],
+      )
+    );
+  }
+
   Future<void> _fetchMessages() async {
     try {
       final r = await ApiClient.dio.get('/community/chat/rooms/${widget.room['id']}/messages');
@@ -343,7 +361,45 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       else if (role == 'Admin') roleBadgeColor = Colors.orange;
       else if (role == 'Moderator') roleBadgeColor = Colors.purple;
 
-      return Align(
+      if (msg['deleted_at'] != null || msg['is_deleted'] == true) {
+        final isAdminDelete = msg['deleted_by_admin'] == true;
+        final reason = msg['delete_reason'] ?? 'Violation of guidelines';
+        return Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: EdgeInsets.only(bottom: 6, left: isMe ? 0 : 38),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[900] : Colors.grey[300],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.withOpacity(0.3))
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.block, size: 12, color: Colors.grey),
+                    SizedBox(width: 4),
+                    Text('Message deleted', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic, fontSize: 12)),
+                  ],
+                ),
+                if (isAdminDelete)
+                  Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Text('Reason: \$reason', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                  )
+              ],
+            ),
+          )
+        );
+      }
+
+      final auth = ref.watch(authProvider);
+      final canDelete = !isPending && (isMe || auth.isAdmin);
+
+      Widget bubbleContent = Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -446,6 +502,50 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           ],
         ),
       );
+
+      if (canDelete) {
+        return GestureDetector(
+          onLongPress: () async {
+            final confirm = await showModalBottomSheet<bool>(
+              context: context,
+              builder: (ctx) => SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: Icon(Icons.delete, color: Colors.red),
+                      title: Text('Delete Message', style: TextStyle(color: Colors.red)),
+                      onTap: () => Navigator.pop(ctx, true),
+                    ),
+                  ],
+                ),
+              ),
+            );
+            if (confirm == true) {
+              String? reason;
+              if (auth.isAdmin && !isMe) {
+                reason = await _showDeleteReasonDialog();
+                if (reason == null) return;
+              }
+              try {
+                String url = '/community/chat/messages/\${msg['id']}';
+                if (reason != null && reason.isNotEmpty) url += '?reason=\$reason';
+                await ApiClient.dio.delete(url);
+                setState(() {
+                  final idx = _messages.indexWhere((m) => m['id'] == msg['id']);
+                  if (idx >= 0) {
+                    _messages[idx] = {..._messages[idx], 'is_deleted': true, 'deleted_at': DateTime.now().toIso8601String(), 'deleted_by_admin': !isMe, 'delete_reason': reason};
+                  }
+                });
+              } catch (e) {
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: \$e')));
+              }
+            }
+          },
+          child: bubbleContent,
+        );
+      }
+      return bubbleContent;
     } catch (e) {
       return Container(
         margin: EdgeInsets.symmetric(vertical: 4),

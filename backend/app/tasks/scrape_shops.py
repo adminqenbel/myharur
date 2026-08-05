@@ -14,8 +14,11 @@ def scrape_and_store_shops():
     
     # Bounding box for Harur (approx)
     query = """
-    [out:json][timeout:25];
-    nwr["shop"](12.03, 78.46, 12.09, 78.51);
+    [out:json][timeout:50];
+    (
+      nwr["shop"](12.03, 78.46, 12.09, 78.51);
+      nwr["shop"](12.11, 78.13, 12.15, 78.18);
+    );
     out center;
     """
     

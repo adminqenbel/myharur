@@ -90,6 +90,8 @@ def get_events(db: Session = Depends(deps.get_db), skip: int = 0, limit: int = 5
     import datetime
     seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
     return db.query(EventModel).filter(
+    seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
+    return db.query(EventModel).filter(
         EventModel.is_approved == True,
         EventModel.event_date >= seven_days_ago
     ).order_by(EventModel.event_date).offset(skip).limit(limit).all()
@@ -167,7 +169,32 @@ def rsvp_event(
     db.commit()
     db.refresh(ticket)
     return ticket
+    return ticket
 
+
+@router.delete("/events/{event_id}")
+def delete_event(
+    event_id: int,
+    reason: Optional[str] = Query(None),
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    event = db.query(EventModel).filter(EventModel.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+        
+    is_admin = current_user.role.name in ["Admin", "Super Admin"]
+    if event.organizer_id != current_user.id and not is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this event")
+    
+    from sqlalchemy.sql import func
+    event.deleted_at = func.now()
+    if is_admin and event.organizer_id != current_user.id:
+        event.deleted_by_admin = True
+        event.delete_reason = reason or "Violation of community guidelines"
+        
+    db.commit()
+    return {"message": "Event deleted successfully"}
 
 # ── Polls ─────────────────────────────────────────────────────────────────────
 
@@ -182,7 +209,11 @@ def _enrich_poll(poll: PollModel, user_id: Optional[int], db: Session) -> dict:
         "creator_id": poll.creator_id,
         "question": poll.question,
         "is_active": poll.is_active,
+        "is_active": poll.is_active,
         "created_at": poll.created_at,
+        "deleted_at": poll.deleted_at,
+        "deleted_by_admin": poll.deleted_by_admin,
+        "delete_reason": poll.delete_reason,
         "options": poll.options,
         "user_voted_option_id": voted,
     }
@@ -242,18 +273,24 @@ def cast_vote(
 @router.delete("/polls/{poll_id}")
 def delete_poll(
     poll_id: int,
+    reason: Optional[str] = Query(None),
     db: Session = Depends(deps.get_db),
     current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     poll = db.query(PollModel).filter(PollModel.id == poll_id).first()
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
-    if poll.creator_id != current_user.id and current_user.role.name not in ["Admin", "Super Admin"]:
+        
+    is_admin = current_user.role.name in ["Admin", "Super Admin"]
+    if poll.creator_id != current_user.id and not is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to delete this poll")
     
-    db.query(PollVote).filter(PollVote.poll_id == poll_id).delete()
-    db.query(PollOption).filter(PollOption.poll_id == poll_id).delete()
-    db.delete(poll)
+    from sqlalchemy.sql import func
+    poll.deleted_at = func.now()
+    if is_admin and poll.creator_id != current_user.id:
+        poll.deleted_by_admin = True
+        poll.delete_reason = reason or "Violation of community guidelines"
+        
     db.commit()
     return {"message": "Poll deleted"}
 
@@ -618,3 +655,28 @@ def send_message(
         print(f"Failed to broadcast REST message: {e}")
             
     return response
+
+@router.delete('/chat/messages/{message_id}')
+def delete_chat_message(
+    message_id: int,
+    reason: Optional[str] = Query(None),
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user),
+) -> Any:
+    message = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    if not message:
+        raise HTTPException(status_code=404, detail='Message not found')
+        
+    is_admin = current_user.role.name in ['Admin', 'Super Admin']
+    if message.sender_id != current_user.id and not is_admin:
+        raise HTTPException(status_code=403, detail='Not authorized to delete this message')
+        
+    from sqlalchemy.sql import func
+    message.is_deleted = True
+    message.deleted_at = func.now()
+    if is_admin and message.sender_id != current_user.id:
+        message.deleted_by_admin = True
+        message.delete_reason = reason or 'Violation of community guidelines'
+        
+    db.commit()
+    return {'message': 'Message deleted'}

@@ -48,8 +48,20 @@ async def async_crawl_source(source_id: int):
             clean_re = re.compile('<.*?>')
             text = re.sub(clean_re, '', content).replace('&nbsp;', ' ').strip()
             
-            img_match = re.search(r'<img[^>]+src="([^">]+)"', content)
-            img_url = img_match.group(1) if img_match else None
+            img_url = None
+            if hasattr(entry, 'media_content') and entry.media_content:
+                img_url = entry.media_content[0].get('url')
+            elif hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
+                img_url = entry.media_thumbnail[0].get('url')
+            elif hasattr(entry, 'enclosures') and entry.enclosures:
+                for enc in entry.enclosures:
+                    if enc.get('type', '').startswith('image/'):
+                        img_url = enc.get('href')
+                        break
+            
+            if not img_url:
+                img_match = re.search(r'<img[^>]+src="([^">]+)"', content)
+                img_url = img_match.group(1) if img_match else None
 
             # Check for existing
             existing = db.query(RawArticle).filter(RawArticle.original_url == link).first()

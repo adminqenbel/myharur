@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import '../widgets/design_system.dart';
 import '../theme.dart';
 
@@ -325,12 +326,28 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     }
                     setMBS(() => isSubmitting = true);
                     try {
+                      double lat = 12.0628;
+                      double lng = 78.4950;
+                      try {
+                        LocationPermission permission = await Geolocator.checkPermission();
+                        if (permission == LocationPermission.denied) {
+                          permission = await Geolocator.requestPermission();
+                        }
+                        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+                          Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                          lat = position.latitude;
+                          lng = position.longitude;
+                        }
+                      } catch (e) {
+                        print('Geolocator error: \$e');
+                      }
+                      
                       await ApiClient.dio.post('/emergency/', data: {
                         'type': 'citizen_sos',
                         'category': selectedCategory,
                         'description': descCtrl.text,
-                        'lat': 12.0628,
-                        'lng': 78.4950
+                        'lat': lat,
+                        'lng': lng
                       });
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchEmergencies();
@@ -398,12 +415,28 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     if (descCtrl.text.isEmpty) return;
                     setMBS(() => isSubmitting = true);
                     try {
+                      double lat = 12.0628;
+                      double lng = 78.4950;
+                      try {
+                        LocationPermission permission = await Geolocator.checkPermission();
+                        if (permission == LocationPermission.denied) {
+                          permission = await Geolocator.requestPermission();
+                        }
+                        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+                          Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                          lat = position.latitude;
+                          lng = position.longitude;
+                        }
+                      } catch (e) {
+                        print('Geolocator error: \$e');
+                      }
+                      
                       await ApiClient.dio.post('/emergency/', data: {
                         'type': 'govt_grievance',
                         'category': selectedCategory,
                         'description': descCtrl.text,
-                        'lat': 12.0628,
-                        'lng': 78.4950
+                        'lat': lat,
+                        'lng': lng
                       });
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchEmergencies();

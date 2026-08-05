@@ -143,7 +143,48 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     );
   }
 
+  Future<String?> _showDeleteReasonDialog() async {
+    final ctrl = TextEditingController();
+    return await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete Reason'),
+        content: TextField(
+          controller: ctrl,
+          decoration: InputDecoration(hintText: 'Reason for deletion (optional)'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, null), child: Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text('Delete')),
+        ],
+      )
+    );
+  }
+
   Widget _buildPollCard(Map<String, dynamic> poll) {
+    if (poll['deleted_at'] != null) {
+      final isAdminDelete = poll['deleted_by_admin'] == true;
+      final reason = poll['delete_reason'] ?? 'Violation of community guidelines';
+      return MHCard(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.info_outline, color: Theme.of(context).colorScheme.error),
+              SizedBox(width: 8),
+              Expanded(child: Text('This poll was removed.', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.error))),
+            ]),
+            if (isAdminDelete)
+              Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text('Reason: $reason', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontStyle: FontStyle.italic)),
+              )
+          ],
+        ),
+      );
+    }
     final options = (poll['options'] as List? ?? []);
     final totalVotes = options.fold<int>(0, (sum, o) => sum + (o['vote_count'] as int? ?? 0));
     final votedId = poll['user_voted_option_id'] as int?;
@@ -233,11 +274,20 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () async {
+                    String? reason;
+                    if (auth.isAdmin && poll['creator_id'] != auth.user?['id']) {
+                      reason = await _showDeleteReasonDialog();
+                      if (reason == null) return; // cancelled
+                    }
                     try {
-                      await ApiClient.dio.delete('/community/polls/${poll['id']}');
+                      String url = '/community/polls/${poll['id']}';
+                      if (reason != null && reason.isNotEmpty) {
+                        url += '?reason=\$reason';
+                      }
+                      await ApiClient.dio.delete(url);
                       _fetchAll();
                     } catch (e) {
-                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete poll: $e')));
+                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete poll: \$e')));
                     }
                   },
                 ),
@@ -284,6 +334,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
             TextField(controller: option2, decoration: const InputDecoration(labelText: 'Option 2 *', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
             SizedBox(height: 12),
             TextField(controller: option3, decoration: const InputDecoration(labelText: 'Option 3 (optional)', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))))),
+            SizedBox(height: 12),
+            TextField(
+              controller: TextEditingController(),
+              readOnly: true,
+              decoration: const InputDecoration(labelText: 'Ends in (days) - Optional', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
+              onChanged: (v) {}, // simplified for now
+            ),
             SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -325,6 +382,32 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
         itemCount: _events.length,
         itemBuilder: (ctx, i) {
           final event = _events[i];
+          if (event['deleted_at'] != null) {
+            final isAdminDelete = event['deleted_by_admin'] == true;
+            final reason = event['delete_reason'] ?? 'Violation of community guidelines';
+            return MHCard(
+              margin: EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.info_outline, color: Theme.of(context).colorScheme.error),
+                    SizedBox(width: 8),
+                    Expanded(child: Text('This event was removed.', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.error))),
+                  ]),
+                  if (isAdminDelete)
+                    Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text('Reason: \$reason', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontStyle: FontStyle.italic)),
+                    )
+                ],
+              ),
+            );
+          }
+          final auth = ref.watch(authProvider);
+          final canDelete = event['organizer_id'] == auth.user?['id'] || auth.isAdmin;
+
           return MHCard(
             margin: EdgeInsets.only(bottom: 16),
             padding: EdgeInsets.zero,
@@ -372,6 +455,27 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
                             ),
                           );
                         }),
+                        if (canDelete)
+                          IconButton(
+                            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
+                            onPressed: () async {
+                              String? reason;
+                              if (auth.isAdmin && event['organizer_id'] != auth.user?['id']) {
+                                reason = await _showDeleteReasonDialog();
+                                if (reason == null) return;
+                              }
+                              try {
+                                String url = '/community/events/${event['id']}';
+                                if (reason != null && reason.isNotEmpty) {
+                                  url += '?reason=\$reason';
+                                }
+                                await ApiClient.dio.delete(url);
+                                _fetchAll();
+                              } catch (e) {
+                                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e')));
+                              }
+                            },
+                          ),
                       ]
                     ),
                     SizedBox(height: 12),
