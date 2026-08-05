@@ -90,8 +90,6 @@ def get_events(db: Session = Depends(deps.get_db), skip: int = 0, limit: int = 5
     import datetime
     seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
     return db.query(EventModel).filter(
-    seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
-    return db.query(EventModel).filter(
         EventModel.is_approved == True,
         EventModel.event_date >= seven_days_ago
     ).order_by(EventModel.event_date).offset(skip).limit(limit).all()
