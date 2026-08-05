@@ -115,7 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showLocationWarningSheet() {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -153,7 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showManualLocationPicker() {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -212,7 +212,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ];
     bool isLoading = false;
     
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

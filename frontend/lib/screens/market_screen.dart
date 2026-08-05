@@ -67,7 +67,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final categories = ['Electronics', 'Furniture', 'Bikes', 'Vehicles', 'Clothing', 'Books', 'Pets', 'Other'];
     final conditions = ['New', 'Like New', 'Used'];
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -179,7 +179,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     bool isSubmitting = false;
     final types = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship'];
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -303,7 +303,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   }
 
   void _showListingDetail(Map<String, dynamic> item) {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(

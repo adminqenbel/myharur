@@ -104,8 +104,8 @@ User Query: """
                 try:
                     import google.generativeai as genai
                     genai.configure(api_key=gemini_key)
-                    # Use standard gemini-1.5-flash for fast text responses
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # Use latest flash model for fast text responses
+                    model = genai.GenerativeModel('gemini-flash-latest')
                     response = model.generate_content(system_prompt + content)
                     if response.text:
                         return response.text

@@ -8,7 +8,7 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   void _showLanguagePicker(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -45,7 +45,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showThemePicker(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

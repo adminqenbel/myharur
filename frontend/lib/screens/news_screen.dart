@@ -49,7 +49,7 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
     String? imageUrl;
     bool isUploadingImage = false;
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

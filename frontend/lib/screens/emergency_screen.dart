@@ -285,7 +285,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     final descCtrl = TextEditingController();
     bool isSubmitting = false;
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -374,7 +374,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     final descCtrl = TextEditingController();
     bool isSubmitting = false;
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

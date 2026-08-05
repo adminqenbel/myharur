@@ -317,7 +317,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final option2 = TextEditingController();
     final option3 = TextEditingController();
     bool isSubmitting = false;
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -509,7 +509,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final locationCtrl = TextEditingController();
     final dateCtrl = TextEditingController();
     bool isSubmitting = false;
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -663,7 +663,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
   void _showCreateQuestionDialog() {
     final ctrl = TextEditingController();
     bool isSubmitting = false;
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -704,7 +704,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
   void _showAnswerDialog(int questionId) {
     final ctrl = TextEditingController();
     bool isSubmitting = false;
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -834,7 +834,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     final nameCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     bool isSubmitting = false;
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
