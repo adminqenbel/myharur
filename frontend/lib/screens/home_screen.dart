@@ -623,7 +623,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24),
                     child: MHCard(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       onTap: _showLocationOptionsSheet,
                       child: Row(
                         children: [
@@ -637,6 +637,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   l(ref, _isInsideDharmapuri ? 'Dharmapuri Region' : 'Outside Service Area'),
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
+                                SizedBox(height: 2),
                                 Text(
                                   _locationName,
                                   style: Theme.of(context).textTheme.bodyMedium,
@@ -649,7 +650,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: 20),
                   
                   // ── Weather Widget ──────────────────────────────────────────
                   if (_weatherData != null)
@@ -676,14 +677,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               children: [
                                 Text(
                                   _weatherData!['condition'] ?? 'Clear',
-                                  style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                                 SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    Icon(Icons.water_drop_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 14),
+                                    Icon(Icons.water_drop_rounded, color: Colors.white.withOpacity(0.85), size: 14),
                                     SizedBox(width: 4),
-                                    Text('Humidity: ${_weatherData!['humidity']}%', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 13)),
+                                    Text('Humidity: ${_weatherData!['humidity']}%', style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w500)),
                                   ],
                                 ),
                               ],
@@ -693,16 +694,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               children: [
                                 Text(
                                   '${_weatherData!['temperature']}',
-                                  style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 42, fontWeight: FontWeight.w800, height: 1),
+                                  style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w800, height: 1),
                                 ),
-                                Text('°C', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text('°C', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ],
                         ),
                       ),
                     ),
-                  SizedBox(height: 24),
+                  if (_weatherData != null) SizedBox(height: 20),
 
                   // ── Quick Access (Apple-style 2x3 Grid) ─────────────────────────
                   Padding(
