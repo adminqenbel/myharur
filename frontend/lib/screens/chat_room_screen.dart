@@ -109,6 +109,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 (m['id'] is String && (m['id'] as String).startsWith('temp_') && m['content'] == msgData['content']));
             _messages.add(msgData);
           });
+          _scrollToBottom();
         }
       }
     }));
@@ -174,6 +175,18 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     }
   }
 
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   Future<void> _send() async {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
@@ -195,15 +208,23 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       '_pending': true,
     };
     setState(() => _messages.add(tempMsg));
+    _scrollToBottom();
+
     final socket = SocketService();
     if (socket.isConnected) {
       socket.sendMessage(roomId, text, clientMsgId: tempId);
     } else {
       try {
         final r = await ApiClient.dio.post('/community/chat/rooms/$roomId/messages', data: {'content': text});
-        if (mounted) setState(() { _messages.removeWhere((m) => m['id'] == tempId); _messages.add(r.data); });
+        if (mounted) {
+          setState(() {
+            _messages.removeWhere((m) => m['id'] == tempId);
+            _messages.add(r.data);
+          });
+          _scrollToBottom();
+        }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Message sending failed. Retrying...')));
       }
     }
   }

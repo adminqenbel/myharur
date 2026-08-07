@@ -133,9 +133,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _isInsideDharmapuri = inBounds;
         _currentLat = position.latitude;
         _currentLng = position.longitude;
-        _locationName = inBounds ? '${position.latitude.toStringAsFixed(4)}°N, ${position.longitude.toStringAsFixed(4)}°E' : 'Outside Service Area';
+        _locationName = 'GPS: ${position.latitude.toStringAsFixed(4)}°N, ${position.longitude.toStringAsFixed(4)}°E';
       });
       _fetchWeatherOnly();
+      
+      // Perform exact place reverse geocoding
+      try {
+        final geoRes = await ApiClient.dio.get('https://nominatim.openstreetmap.org/reverse', queryParameters: {
+          'format': 'json',
+          'lat': position.latitude,
+          'lon': position.longitude,
+        });
+        if (mounted && geoRes.data != null && geoRes.data['address'] != null) {
+          final addr = geoRes.data['address'];
+          final place = addr['suburb'] ?? addr['town'] ?? addr['village'] ?? addr['city'] ?? addr['county'] ?? addr['state_district'] ?? 'Harur Region';
+          setState(() {
+            _locationName = '$place (${position.latitude.toStringAsFixed(3)}°, ${position.longitude.toStringAsFixed(3)}°)';
+          });
+        }
+      } catch (_) {}
+
       if (!inBounds) {
         _checkWarning();
       }

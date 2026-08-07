@@ -529,40 +529,48 @@ class MHEmergencyCard extends StatelessWidget {
             Text(item['description'] ?? 'No description provided.', maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
             SizedBox(height: 12),
             if (lat.isNotEmpty && lng.isNotEmpty)
-              GestureDetector(
-                onTap: () async {
-                  final url = Uri.parse('https://maps.google.com/?q=$lat,$lng');
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.dividerLight),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                        child: Icon(Icons.map_rounded, color: Colors.blue, size: 24),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('View on Map', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            Text('$lat, $lng', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
-                          ],
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    final Uri mapUrl = Uri.parse('https://maps.google.com/?q=$lat,$lng');
+                    try {
+                      await launchUrl(mapUrl, mode: LaunchMode.externalApplication);
+                    } catch (_) {
+                      try {
+                        await launchUrl(mapUrl);
+                      } catch (_) {}
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.appleBlue.withOpacity(0.3), width: 1.5),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: AppTheme.appleBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                          child: Icon(Icons.map_rounded, color: AppTheme.appleBlue, size: 24),
                         ),
-                      ),
-                      Icon(Icons.open_in_new_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                    ],
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('View on Google Maps', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.appleBlue)),
+                              Text('$lat, $lng', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.open_in_new_rounded, size: 18, color: AppTheme.appleBlue),
+                      ],
+                    ),
                   ),
                 ),
               ),
