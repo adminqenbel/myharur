@@ -501,8 +501,9 @@ def get_messages(
             if name:
                 sender_name = name
 
+        m_dict = {k: v for k, v in m.__dict__.items() if not k.startswith('_')}
         result.append({
-            **m.__dict__,
+            **m_dict,
             "sender_name": sender_name,
             "sender_role": role_name,
             "sender_avatar": profile.avatar_url if profile and profile.avatar_url else None,
@@ -553,8 +554,9 @@ def send_message(
     db.refresh(msg)
     user_info = _get_user_info(db, current_user.id)
     
+    msg_clean_dict = {k: v for k, v in msg.__dict__.items() if not k.startswith('_')}
     response = {
-        **msg.__dict__,
+        **msg_clean_dict,
         "sender_name": _get_name(db, current_user.id),
         "sender_role": _get_role(db, current_user.id),
         "sender_avatar": current_user.profile.avatar_url if current_user.profile else None,
