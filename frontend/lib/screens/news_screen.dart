@@ -426,8 +426,8 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
         children: [
           Icon(icon, size: 16, color: AppTheme.appleBlue),
           SizedBox(width: 6),
-          Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          Text(value ?? '...', style: TextStyle(color: Colors.black87, fontSize: 12)),
+          Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
+          Text(value ?? '...', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8), fontSize: 12)),
         ],
       ),
     );

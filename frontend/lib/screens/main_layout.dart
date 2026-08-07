@@ -83,16 +83,16 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 30, offset: const Offset(0, 10))
+                    BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.1), blurRadius: 35, offset: const Offset(0, 10))
                   ],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(32),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.35 : 0.5),
+                        color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.25 : 0.65),
                         border: Border.all(
                           color: isDark ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.4),
                           width: 1.2,
@@ -118,49 +118,44 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isDark) {
+Widget _buildNavItem(int index, IconData icon, String label, int selectedIndex, bool isDark) {
     final bool isSelected = index == selectedIndex;
-    final Color activeColor = AppTheme.appleBlue; // Apple Blue
-    final Color inactiveColor = isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6) : AppTheme.textSecondaryLight;
+    final Color activeColor = AppTheme.appleBlue;
+    final Color inactiveColor = isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : AppTheme.textSecondaryLight;
     
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 20 : 12, 
-          vertical: 10
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedScale(
-              scale: isSelected ? 1.15 : 1.0,
-              duration: const Duration(milliseconds: 250),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              transform: Matrix4.identity()..scale(isSelected ? 1.15 : 1.0),
               child: Icon(
                 icon,
                 color: isSelected ? activeColor : inactiveColor,
                 size: 26,
+                shadows: isSelected ? [BoxShadow(color: activeColor.withOpacity(0.4), blurRadius: 10, offset: Offset(0, 3))] : null,
               ),
             ),
-            if (isSelected) ...[
-              SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
+            SizedBox(height: 4),
+            AnimatedOpacity(
+              duration: Duration(milliseconds: 200),
+              opacity: isSelected ? 1.0 : 0.0,
+              child: Container(
+                height: 4,
+                width: 4,
+                decoration: BoxDecoration(
                   color: activeColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
+                  shape: BoxShape.circle,
                 ),
               ),
-            ]
+            ),
           ],
         ),
       ),

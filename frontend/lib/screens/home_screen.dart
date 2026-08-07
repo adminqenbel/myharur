@@ -558,7 +558,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       onTap: () async {
                         if (_currentLat != null && _currentLng != null) {
-                          final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$_currentLat,$_currentLng');
+                          final url = Uri.parse('https://maps.google.com/?q=$_currentLat,$_currentLng');
                           if (await canLaunchUrl(url)) {
                             await launchUrl(url, mode: LaunchMode.externalApplication);
                             return;
@@ -645,20 +645,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   SizedBox(height: 24),
 
-                  // ── Quick Access Bar ──────────────────────────────────────────
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  // ── Quick Access (Apple-style 2x3 Grid) ─────────────────────────
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildQuickAction(Icons.newspaper_rounded, 'News', AppTheme.appleBlue, () => _navigateTo(const NewsScreen())),
-                        _buildQuickAction(Icons.sos_rounded, 'Emergency', AppTheme.danger, () => context.go('/report')),
-                        _buildQuickAction(Icons.storefront_rounded, 'Shops', AppTheme.appleBlue, () => _navigateTo(const ShopsScreen())),
-                        _buildQuickAction(Icons.shopping_bag_rounded, 'Market', AppTheme.appleBlue, () => context.go('/market')),
+                        Text('Quick Access', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface, letterSpacing: -0.3)),
+                        SizedBox(height: 12),
+                        GridView.count(
+                          crossAxisCount: 3,
+                          childAspectRatio: 0.95,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          children: [
+                            _buildServiceIcon(Icons.newspaper_rounded, 'News', AppTheme.appleBlue, () => _navigateTo(const NewsScreen())),
+                            _buildServiceIcon(Icons.sos_rounded, 'Emergency', AppTheme.danger, () => context.go('/report')),
+                            _buildServiceIcon(Icons.storefront_rounded, 'Shops', AppTheme.success, () => _navigateTo(const ShopsScreen())),
+                            _buildServiceIcon(Icons.shopping_bag_rounded, 'Market', AppTheme.appleBlue, () => context.go('/market')),
+                            _buildServiceIcon(Icons.forum_rounded, 'Community', Color(0xFFFF9500), () => context.go('/community')),
+                            _buildServiceIcon(Icons.emoji_events_rounded, 'Rankings', Color(0xFFAF52DE), () => _navigateTo(const LeaderboardScreen())),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 24),
+                  SizedBox(height: 20),
 
                   // ── Top Banner (Emergency) ────────────────────────────────────
                   if (_latestNews.any((n) => n['is_breaking'] == true))
@@ -689,36 +703,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       )
                     ).toList(),
                   
-                  // ── Services Grid ─────────────────────────────────────────────
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Discover', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-                        SizedBox(height: 16),
-                        GridView.count(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.9,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          children: [
-                            _buildServiceIcon(Icons.work_rounded, 'Jobs', AppTheme.appleBlue, () => context.go('/market')),
-                            _buildServiceIcon(Icons.festival_rounded, 'Events', AppTheme.appleBlue, () => context.go('/community')),
-                            _buildServiceIcon(Icons.handyman_rounded, 'Services', AppTheme.appleBlue, () => _navigateTo(const ShopsScreen())),
-                            _buildServiceIcon(Icons.emoji_events_rounded, 'Rankings', AppTheme.appleBlue, () => _navigateTo(const LeaderboardScreen())),
-                            _buildServiceIcon(Icons.map_rounded, 'Map', AppTheme.appleBlue, () {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Town Map coming soon!')));
-                            }),
-                            _buildServiceIcon(Icons.forum_rounded, 'Community', AppTheme.appleBlue, () => context.go('/community')),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 32),
+                  
                   
                   // ── Latest News Section ───────────────────────────────────────
                   Padding(

@@ -534,13 +534,25 @@ def keep_alive_loop():
         sync_trigger_crawlers()
     except Exception as e:
         print(f"[News] Background fetch error: {e}")
-        
-    loops = 0
+
+    news_loops = 0
+    weather_loops = 0
     while True:
         try:
-            time.sleep(600)  # 10 min
-            loops += 1
-            if loops % 12 == 0:  # Every 2 hours
+            time.sleep(60)  # Check every 1 minute
+            weather_loops += 1
+            news_loops += 1
+
+            # Weather: every 1 minute
+            try:
+                import asyncio as _asyncio
+                from app.tasks.crawler import async_fetch_weather
+                _asyncio.run(async_fetch_weather())
+            except Exception:
+                pass
+
+            # News + Rates: every 2 hours (120 loops of 1 minute)
+            if news_loops % 120 == 0:
                 scrape_rates()
                 try:
                     from app.tasks.crawler import sync_trigger_crawlers
@@ -554,6 +566,8 @@ def keep_alive_loop():
                 pass
         except Exception:
             pass
+
+
 
 
 # ── Startup ──────────────────────────────────────────────────────────────────
@@ -876,6 +890,28 @@ async def startup_event():
                 db.add(ShopCategory(name=cat_name, icon=cat_icon))
         db.commit()
         print("[Seed] Shop categories seeded")
+
+        # ── Seed News Sources (verify live feeds before inserting) ──
+        from app.models.ingestion import NewsSource
+        from app.tasks.crawler import verify_and_seed_news_sources
+        try:
+            n_seeded = verify_and_seed_news_sources(db)
+            if n_seeded > 0:
+                print(f"[Seed] {n_seeded} live news sources verified and seeded")
+            else:
+                print("[Seed] News sources already seeded or no live feeds found")
+        except Exception as e:
+            print(f"[Seed] News sources seeding error (non-fatal): {e}")
+
+        # ── Migration: Add emergency photo_urls column if not present ──
+        from sqlalchemy import text as sql_t
+        try:
+            with engine.begin() as conn:
+                conn.execute(sql_t("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS photo_urls JSONB DEFAULT '[]';"))
+        except Exception:
+            pass
+
+
 
         # ── Seed Sample Approved Shops (only if zero approved shops exist) ──
         approved_count = db.query(ShopModel).filter(ShopModel.is_approved == True).count()

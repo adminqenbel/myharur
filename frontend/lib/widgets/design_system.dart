@@ -517,12 +517,21 @@ class MHEmergencyCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: 12),
+            
+            if (item['photo_url'] != null && item['photo_url'].toString().isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(item['photo_url'], height: 160, width: double.infinity, fit: BoxFit.cover),
+                ),
+              ),
             Text(item['description'] ?? 'No description provided.', maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
             SizedBox(height: 12),
             if (lat.isNotEmpty && lng.isNotEmpty)
               GestureDetector(
                 onTap: () async {
-                  final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                  final url = Uri.parse('https://maps.google.com/?q=$lat,$lng');
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   }

@@ -101,7 +101,17 @@ def update_status(
         emergency.assigned_to = current_user.id
     if status in ["resolved", "completed", "closed"]:
         from datetime import datetime
+        import os
         emergency.resolved_at = datetime.utcnow()
+        
+        if emergency.photo_url and emergency.photo_url.startswith('/static/uploads/'):
+            try:
+                filepath = os.path.join('.', emergency.photo_url.lstrip('/'))
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            except Exception:
+                pass
+        emergency.photo_url = None
         
     db.commit()
     db.refresh(emergency)
@@ -125,6 +135,18 @@ def resolve_emergency(
         raise HTTPException(status_code=403, detail="Not authorized")
         
     emergency.status = "resolved"
+    from datetime import datetime
+    import os
+    emergency.resolved_at = datetime.utcnow()
+    
+    if emergency.photo_url and emergency.photo_url.startswith('/static/uploads/'):
+        try:
+            filepath = os.path.join('.', emergency.photo_url.lstrip('/'))
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except Exception:
+            pass
+    emergency.photo_url = None
     db.commit()
     db.refresh(emergency)
     return emergency

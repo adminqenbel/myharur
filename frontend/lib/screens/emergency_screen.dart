@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import '../widgets/design_system.dart';
 import '../theme.dart';
+import '../utils/image_upload_helper.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -99,6 +100,24 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           SizedBox(height: 30),
           GestureDetector(
             onTap: _showSosOptionsDialog,
+            onLongPress: () async {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Auto-Dispatching Emergency SOS...'), backgroundColor: AppTheme.danger));
+              try {
+                final position = await _getLocationWithConsent();
+                if (position == null) return;
+                await ApiClient.dio.post('/emergency/', data: {
+                  'type': 'citizen_sos',
+                  'category': 'police',
+                  'description': 'EMERGENCY AUTO-DISPATCH (Hold SOS Button)',
+                  'lat': position.latitude,
+                  'lng': position.longitude,
+                });
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Emergency SOS Auto-Dispatched! Help is on the way.'), backgroundColor: AppTheme.success));
+                _fetchEmergencies();
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+              }
+            },
             child: Container(
               width: 180,
               height: 180,
@@ -327,12 +346,28 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     }
   }
 
+  Widget _buildCategoryChip(String value, String label, IconData icon, String selectedValue, Function(String) onSelect) {
+    final isSelected = value == selectedValue;
+    return ChoiceChip(
+      label: Text(label),
+      avatar: Icon(icon, color: isSelected ? Colors.white : Theme.of(context).colorScheme.primary, size: 18),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) onSelect(value);
+      },
+      selectedColor: Theme.of(context).colorScheme.primary,
+      labelStyle: TextStyle(color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface),
+    );
+  }
+
   void _showSosOptionsDialog() {
     String selectedCategory = 'police';
     final descCtrl = TextEditingController();
     bool isSubmitting = false;
+    String? imageUrl;
+    bool isUploadingImage = false;
 
-    showModalBottomSheet(useRootNavigator: true, 
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -345,16 +380,53 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             children: [
               Text('Request Emergency Help', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                decoration: const InputDecoration(labelText: 'Help Category', border: OutlineInputBorder()),
-                items: [
-                  DropdownMenuItem(value: 'police', child: Text('Police')),
-                  DropdownMenuItem(value: 'fire', child: Text('Fire')),
-                  DropdownMenuItem(value: 'ambulance', child: Text('Ambulance')),
-                  DropdownMenuItem(value: 'custom_help', child: Text('Custom Help (e.g. Look for parent)')),
+              
+              GestureDetector(
+                onTap: () async {
+                  if (isUploadingImage) return;
+                  setMBS(() => isUploadingImage = true);
+                  final url = await ImageUploadHelper.pickAndUpload();
+                  setMBS(() {
+                    if (url != null) imageUrl = url;
+                    isUploadingImage = false;
+                  });
+                },
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover) : null,
+                  ),
+                  child: isUploadingImage
+                      ? Center(child: CircularProgressIndicator())
+                      : imageUrl == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo, size: 30, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                                SizedBox(height: 4),
+                                Text('Add Photo (Optional)', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                              ],
+                            )
+                          : SizedBox(),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              Text('Help Category', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildCategoryChip('police', 'Police', Icons.local_police_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('fire', 'Fire', Icons.fire_truck_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('ambulance', 'Medical', Icons.medical_services_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('blood', 'Blood', Icons.bloodtype_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('custom_help', 'Other', Icons.help_outline_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
                 ],
-                onChanged: (v) => setMBS(() => selectedCategory = v!),
               ),
               SizedBox(height: 16),
               TextField(
@@ -373,28 +445,24 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     }
                     setMBS(() => isSubmitting = true);
                     try {
-                      final Position? position = await _getLocationWithConsent();
+                      final position = await _getLocationWithConsent();
                       if (position == null) {
                         setMBS(() => isSubmitting = false);
                         return;
                       }
                       
-                      double lat = position.latitude;
-                      double lng = position.longitude;
-                      
                       await ApiClient.dio.post('/emergency/', data: {
                         'type': 'citizen_sos',
                         'category': selectedCategory,
                         'description': descCtrl.text,
-                        'lat': lat,
-                        'lng': lng
+                        'lat': position.latitude,
+                        'lng': position.longitude,
+                        'photo_url': imageUrl,
                       });
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchEmergencies();
                     } catch (e) {
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                      }
+                      if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
                       setMBS(() => isSubmitting = false);
                     }
                   },
@@ -413,8 +481,10 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     String selectedCategory = 'electricity';
     final descCtrl = TextEditingController();
     bool isSubmitting = false;
+    String? imageUrl;
+    bool isUploadingImage = false;
 
-    showModalBottomSheet(useRootNavigator: true, 
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -427,19 +497,53 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             children: [
               Text('Report Government Grievance', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                decoration: const InputDecoration(labelText: 'Issue Category', border: OutlineInputBorder()),
-                items: [
-                  DropdownMenuItem(value: 'electricity', child: Text('Electricity')),
-                  DropdownMenuItem(value: 'light', child: Text('Street Light')),
-                  DropdownMenuItem(value: 'traffic', child: Text('Traffic Issue')),
-                  DropdownMenuItem(value: 'accident', child: Text('Accident')),
-                  DropdownMenuItem(value: 'pothole', child: Text('Pothole / Road Damage')),
-                  DropdownMenuItem(value: 'water', child: Text('Water Supply')),
-                  DropdownMenuItem(value: 'water_stagnation', child: Text('Water Stagnation')),
+              
+              GestureDetector(
+                onTap: () async {
+                  if (isUploadingImage) return;
+                  setMBS(() => isUploadingImage = true);
+                  final url = await ImageUploadHelper.pickAndUpload();
+                  setMBS(() {
+                    if (url != null) imageUrl = url;
+                    isUploadingImage = false;
+                  });
+                },
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl!), fit: BoxFit.cover) : null,
+                  ),
+                  child: isUploadingImage
+                      ? Center(child: CircularProgressIndicator())
+                      : imageUrl == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo, size: 30, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                                SizedBox(height: 4),
+                                Text('Add Photo (Optional)', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                              ],
+                            )
+                          : SizedBox(),
+                ),
+              ),
+              SizedBox(height: 16),
+
+              Text('Issue Category', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildCategoryChip('electricity', 'Electricity', Icons.electric_bolt_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('light', 'Street Light', Icons.lightbulb_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('pothole', 'Pothole', Icons.add_road_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('water', 'Water Supply', Icons.water_drop_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
+                  _buildCategoryChip('water_stagnation', 'Stagnation', Icons.waves_rounded, selectedCategory, (v) => setMBS(() => selectedCategory = v)),
                 ],
-                onChanged: (v) => setMBS(() => selectedCategory = v!),
               ),
               SizedBox(height: 16),
               TextField(
@@ -455,28 +559,24 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     if (descCtrl.text.isEmpty) return;
                     setMBS(() => isSubmitting = true);
                     try {
-                      final Position? position = await _getLocationWithConsent();
+                      final position = await _getLocationWithConsent();
                       if (position == null) {
                         setMBS(() => isSubmitting = false);
                         return;
                       }
                       
-                      double lat = position.latitude;
-                      double lng = position.longitude;
-                      
                       await ApiClient.dio.post('/emergency/', data: {
                         'type': 'govt_grievance',
                         'category': selectedCategory,
                         'description': descCtrl.text,
-                        'lat': lat,
-                        'lng': lng
+                        'lat': position.latitude,
+                        'lng': position.longitude,
+                        'photo_url': imageUrl,
                       });
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchEmergencies();
                     } catch (e) {
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                      }
+                      if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
                       setMBS(() => isSubmitting = false);
                     }
                   },

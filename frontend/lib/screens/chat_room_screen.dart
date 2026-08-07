@@ -166,9 +166,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to load messages: $e', style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 10),
+          content: Text('Unable to load messages. Please check network connection.', style: TextStyle(color: Colors.white)),
+          backgroundColor: AppTheme.danger,
+          duration: Duration(seconds: 3),
         ));
       }
     }
@@ -225,7 +225,19 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(widget.room['name'] ?? 'Chat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Text(widget.room['name'] ?? 'Chat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              SizedBox(width: 8),
+              Container(
+                width: 8, height: 8,
+                decoration: BoxDecoration(
+                  color: SocketService().isConnected ? AppTheme.success : Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ),
           if (widget.room['description'] != null)
             Text(widget.room['description'] ?? '', style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal)),
         ]),
