@@ -501,6 +501,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  void _showLocationOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: true,
+      builder: (context) {
+        return MHBottomSheet(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.my_location_rounded, size: 48, color: _isInsideDharmapuri ? AppTheme.success : AppTheme.danger),
+              SizedBox(height: 12),
+              Text(_isInsideDharmapuri ? 'Dharmapuri Service Region' : 'Outside Service Area', style: Theme.of(context).textTheme.headlineMedium),
+              SizedBox(height: 8),
+              Text('Detected Location: $_locationName', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              SizedBox(height: 20),
+              ListTile(
+                leading: Icon(Icons.map_rounded, color: AppTheme.appleBlue),
+                title: Text('View Exact Location on Google Maps', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('Open Google Maps navigation'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Theme.of(context).dividerColor)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  if (_currentLat != null && _currentLng != null) {
+                    final url = Uri.parse('https://maps.google.com/?q=$_currentLat,$_currentLng');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  }
+                },
+              ),
+              SizedBox(height: 12),
+              ListTile(
+                leading: Icon(Icons.edit_location_alt_rounded, color: AppTheme.accent),
+                title: Text('Select Manual Location', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('Choose Harur Town or Dharmapuri City'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Theme.of(context).dividerColor)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showManualLocationPicker();
+                },
+              ),
+              SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
@@ -573,16 +624,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 24),
                     child: MHCard(
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      onTap: () async {
-                        if (_currentLat != null && _currentLng != null) {
-                          final url = Uri.parse('https://maps.google.com/?q=$_currentLat,$_currentLng');
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url, mode: LaunchMode.externalApplication);
-                            return;
-                          }
-                        }
-                        _showManualLocationPicker();
-                      },
+                      onTap: _showLocationOptionsSheet,
                       child: Row(
                         children: [
                           Icon(Icons.location_on_rounded, color: _isInsideDharmapuri ? AppTheme.success : AppTheme.danger, size: 28),

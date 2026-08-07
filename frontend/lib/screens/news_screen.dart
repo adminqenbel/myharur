@@ -273,9 +273,12 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
     );
   }
 
-  Widget _buildModernNewsCard(Map<String, dynamic> post) {
+  Widget _buildModernNewsCard(dynamic postRaw) {
+    final Map<String, dynamic> post = postRaw is Map<String, dynamic>
+        ? postRaw
+        : Map<String, dynamic>.from(postRaw as Map);
     final bool hasImage = post['image_url'] != null && (post['image_url'] as String).isNotEmpty;
-    final bool isVerified = post['source'] == 'Harur News Feed'; // Dummy logic for verified badge
+    final bool isVerified = post['source'] == 'Harur News Feed';
     
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),

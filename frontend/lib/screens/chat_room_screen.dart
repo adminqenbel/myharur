@@ -295,13 +295,13 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         if (_typingText.isNotEmpty)
           Container(
             width: double.infinity,
-            color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.surface,
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(_typingText, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontStyle: FontStyle.italic)),
+            child: Text(_typingText, style: TextStyle(color: AppTheme.accent, fontSize: 12, fontStyle: FontStyle.italic)),
           ),
         if (_mentionSuggestions.isNotEmpty)
           Container(
-            color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             constraints: const BoxConstraints(maxHeight: 160),
             child: ListView.builder(
               shrinkWrap: true,
@@ -325,10 +325,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 top: false,
                 child: Container(
                   width: double.infinity,
-                  color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   padding: EdgeInsets.symmetric(vertical: 16),
                   alignment: Alignment.center,
-                  child: Text('Only administrators can post in this room', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.bold)),
+                  child: Text('Only administrators can post in this room', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
               );
             }
@@ -336,7 +336,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             return SafeArea(
               top: false,
             child: Container(
-              color: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.surface,
+              color: Theme.of(context).colorScheme.surface,
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(children: [
                 Expanded(

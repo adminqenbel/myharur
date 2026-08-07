@@ -114,7 +114,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     if (_tabController.index == 3 && !canCreateRoom) return null;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 140),
+      padding: const EdgeInsets.only(bottom: 90),
       child: FloatingActionButton(
         backgroundColor: AppTheme.accent,
         onPressed: () {
