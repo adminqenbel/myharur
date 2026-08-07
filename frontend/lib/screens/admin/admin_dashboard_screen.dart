@@ -83,6 +83,108 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     }
   }
 
+  void _showVersionManagerDialog() async {
+    final versionCtrl = TextEditingController(text: '1.2.0');
+    final minVersionCtrl = TextEditingController(text: '1.0.0');
+    final buildNumCtrl = TextEditingController(text: '12');
+    final apkUrlCtrl = TextEditingController(text: 'https://myharur.onrender.com/static/myharur.apk');
+    final releaseNotesCtrl = TextEditingController(text: 'Emergency Google Maps deep-links, dynamic news ingestion, and community chat stability fixes.');
+    bool forceUpdate = false;
+
+    try {
+      final res = await ApiClient.dio.get('/config/');
+      versionCtrl.text = (res.data['latest_version'] ?? '1.2.0').toString();
+      minVersionCtrl.text = (res.data['min_version'] ?? '1.0.0').toString();
+      buildNumCtrl.text = (res.data['build_number'] ?? '12').toString();
+      apkUrlCtrl.text = (res.data['apk_url'] ?? 'https://myharur.onrender.com/static/myharur.apk').toString();
+      releaseNotesCtrl.text = (res.data['release_notes'] ?? '').toString();
+      forceUpdate = res.data['force_update'] as bool? ?? false;
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.system_update_rounded, color: AppTheme.appleBlue),
+              SizedBox(width: 8),
+              Text('Version & Release Manager'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: versionCtrl,
+                  decoration: const InputDecoration(labelText: 'Latest Version (e.g. 1.2.0)', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: minVersionCtrl,
+                  decoration: const InputDecoration(labelText: 'Minimum Required Version', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: buildNumCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Build Number', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: apkUrlCtrl,
+                  decoration: const InputDecoration(labelText: 'Direct APK Download URL', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: releaseNotesCtrl,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Release Notes', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Force Update for All Users', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  subtitle: const Text('Prevent using app until updated'),
+                  value: forceUpdate,
+                  onChanged: (val) => setDialogState(() => forceUpdate = val),
+                  activeColor: AppTheme.danger,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await ApiClient.dio.post('/config/version', data: {
+                    'latest_version': versionCtrl.text.trim(),
+                    'min_version': minVersionCtrl.text.trim(),
+                    'build_number': int.tryParse(buildNumCtrl.text.trim()) ?? 12,
+                    'apk_url': apkUrlCtrl.text.trim(),
+                    'release_notes': releaseNotesCtrl.text.trim(),
+                    'force_update': forceUpdate,
+                  });
+                  if (mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('App Version Settings Updated Successfully!')));
+                  }
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                }
+              },
+              child: const Text('Publish Release'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _exportUsers() async {
     final url = '${ApiClient.dio.options.baseUrl}/admin/users/export';
     final uri = Uri.parse(url);
@@ -297,6 +399,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             activeColor: AppTheme.danger,
             tileColor: AppTheme.danger.withOpacity(0.1),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          SizedBox(height: 16),
+          ListTile(
+            tileColor: AppTheme.appleBlue.withOpacity(0.08),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.appleBlue.withOpacity(0.2))),
+            leading: Icon(Icons.system_update_rounded, color: AppTheme.appleBlue, size: 28),
+            title: Text('App Release & Version Control', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.appleBlue)),
+            subtitle: Text('Manage version numbers, release notes & force updates'),
+            trailing: Icon(Icons.chevron_right_rounded, color: AppTheme.appleBlue),
+            onTap: _showVersionManagerDialog,
           ),
           SizedBox(height: 24),
           Text('Platform Statistics', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
