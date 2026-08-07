@@ -319,8 +319,8 @@ class MHSkeletonLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
-      baseColor: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-      highlightColor: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5) : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+      baseColor: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.1) : Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+      highlightColor: isDark ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3) : Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
       child: Container(
         width: width,
         height: height,
@@ -518,6 +518,45 @@ class MHEmergencyCard extends StatelessWidget {
             ),
             SizedBox(height: 12),
             Text(item['description'] ?? 'No description provided.', maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
+            SizedBox(height: 12),
+            if (lat.isNotEmpty && lng.isNotEmpty)
+              GestureDetector(
+                onTap: () async {
+                  final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.dividerLight),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                        child: Icon(Icons.map_rounded, color: Colors.blue, size: 24),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('View on Map', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text('$lat, $lng', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.open_in_new_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                    ],
+                  ),
+                ),
+              ),
             SizedBox(height: 16),
             Divider(color: Theme.of(context).dividerColor.withOpacity(0.5)),
             SizedBox(height: 8),
@@ -527,27 +566,7 @@ class MHEmergencyCard extends StatelessWidget {
                 SizedBox(width: 4),
                 Text(userName, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
                 Spacer(),
-                if (lat.isNotEmpty && lng.isNotEmpty)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () async {
-                      final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Row(
-                        children: [
-                          Icon(Icons.map_rounded, size: 16, color: Colors.blue),
-                          SizedBox(width: 4),
-                          Text('View Map', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue)),
-                        ],
-                      ),
-                    ),
-                  )
-                else
+                if (lat.isEmpty || lng.isEmpty)
                   Row(
                     children: [
                       Icon(Icons.location_off_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),

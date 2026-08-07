@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api_client.dart';
@@ -17,11 +18,21 @@ class NewsScreen extends ConsumerStatefulWidget {
 class _NewsScreenState extends ConsumerState<NewsScreen> {
   late Future<List<dynamic>> _newsFuture;
   late Future<Map<String, dynamic>> _ratesFuture;
+  Timer? _newsTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _newsTimer = Timer.periodic(const Duration(hours: 2), (timer) {
+      if (mounted) setState(() => _fetchData());
+    });
+  }
+
+  @override
+  void dispose() {
+    _newsTimer?.cancel();
+    super.dispose();
   }
 
   void _fetchData() {
@@ -105,7 +116,10 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
-                  if (titleCtrl.text.isEmpty || descCtrl.text.isEmpty) return;
+                  if (titleCtrl.text.trim().isEmpty || descCtrl.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill out all required fields.'), backgroundColor: Colors.red));
+                    return;
+                  }
                   try {
                     await ApiClient.dio.post('/news/', data: {
                       'title': titleCtrl.text,

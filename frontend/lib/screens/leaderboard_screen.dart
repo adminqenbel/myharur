@@ -304,7 +304,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> with Sing
                         ..._leaderboard.sublist(3).asMap().entries.map((entry) {
                           return _buildListRank(entry.value, entry.key + 3);
                         }).toList(),
-                      SizedBox(height: 80),
+                      SizedBox(height: 160),
                     ],
                   ),
                 ),

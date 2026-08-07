@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -23,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -93,12 +95,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleAdminLogin() async {
+    if (!_formKey.currentState!.validate()) return;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || password.isEmpty) {
-      _showError('Please enter email and password');
-      return;
-    }
     setState(() => _isLoading = true);
     try {
       final response = await ApiClient.dio.post(
@@ -123,7 +122,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
+      body: Stack(
+        children: [
+          SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
@@ -154,12 +155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: Theme.of(context).textTheme.bodyMedium),
               SizedBox(height: 48),
 
-              if (_isLoading)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
-                  child: CircularProgressIndicator(),
-                )
-              else if (!_isAdminMode) ...[
+              if (!_isAdminMode) ...[
                 // Google Sign-In
                 SizedBox(
                   width: double.infinity,
@@ -228,45 +224,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Container(
                   decoration: AppTheme.card(),
                   padding: EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.primary),
-                          SizedBox(width: 8),
-                          Text('Admin Login', style: Theme.of(context).textTheme.titleLarge),
-                        ],
-                      ),
-                      SizedBox(height: 24),
-                      TextField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(labelText: 'Username or Email', prefixIcon: Icon(Icons.person_outline, size: 18)),
-                        keyboardType: TextInputType.text,
-                      ),
-                      SizedBox(height: 14),
-                      TextField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock_outline, size: 18),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePwd ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 18),
-                            onPressed: () => setState(() => _obscurePwd = !_obscurePwd),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.admin_panel_settings, color: Theme.of(context).colorScheme.primary),
+                            SizedBox(width: 8),
+                            Text('Admin Login', style: Theme.of(context).textTheme.titleLarge),
+                          ],
+                        ),
+                        SizedBox(height: 24),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(labelText: 'Username or Email', prefixIcon: Icon(Icons.person_outline, size: 18)),
+                          keyboardType: TextInputType.text,
+                          validator: (value) => (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                        ),
+                        SizedBox(height: 14),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: Icon(Icons.lock_outline, size: 18),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscurePwd ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 18),
+                              onPressed: () => setState(() => _obscurePwd = !_obscurePwd),
+                            ),
+                          ),
+                          obscureText: _obscurePwd,
+                          validator: (value) => (value == null || value.isEmpty) ? 'Required field' : null,
+                        ),
+                        SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: MHButton(
+                            onPressed: _handleAdminLogin,
+                            text: 'Login',
                           ),
                         ),
-                        obscureText: _obscurePwd,
-                      ),
-                      SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: MHButton(
-                          onPressed: _handleAdminLogin,
-                          text: 'Login',
-                          isLoading: _isLoading,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(height: 16),
@@ -284,6 +284,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
-    );
+      if (_isLoading)
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ),
+        ),
+    ],
+  ),
+);
   }
 }

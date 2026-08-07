@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/locale_provider.dart';
 import '../providers/auth_provider.dart';
@@ -31,6 +33,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<dynamic> _latestNews = [];
   bool _newsLoading = true;
   Map<String, dynamic>? _weatherData;
+  double? _currentLat;
+  double? _currentLng;
+  Timer? _weatherTimer;
+  Timer? _newsTimer;
 
   @override
   void initState() {
@@ -38,16 +44,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _determinePosition();
     _fetchLatestNews();
     NotificationService().requestPermission();
+    _weatherTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _fetchWeatherOnly();
+    });
+    _newsTimer = Timer.periodic(const Duration(hours: 2), (timer) {
+      _fetchLatestNews();
+    });
+  }
+
+  @override
+  void dispose() {
+    _weatherTimer?.cancel();
+    _newsTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchWeatherOnly() async {
+    try {
+      String url = '/news/weather';
+      if (_currentLat != null && _currentLng != null) {
+        url += '?lat=$_currentLat&lng=$_currentLng';
+      }
+      final w = await ApiClient.dio.get(url);
+      if (mounted) setState(() => _weatherData = w.data);
+    } catch (_) {}
   }
 
   Future<void> _fetchLatestNews() async {
     try {
       final r = await ApiClient.dio.get('/news/');
-      final w = await ApiClient.dio.get('/news/weather');
+      await _fetchWeatherOnly();
       if (mounted) {
         setState(() {
           _latestNews = (r.data as List).take(5).toList();
-          _weatherData = w.data;
           _newsLoading = false;
         });
       }
@@ -64,7 +93,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         setState(() {
           _isInsideDharmapuri = true;
           _locationName = loc['name'] as String;
+          _currentLat = loc['lat'] as double?;
+          _currentLng = loc['lng'] as double?;
         });
+        _fetchWeatherOnly();
       }
       return;
     }
@@ -92,15 +124,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
 
-    Position position = await Geolocator.getCurrentPosition();
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     bool inBounds = position.latitude >= 11.75 && position.latitude <= 12.35 &&
                     position.longitude >= 77.45 && position.longitude <= 78.75;
 
     if (mounted) {
       setState(() {
         _isInsideDharmapuri = inBounds;
-        _locationName = inBounds ? 'Dharmapuri Region' : 'Outside Service Area';
+        _currentLat = position.latitude;
+        _currentLng = position.longitude;
+        _locationName = inBounds ? '${position.latitude.toStringAsFixed(4)}°N, ${position.longitude.toStringAsFixed(4)}°E' : 'Outside Service Area';
       });
+      _fetchWeatherOnly();
       if (!inBounds) {
         _checkWarning();
       }
@@ -115,7 +150,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showLocationWarningSheet() {
-    showModalBottomSheet(useRootNavigator: true, 
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -153,7 +188,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showManualLocationPicker() {
-    showModalBottomSheet(useRootNavigator: true, 
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -207,12 +242,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showAIChatSheet() {
     final TextEditingController ctrl = TextEditingController();
+    final ScrollController scrollCtrl = ScrollController();
     final List<Map<String, dynamic>> messages = [
-      {'sender': 'ai', 'text': 'Hello! I am your MyHarur AI Support. How can I help you today?'}
+      {
+        'sender': 'ai',
+        'text': 'Hello! I am your MyHarur AI Support. How can I help you today?',
+        'time': DateTime.now()
+      }
     ];
     bool isLoading = false;
     
-    showModalBottomSheet(useRootNavigator: true, 
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -220,8 +260,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            void sendMessage(String text) async {
+              if (text.isEmpty) return;
+              ctrl.clear();
+              setModalState(() {
+                messages.add({'sender': 'me', 'text': text, 'time': DateTime.now()});
+                isLoading = true;
+              });
+              
+              Future.delayed(const Duration(milliseconds: 100), () {
+                scrollCtrl.animateTo(scrollCtrl.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+              });
+
+              try {
+                final r = await ApiClient.dio.post('/community/ai/ask', data: {'query': text});
+                setModalState(() {
+                  messages.add({'sender': 'ai', 'text': r.data['response'], 'time': DateTime.now()});
+                  isLoading = false;
+                });
+              } catch (e) {
+                setModalState(() {
+                  messages.add({'sender': 'ai', 'text': 'Error connecting to AI.', 'time': DateTime.now()});
+                  isLoading = false;
+                });
+              }
+              
+              Future.delayed(const Duration(milliseconds: 100), () {
+                scrollCtrl.animateTo(scrollCtrl.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+              });
+            }
+
             return Container(
-              height: MediaQuery.of(context).size.height * 0.75,
+              height: MediaQuery.of(context).size.height * 0.85,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -233,107 +303,110 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     width: 40, height: 4,
                     decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
                   ),
-                  Text("AI Support", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.smart_toy_rounded, color: AppTheme.accent),
+                      const SizedBox(width: 8),
+                      Text("AI Support", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
                         final msg = messages[index];
                         final isMe = msg['sender'] == 'me';
+                        final time = msg['time'] as DateTime;
+                        final timeStr = '${time.hour > 12 ? time.hour - 12 : time.hour == 0 ? 12 : time.hour}:${time.minute.toString().padLeft(2, '0')} ${time.hour >= 12 ? 'PM' : 'AM'}';
+                        
                         return Align(
                           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                           child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isMe ? AppTheme.info : Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(16),
-                                topRight: const Radius.circular(16),
-                                bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
-                                bottomRight: isMe ? Radius.zero : const Radius.circular(16),
-                              ),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))],
-                            ),
-                            child: Text(
-                              msg['text'],
-                              style: TextStyle(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                            child: Column(
+                              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: isMe ? AppTheme.accent : Theme.of(context).colorScheme.surface,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: const Radius.circular(20),
+                                      topRight: const Radius.circular(20),
+                                      bottomLeft: isMe ? const Radius.circular(20) : Radius.zero,
+                                      bottomRight: isMe ? Radius.zero : const Radius.circular(20),
+                                    ),
+                                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4))],
+                                  ),
+                                  child: Text(
+                                    msg['text'],
+                                    style: TextStyle(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, fontSize: 15, height: 1.4),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  timeStr,
+                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.bold),
+                                )
+                              ],
                             ),
                           ),
                         );
                       },
                     ),
                   ),
-                  if (isLoading) const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
+                  if (isLoading) 
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent)),
+                            const SizedBox(width: 8),
+                            Text('AI is typing...', style: TextStyle(color: AppTheme.accent, fontSize: 12, fontStyle: FontStyle.italic)),
+                          ],
+                        ),
+                      ),
+                    ),
                   Container(
-                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 110, top: 8),
+                    padding: EdgeInsets.only(left: 16, right: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16, top: 12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5))),
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: TextField(
                             controller: ctrl,
+                            textInputAction: TextInputAction.send,
                             decoration: InputDecoration(
-                              hintText: "Type your message...",
+                              hintText: "Message AI...",
+                              hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                               filled: true,
-                              fillColor: Theme.of(context).scaffoldBackgroundColor,
+                              fillColor: Theme.of(context).colorScheme.surface,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             ),
-                            onSubmitted: (text) async {
-                              final trimText = text.trim();
-                              if (trimText.isEmpty) return;
-                              ctrl.clear();
-                              setModalState(() {
-                                messages.add({'sender': 'me', 'text': trimText});
-                                isLoading = true;
-                              });
-                              try {
-                                final r = await ApiClient.dio.post('/community/ai/ask', data: {'query': trimText});
-                                setModalState(() {
-                                  messages.add({'sender': 'ai', 'text': r.data['response']});
-                                  isLoading = false;
-                                });
-                              } catch (e) {
-                                setModalState(() {
-                                  messages.add({'sender': 'ai', 'text': 'Error connecting to AI.'});
-                                  isLoading = false;
-                                });
-                              }
-                            },
+                            onSubmitted: (text) => sendMessage(text.trim()),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        CircleAvatar(
-                          backgroundColor: AppTheme.info,
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.accent,
+                            shape: BoxShape.circle,
+                            boxShadow: [BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+                          ),
                           child: IconButton(
                             icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                            onPressed: () async {
-                              final text = ctrl.text.trim();
-                              if (text.isEmpty) return;
-                              ctrl.clear();
-                              setModalState(() {
-                                messages.add({'sender': 'me', 'text': text});
-                                isLoading = true;
-                              });
-                              try {
-                                final r = await ApiClient.dio.post('/community/ai/ask', data: {'query': text});
-                                setModalState(() {
-                                  messages.add({'sender': 'ai', 'text': r.data['response']});
-                                  isLoading = false;
-                                });
-                              } catch (e) {
-                                setModalState(() {
-                                  messages.add({'sender': 'ai', 'text': 'Error connecting to AI.'});
-                                  isLoading = false;
-                                });
-                              }
-                            },
+                            onPressed: () => sendMessage(ctrl.text.trim()),
                           ),
                         ),
                       ],
@@ -382,6 +455,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  String _getGreeting() {
+    var hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning,';
+    if (hour < 17) return 'Good Afternoon,';
+    return 'Good Evening,';
+  }
+
   Widget _buildServiceIcon(IconData icon, String label, Color color, VoidCallback onTap) {
     return MHCard(
       onTap: onTap,
@@ -421,48 +501,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           slivers: [
             // ── Custom Header (SliverAppBar) ───────────────────────────────
             SliverAppBar(
-              expandedHeight: 120.0,
+              expandedHeight: 110.0,
               floating: true,
               pinned: true,
-              backgroundColor: theme.appBarTheme.backgroundColor,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-              ),
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: EdgeInsets.only(left: 24, bottom: 16),
+                titlePadding: EdgeInsets.only(left: 24, bottom: 12),
                 title: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Hello,", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w500)),
-                    Text(displayName, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
+                    Text(_getGreeting(), style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: -0.3)),
+                    Text(displayName, style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                   ],
-                ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    color: theme.appBarTheme.backgroundColor,
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
-                  ),
                 ),
               ),
               actions: [
-                IconButton(
-                  icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface, size: 28),
-                  onPressed: () {
-                    _navigateTo(const NotificationsScreen());
-                  },
-                ),
-                SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => context.go('/profile'),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Color(0xFF16324F),
-                    child: Icon(Icons.person, color: Theme.of(context).colorScheme.surface),
+                Container(
+                  margin: EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.notifications_none_rounded, color: theme.colorScheme.onSurface, size: 24),
+                    onPressed: () => _navigateTo(const NotificationsScreen()),
                   ),
                 ),
-                SizedBox(width: 24),
+                GestureDetector(
+                  onTap: () => context.go('/profile'),
+                  child: Container(
+                    margin: EdgeInsets.only(right: 24),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppTheme.appleBlue.withOpacity(0.1),
+                      child: Icon(Icons.person, color: AppTheme.appleBlue, size: 22),
+                    ),
+                  ),
+                ),
               ],
             ),
             
@@ -477,7 +556,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 24),
                     child: MHCard(
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      onTap: _showManualLocationPicker,
+                      onTap: () async {
+                        if (_currentLat != null && _currentLng != null) {
+                          final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$_currentLat,$_currentLng');
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url, mode: LaunchMode.externalApplication);
+                            return;
+                          }
+                        }
+                        _showManualLocationPicker();
+                      },
                       child: Row(
                         children: [
                           Icon(Icons.location_on_rounded, color: _isInsideDharmapuri ? AppTheme.success : AppTheme.danger, size: 28),

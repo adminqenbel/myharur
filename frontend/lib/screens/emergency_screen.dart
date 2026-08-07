@@ -57,21 +57,27 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         ),
         floatingActionButton: Builder(
           builder: (ctx) {
-            final tab = DefaultTabController.of(ctx);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 140),
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                  if (tab.index == 1) {
-                    _showCreateGrievanceDialog();
-                  } else {
-                    _showSosOptionsDialog();
-                  }
-                },
-                backgroundColor: AppTheme.danger,
-                icon: Icon(Icons.add_alert_rounded, color: Theme.of(context).colorScheme.surface),
-                label: Text(tab.index == 1 ? 'Report Issue' : 'Request Help', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold)),
-              ),
+            final tabController = DefaultTabController.of(ctx);
+            return AnimatedBuilder(
+              animation: tabController,
+              builder: (context, _) {
+                final isGovt = tabController.index == 1;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 140),
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                      if (isGovt) {
+                        _showCreateGrievanceDialog();
+                      } else {
+                        _showSosOptionsDialog();
+                      }
+                    },
+                    backgroundColor: AppTheme.danger,
+                    icon: Icon(Icons.add_alert_rounded, color: Theme.of(context).colorScheme.surface),
+                    label: Text(isGovt ? 'Report Issue' : 'Request Help', style: TextStyle(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold)),
+                  ),
+                );
+              }
             );
           }
         ),
@@ -280,6 +286,47 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     );
   }
 
+  Future<Position?> _getLocationWithConsent() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enable location services to report.')));
+      return null;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      final bool? consent = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Location Access Needed'),
+          content: Text('To report an emergency, we need your exact GPS location. This will be shared with authorities and nearby responders.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Allow')),
+          ],
+        ),
+      );
+      if (consent != true) return null;
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission denied.')));
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permissions are permanently denied.')));
+      return null;
+    }
+
+    try {
+      return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to get location: $e')));
+      return null;
+    }
+  }
+
   void _showSosOptionsDialog() {
     String selectedCategory = 'police';
     final descCtrl = TextEditingController();
@@ -326,21 +373,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     }
                     setMBS(() => isSubmitting = true);
                     try {
-                      double lat = 12.0628;
-                      double lng = 78.4950;
-                      try {
-                        LocationPermission permission = await Geolocator.checkPermission();
-                        if (permission == LocationPermission.denied) {
-                          permission = await Geolocator.requestPermission();
-                        }
-                        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-                          Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-                          lat = position.latitude;
-                          lng = position.longitude;
-                        }
-                      } catch (e) {
-                        print('Geolocator error: \$e');
+                      final Position? position = await _getLocationWithConsent();
+                      if (position == null) {
+                        setMBS(() => isSubmitting = false);
+                        return;
                       }
+                      
+                      double lat = position.latitude;
+                      double lng = position.longitude;
                       
                       await ApiClient.dio.post('/emergency/', data: {
                         'type': 'citizen_sos',
@@ -415,21 +455,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                     if (descCtrl.text.isEmpty) return;
                     setMBS(() => isSubmitting = true);
                     try {
-                      double lat = 12.0628;
-                      double lng = 78.4950;
-                      try {
-                        LocationPermission permission = await Geolocator.checkPermission();
-                        if (permission == LocationPermission.denied) {
-                          permission = await Geolocator.requestPermission();
-                        }
-                        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-                          Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-                          lat = position.latitude;
-                          lng = position.longitude;
-                        }
-                      } catch (e) {
-                        print('Geolocator error: \$e');
+                      final Position? position = await _getLocationWithConsent();
+                      if (position == null) {
+                        setMBS(() => isSubmitting = false);
+                        return;
                       }
+                      
+                      double lat = position.latitude;
+                      double lng = position.longitude;
                       
                       await ApiClient.dio.post('/emergency/', data: {
                         'type': 'govt_grievance',

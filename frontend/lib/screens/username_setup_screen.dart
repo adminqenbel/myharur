@@ -19,6 +19,7 @@ class UsernameSetupScreen extends ConsumerStatefulWidget {
 class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
   final _usernameCtrl = TextEditingController();
   final _displayCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   bool _loading = false;
   String? _error;
   String? _checking;
@@ -28,6 +29,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
   void dispose() {
     _usernameCtrl.dispose();
     _displayCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -63,7 +65,15 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
   Future<void> _submit() async {
     final username = _usernameCtrl.text.trim();
     final displayName = _displayCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+    
     if (_error != null || username.isEmpty || !_available) return;
+    
+    if (phone.isEmpty || !RegExp(r'^[6-9]\d{9}$').hasMatch(phone)) {
+      setState(() => _error = 'Please enter a valid 10-digit Indian mobile number');
+      return;
+    }
+    
     if (displayName.isNotEmpty) {
       final dnErr = validateDisplayName(displayName);
       if (dnErr != null) {
@@ -76,6 +86,7 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
       final r = await ApiClient.dio.post('/auth/set-username', data: {
         'username': username,
         if (displayName.isNotEmpty) 'display_name': displayName,
+        'phone': phone,
       });
       final token = r.data['access_token'] as String;
       final user = r.data['user'];
@@ -165,6 +176,20 @@ class _UsernameSetupScreenState extends ConsumerState<UsernameSetupScreen> {
                     counterText: '',
                   ),
                   maxLength: 60,
+                  textInputAction: TextInputAction.next,
+                ),
+                SizedBox(height: 16),
+                
+                TextField(
+                  controller: _phoneCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Mobile Number *',
+                    prefixText: '+91 ',
+                    border: OutlineInputBorder(),
+                    helperText: '10-digit mobile number for local updates.',
+                  ),
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _submit(),
                 ),

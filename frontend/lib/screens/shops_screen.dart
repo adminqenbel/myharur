@@ -1,139 +1,484 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../api_client.dart';
 import '../theme.dart';
+import 'shop_registration_screen.dart';
+import 'my_shops_screen.dart';
+import 'shop_detail_screen.dart';
 
-class ShopsScreen extends StatefulWidget {
+class ShopsScreen extends ConsumerStatefulWidget {
   const ShopsScreen({super.key});
 
   @override
-  State<ShopsScreen> createState() => _ShopsScreenState();
+  ConsumerState<ShopsScreen> createState() => _ShopsScreenState();
 }
 
-class _ShopsScreenState extends State<ShopsScreen> {
-  late Future<List<dynamic>> _shopsFuture;
+class _ShopsScreenState extends ConsumerState<ShopsScreen> {
+  List<dynamic> _shops = [];
+  List<dynamic> _categories = [];
+  bool _isLoading = true;
+  String? _error;
+  int? _selectedCategoryId;
+  String _sort = 'newest';
+  final _searchCtrl = TextEditingController();
+  bool _searching = false;
 
   @override
   void initState() {
     super.initState();
-    _shopsFuture = _fetchShops();
-  }
-
-  Future<List<dynamic>> _fetchShops() async {
-    final response = await ApiClient.dio.get('/shops/');
-    return response.data;
+    _loadData();
   }
 
   @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final results = await Future.wait([
+        ApiClient.dio.get('/shops/categories'),
+        ApiClient.dio.get('/shops/', queryParameters: {
+          if (_selectedCategoryId != null) 'category_id': _selectedCategoryId,
+          'sort': _sort,
+          if (_searchCtrl.text.trim().isNotEmpty) 'q': _searchCtrl.text.trim(),
+        }),
+      ]);
+      if (mounted) {
+        setState(() {
+          _categories = results[0].data as List;
+          _shops = results[1].data as List;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not load shops. Check your connection.';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _filterByCategory(int? catId) async {
+    setState(() => _selectedCategoryId = catId);
+    await _loadData();
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _callShop(String phone) => _launchUrl('tel:$phone');
+  void _whatsappShop(String phone) => _launchUrl('https://wa.me/91$phone');
+  void _directionsTo(double lat, double lng) =>
+      _launchUrl('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Light background theme
       appBar: AppBar(
-        title: Text('Local Businesses', style: TextStyle(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
+        title: const Text('Local Businesses'),
         centerTitle: false,
-        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           IconButton(
-            icon: Icon(Icons.search_rounded),
+            icon: Icon(_searching ? Icons.close_rounded : Icons.search_rounded),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Search coming soon!')));
+              setState(() {
+                _searching = !_searching;
+                if (!_searching) {
+                  _searchCtrl.clear();
+                  _loadData();
+                }
+              });
             },
           ),
-          IconButton(
-            icon: Icon(Icons.filter_list_rounded),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Filters coming soon!')));
+          PopupMenuButton<String>(
+            onSelected: (val) {
+              setState(() => _sort = val);
+              _loadData();
             },
-          )
+            icon: const Icon(Icons.sort_rounded),
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(value: 'newest', child: Text('Newest First')),
+              const PopupMenuItem(value: 'popular', child: Text('Most Popular')),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.storefront_rounded),
+            tooltip: 'My Shops',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyShopsScreen()),
+            ),
+          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ShopRegistrationScreen()),
+        ).then((_) => _loadData()),
+        icon: const Icon(Icons.add_business_rounded),
+        label: const Text('Register Shop'),
+        backgroundColor: AppTheme.accent,
+        foregroundColor: Colors.white,
+        elevation: 2,
       ),
       body: Column(
         children: [
-          // ── Category Chips ───────────────────────────────────────────
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), width: 1)),
+          // Search bar
+          if (_searching)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search shops...',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            _loadData();
+                          },
+                        )
+                      : null,
+                ),
+                onSubmitted: (_) => _loadData(),
+                onChanged: (v) {
+                  if (v.isEmpty) _loadData();
+                  setState(() {});
+                },
+              ),
             ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+
+          // Category chips
+          if (_categories.isNotEmpty)
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.bgDark : AppTheme.bgLight,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? AppTheme.dividerDark : AppTheme.dividerLight,
+                  ),
+                ),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    _categoryChip(null, '🏪', 'All', isDark),
+                    const SizedBox(width: 8),
+                    ..._categories.map((cat) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _categoryChip(
+                            cat['id'] as int,
+                            cat['icon'] ?? '🏪',
+                            cat['name'] as String,
+                            isDark,
+                          ),
+                        )),
+                  ],
+                ),
+              ),
+            ),
+
+          // Shop list
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? _buildError()
+                    : _shops.isEmpty
+                        ? _buildEmpty()
+                        : RefreshIndicator(
+                            onRefresh: _loadData,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.only(top: 12, bottom: 120),
+                              itemCount: _shops.length,
+                              itemBuilder: (ctx, i) => _buildShopCard(_shops[i], isDark),
+                            ),
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _categoryChip(int? id, String icon, String label, bool isDark) {
+    final isSelected = _selectedCategoryId == id;
+    return GestureDetector(
+      onTap: () => _filterByCategory(id),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.accent : (isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppTheme.accent : (isDark ? AppTheme.dividerDark : AppTheme.dividerLight),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 5),
+            Text(
+              label.length > 12 ? '${label.substring(0, 10)}…' : label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShopCard(Map<String, dynamic> shop, bool isDark) {
+    final isOpen = shop['is_open'] == true;
+    final isVerified = shop['is_verified'] == true;
+    final cat = shop['category'] as Map<String, dynamic>?;
+    final phone = shop['phone'] as String?;
+    final whatsapp = shop['whatsapp'] as String?;
+    final lat = shop['location_lat'] as double?;
+    final lng = shop['location_lng'] as double?;
+    final products = (shop['products'] as List?)?.length ?? 0;
+    final offers = (shop['offers'] as List?)?.length ?? 0;
+
+    return GestureDetector(
+      onTap: () {
+        // We will push the detail screen directly or via GoRouter.
+        // For now, push directly to avoid complex GoRouter setup for a sub-screen.
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ShopDetailScreen(shop: shop),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? AppTheme.dividerDark : AppTheme.dividerLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Shop header
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Logo/Icon
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: shop['logo_url'] != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              shop['logo_url'],
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Text(
+                                cat?['icon'] ?? '🏪',
+                                style: const TextStyle(fontSize: 28),
+                              ),
+                            ),
+                          )
+                        : Text(cat?['icon'] ?? '🏪', style: const TextStyle(fontSize: 28)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              shop['name'] ?? '',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isVerified) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.verified_rounded, color: AppTheme.accent, size: 18),
+                          ],
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isOpen ? AppTheme.success.withOpacity(0.12) : AppTheme.danger.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isOpen ? 'Open' : 'Closed',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: isOpen ? AppTheme.success : AppTheme.danger,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (cat != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          cat['name'],
+                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryLight),
+                        ),
+                      ],
+                      if (shop['description'] != null) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          shop['description'],
+                          style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87, height: 1.3),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Info row (address, hours, products, offers)
+          if (shop['address'] != null || shop['opening_hours'] != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+              child: Column(
                 children: [
-                  _buildCategoryChip('All Categories', true),
-                  SizedBox(width: 8),
-                  _buildCategoryChip('Food & Dining', false),
-                  SizedBox(width: 8),
-                  _buildCategoryChip('Groceries', false),
-                  SizedBox(width: 8),
-                  _buildCategoryChip('Services', false),
-                  SizedBox(width: 8),
-                  _buildCategoryChip('Electronics', false),
+                  if (shop['address'] != null)
+                    _infoRow(Icons.location_on_rounded, shop['address'], Colors.red),
+                  if (shop['opening_hours'] != null)
+                    _infoRow(Icons.schedule_rounded, shop['opening_hours'], Colors.orange),
                 ],
               ),
             ),
+
+          // Products/Offers pills
+          if (products > 0 || offers > 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  if (products > 0)
+                    _pill('$products Products', AppTheme.accent),
+                  if (offers > 0)
+                    _pill('$offers Offers 🔥', Colors.orange),
+                ],
+              ),
+            ),
+
+          const Divider(height: 1),
+
+          // Action buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                if (phone != null)
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.call_rounded,
+                      'Call',
+                      Colors.green,
+                      () => _callShop(phone),
+                    ),
+                  ),
+                if (whatsapp != null)
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.chat_rounded,
+                      'WhatsApp',
+                      const Color(0xFF25D366),
+                      () => _whatsappShop(whatsapp),
+                    ),
+                  ),
+                if (lat != null && lng != null)
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.directions_rounded,
+                      'Directions',
+                      AppTheme.accent,
+                      () => _directionsTo(lat, lng),
+                    ),
+                  ),
+                if (phone == null && whatsapp == null && (lat == null || lng == null))
+                  Expanded(
+                    child: _actionBtn(
+                      Icons.info_outline_rounded,
+                      'View Details',
+                      AppTheme.accent,
+                      () {},
+                    ),
+                  ),
+              ],
+            ),
           ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 13, color: color.withOpacity(0.7)),
+          const SizedBox(width: 5),
           Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: _shopsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator(color: AppTheme.info));
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.store_mall_directory_rounded, size: 64, color: AppTheme.danger),
-                        SizedBox(height: 16),
-                        Text('Failed to load shops', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-                        SizedBox(height: 8),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 32.0),
-                          child: Text('We could not reach the directory server. Please try again.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14)),
-                        ),
-                        SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () => setState(() => _shopsFuture = _fetchShops()),
-                          icon: Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.surface),
-                          label: Text('Try Again', style: TextStyle(color: Theme.of(context).colorScheme.surface)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.accent, 
-                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14), 
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final shops = snapshot.data ?? [];
-                if (shops.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.storefront_rounded, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                        SizedBox(height: 16),
-                        Text('No businesses listed yet.', style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: EdgeInsets.only(top: 16, bottom: 120), // padding for FAB/nav
-                  itemCount: shops.length,
-                  itemBuilder: (context, index) {
-                    final shop = shops[index];
-                    return _buildModernShopCard(shop);
-                  },
-                );
-              },
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryLight),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -141,154 +486,83 @@ class _ShopsScreenState extends State<ShopsScreen> {
     );
   }
 
-  Widget _buildCategoryChip(String label, bool isSelected) {
+  Widget _pill(String label, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).scaffoldBackgroundColor,
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: isSelected ? null : Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), width: 1),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-          fontSize: 13,
-        ),
-      ),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 
-  Widget _buildModernShopCard(Map<String, dynamic> shop) {
-    final bool isOpen = (shop['is_open'] as bool?) ?? true; // Dummy logic
-    
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 6))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shop details coming soon!')));
-          }, // Navigate to shop details
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                      ),
-                      child: Center(child: Icon(Icons.storefront_rounded, size: 36, color: AppTheme.info)),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  shop['name'] ?? 'Local Business',
-                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Theme.of(context).colorScheme.onSurface),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isOpen ? AppTheme.success.withOpacity(0.1) : AppTheme.danger.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  isOpen ? 'OPEN' : 'CLOSED',
-                                  style: TextStyle(
-                                    color: isOpen ? AppTheme.success : AppTheme.danger,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            shop['description'] ?? 'Supporting local economy in Harur.',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 13, height: 1.4),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Icon(Icons.star_rounded, color: AppTheme.accent, size: 16),
-                              SizedBox(width: 4),
-                              Text('4.8', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              SizedBox(width: 16),
-                              Icon(Icons.location_on_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 14),
-                              SizedBox(width: 4),
-                              Text('0.5 km away', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12)),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), height: 1),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildActionButton(Icons.call_rounded, 'Call', AppTheme.info),
-                    _buildActionButton(Icons.directions_rounded, 'Directions', AppTheme.success),
-                    _buildActionButton(Icons.chat_bubble_rounded, 'WhatsApp', AppTheme.success),
-                  ],
-                )
-              ],
+  Widget _actionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4)),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.store_mall_directory_outlined, size: 60, color: AppTheme.danger),
+          const SizedBox(height: 16),
+          const Text('Failed to Load', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textSecondaryLight)),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: _loadData,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Try Again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, Color color) {
-    return InkWell(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label coming soon!')));
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            SizedBox(width: 6),
-            Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
-          ],
-        ),
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.accent.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.storefront_rounded, size: 56, color: AppTheme.accent),
+          ),
+          const SizedBox(height: 20),
+          const Text('No Shops Found', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(
+            _selectedCategoryId != null
+                ? 'No shops in this category yet.'
+                : 'Be the first to register your business!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.textSecondaryLight),
+          ),
+          const SizedBox(height: 20),
+          if (_selectedCategoryId != null)
+            TextButton(
+              onPressed: () => _filterByCategory(null),
+              child: const Text('Show All Shops'),
+            ),
+        ],
       ),
     );
   }

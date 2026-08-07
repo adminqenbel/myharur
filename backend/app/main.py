@@ -595,6 +595,9 @@ def fix_database_schema():
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;"))
         db.execute(text("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS status VARCHAR;"))
+        
+        db.execute(text("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone VARCHAR;"))
+        
         db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS description TEXT;"))
         db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'general';"))
         db.execute(text("ALTER TABLE emergencies ADD COLUMN IF NOT EXISTS photo_url VARCHAR;"))
@@ -766,14 +769,182 @@ async def startup_event():
         super_admin_email = "admin.qenbel@gmail.com"
         from app.core.security import get_password_hash
 
-        # ── Seed All System & Government Roles ──
-        required_roles = ["Super Admin", "Admin", "Moderator", "User", "Government", "Police", "Hospital", "Municipality"]
+        # ── Seed All System & Government Roles (Extended) ──
+        required_roles = [
+            "Super Admin", "Admin", "Moderator", "User",
+            "Government", "Police", "Hospital", "Municipality",
+            "Shop Admin", "Verified Business", "Citizen",
+            "Event Head", "Organizing Secretary", "Volunteer",
+            "Government Official",
+        ]
         for r_name in required_roles:
             role = db.query(RoleModel).filter(RoleModel.name == r_name).first()
             if not role:
                 role = RoleModel(name=r_name)
                 db.add(role)
         db.commit()
+
+        # ── Seed Permissions ──
+        from app.models.v4_extensions import Permission, role_permissions
+        all_permissions = [
+            ("Read", "Can read platform content"),
+            ("Write", "Can create content"),
+            ("Delete", "Can delete content"),
+            ("Suspend", "Can suspend users"),
+            ("Manage Roles", "Can manage user roles"),
+            ("Manage News", "Can approve/reject news"),
+            ("Manage Shops", "Can approve/reject shops"),
+            ("Unlimited Shops", "Can register unlimited shops"),
+            ("Manage Emergency", "Can manage emergency reports"),
+            ("Manage Events", "Can manage community events"),
+            ("Manage Community", "Can moderate community"),
+            ("View Analytics", "Can view platform analytics"),
+            ("Super Admin", "Superuser — all permissions"),
+        ]
+        perm_map = {}
+        for pname, pdesc in all_permissions:
+            perm = db.query(Permission).filter(Permission.name == pname).first()
+            if not perm:
+                perm = Permission(name=pname, description=pdesc)
+                db.add(perm)
+                db.flush()
+            perm_map[pname] = perm
+        db.commit()
+
+        # ── Assign Permissions to Roles ──
+        role_perm_map = {
+            "Super Admin": list(perm_map.keys()),
+            "Admin": ["Read", "Write", "Delete", "Suspend", "Manage Roles", "Manage News", "Manage Shops", "Manage Emergency", "Manage Events", "Manage Community", "View Analytics"],
+            "Moderator": ["Read", "Write", "Delete", "Manage News", "Manage Community"],
+            "Government": ["Read", "Write", "Manage Emergency", "Manage Events"],
+            "Government Official": ["Read", "Write", "Manage Emergency", "Manage Events"],
+            "Police": ["Read", "Write", "Manage Emergency"],
+            "Hospital": ["Read", "Write", "Manage Emergency"],
+            "Municipality": ["Read", "Write", "Manage Emergency", "Manage Events"],
+            "Shop Admin": ["Read", "Write", "Manage Shops", "Unlimited Shops"],
+            "Verified Business": ["Read", "Write"],
+            "Event Head": ["Read", "Write", "Manage Events"],
+            "Organizing Secretary": ["Read", "Write"],
+            "Volunteer": ["Read", "Write"],
+            "Citizen": ["Read", "Write"],
+            "User": ["Read", "Write"],
+        }
+        from sqlalchemy import text as sql_text
+        for role_name, perm_names in role_perm_map.items():
+            role = db.query(RoleModel).filter(RoleModel.name == role_name).first()
+            if not role:
+                continue
+            for pname in perm_names:
+                perm = perm_map.get(pname)
+                if not perm:
+                    continue
+                exists = db.execute(
+                    sql_text("SELECT 1 FROM role_permissions WHERE role_id=:r AND permission_id=:p"),
+                    {"r": role.id, "p": perm.id}
+                ).fetchone()
+                if not exists:
+                    db.execute(
+                        sql_text("INSERT INTO role_permissions (role_id, permission_id) VALUES (:r, :p)"),
+                        {"r": role.id, "p": perm.id}
+                    )
+        db.commit()
+        print("[Seed] Roles and permissions seeded/updated")
+
+        # ── Seed Shop Categories ──
+        from app.models.shop import ShopCategory, Shop as ShopModel
+        shop_categories = [
+            ("Food & Restaurant", "🍽️"),
+            ("Grocery & Supermarket", "🛒"),
+            ("Pharmacy & Medical", "💊"),
+            ("Electronics & Mobile", "📱"),
+            ("Textiles & Clothing", "👗"),
+            ("Hardware & Tools", "🔧"),
+            ("Bakery & Sweets", "🧁"),
+            ("Vegetables & Fruits", "🥦"),
+            ("Petrol & Fuel", "⛽"),
+            ("Jewellery & Gold", "💍"),
+            ("Hotel & Lodge", "🏨"),
+            ("Auto & Vehicles", "🚗"),
+            ("Agriculture & Seeds", "🌾"),
+            ("Stationery & Books", "📚"),
+            ("Beauty & Salon", "💇"),
+            ("Services", "🔨"),
+        ]
+        for cat_name, cat_icon in shop_categories:
+            existing = db.query(ShopCategory).filter(ShopCategory.name == cat_name).first()
+            if not existing:
+                db.add(ShopCategory(name=cat_name, icon=cat_icon))
+        db.commit()
+        print("[Seed] Shop categories seeded")
+
+        # ── Seed Sample Approved Shops (only if zero approved shops exist) ──
+        approved_count = db.query(ShopModel).filter(ShopModel.is_approved == True).count()
+        if approved_count == 0:
+            # Get superadmin user as owner
+            sa_user = db.query(UserModel).filter(UserModel.email == "admin.qenbel@gmail.com").first()
+            food_cat = db.query(ShopCategory).filter(ShopCategory.name == "Food & Restaurant").first()
+            grocery_cat = db.query(ShopCategory).filter(ShopCategory.name == "Grocery & Supermarket").first()
+            pharma_cat = db.query(ShopCategory).filter(ShopCategory.name == "Pharmacy & Medical").first()
+
+            if sa_user and food_cat:
+                sample_shops = [
+                    ShopModel(
+                        owner_id=sa_user.id,
+                        category_id=food_cat.id,
+                        name="Harur Murugan Hotel",
+                        description="Authentic Tamil Nadu meals — Idly, Dosa, and full meals. Serving Harur since 2005.",
+                        address="Bus Stand Road, Harur, Dharmapuri - 636903",
+                        phone="9876543210",
+                        whatsapp="9876543210",
+                        opening_hours="6:00 AM – 10:00 PM",
+                        location_lat=12.0628,
+                        location_lng=78.4950,
+                        is_open=True,
+                        is_approved=True,
+                        is_verified=True,
+                        delivery_available=False,
+                        visit_count=42,
+                    ),
+                    ShopModel(
+                        owner_id=sa_user.id,
+                        category_id=grocery_cat.id if grocery_cat else food_cat.id,
+                        name="Sri Murugan Supermarket",
+                        description="Your one-stop shop for groceries, daily essentials, and household items in Harur.",
+                        address="Main Market, Harur",
+                        phone="9123456789",
+                        whatsapp="9123456789",
+                        opening_hours="8:00 AM – 9:00 PM",
+                        location_lat=12.0635,
+                        location_lng=78.4958,
+                        is_open=True,
+                        is_approved=True,
+                        is_verified=False,
+                        delivery_available=True,
+                        visit_count=18,
+                    ),
+                    ShopModel(
+                        owner_id=sa_user.id,
+                        category_id=pharma_cat.id if pharma_cat else food_cat.id,
+                        name="Harur Medical Store",
+                        description="Licensed pharmacy — medicines, diagnostics, and health products. 24-hour emergency service.",
+                        address="Hospital Road, Harur",
+                        phone="9988776655",
+                        whatsapp="9988776655",
+                        opening_hours="24 Hours",
+                        location_lat=12.0620,
+                        location_lng=78.4940,
+                        is_open=True,
+                        is_approved=True,
+                        is_verified=True,
+                        delivery_available=True,
+                        visit_count=31,
+                    ),
+                ]
+                for s in sample_shops:
+                    db.add(s)
+                db.commit()
+                print("[Seed] Sample shops created")
+
 
         sa_role = db.query(RoleModel).filter(RoleModel.name == "Super Admin").first()
         mod_role = db.query(RoleModel).filter(RoleModel.name == "Moderator").first()

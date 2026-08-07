@@ -194,6 +194,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   // Account Actions
                   _section('Account', [
+                    _actionTile(Icons.storefront_rounded, 'My Shops', AppTheme.accent, () => context.push('/my-shops')),
                     _actionTile(Icons.edit_rounded, 'Edit Profile', AppTheme.info, () => context.push('/edit-profile')),
                     if (provider != 'google')
                       _actionTile(Icons.lock_outline_rounded, 'Change Password', AppTheme.accent, () => context.push('/change-password')),

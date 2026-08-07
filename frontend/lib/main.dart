@@ -21,6 +21,8 @@ import 'screens/change_password_screen.dart';
 import 'screens/set_password_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/username_setup_screen.dart';
+import 'screens/my_shops_screen.dart';
+import 'screens/shop_registration_screen.dart';
 import 'providers/auth_provider.dart';
 
 import 'services/notification_service.dart';
@@ -66,6 +68,8 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/set-password', builder: (context, state) => const SetPasswordScreen()),
     GoRoute(path: '/admin', builder: (context, state) => const AdminDashboardScreen()),
     GoRoute(path: '/username-setup', builder: (context, state) => const UsernameSetupScreen()),
+    GoRoute(path: '/my-shops', builder: (context, state) => const MyShopsScreen()),
+    GoRoute(path: '/register-shop', builder: (context, state) => const ShopRegistrationScreen()),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => MainLayout(child: child),

@@ -357,27 +357,6 @@ def reject_news(
 
 # ── Stats ─────────────────────────────────────────────────────────────────
 
-@router.get("/stats")
-def get_admin_stats(
-    db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(check_permissions("Read")),
-) -> Any:
-    """Get platform statistics."""
-    total_users = db.query(UserModel).count()
-    active_users = db.query(UserModel).filter(UserModel.is_active == True).count()
-    banned_users = db.query(UserModel).filter(UserModel.is_banned == True).count()
-    pending_news = db.query(NewsModel).filter(NewsModel.is_approved == False).count()
-    approved_news = db.query(NewsModel).filter(NewsModel.is_approved == True).count()
-    users_no_username = db.query(UserModel).filter(UserModel.username_required == True).count()
-
-    return {
-        "total_users": total_users,
-        "active_users": active_users,
-        "banned_users": banned_users,
-        "users_without_username": users_no_username,
-        "pending_news": pending_news,
-        "approved_news": approved_news,
-    }
 
 # ── V2 Intelligence Engine Dashboard ────────────────────────────────────────
 
@@ -514,3 +493,233 @@ def superadmin_delete_content(
     db.commit()
     log_admin_action(db, current_user.id, f"super_delete_{content_type}", target_id=item_id)
     return {"message": f"Deleted {content_type} with ID {item_id}"}
+
+
+# ── Roles Management ──────────────────────────────────────────────────────────
+
+@router.get("/roles")
+def list_all_roles(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
+) -> Any:
+    """List all available roles with user counts."""
+    from app.models.v4_extensions import Permission
+    roles = db.query(RoleModel).all()
+    result = []
+    for role in roles:
+        user_count = db.query(UserModel).filter(UserModel.role_id == role.id).count()
+        result.append({
+            "id": role.id,
+            "name": role.name,
+            "user_count": user_count,
+        })
+    return result
+
+
+@router.get("/permissions")
+def list_all_permissions(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
+) -> Any:
+    """List all permissions."""
+    from app.models.v4_extensions import Permission
+    perms = db.query(Permission).order_by(Permission.name).all()
+    return [{"id": p.id, "name": p.name, "description": p.description} for p in perms]
+
+
+@router.post("/roles")
+def create_role(
+    role_in: RoleAssign,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
+) -> Any:
+    """Create a new role."""
+    if current_user.role and current_user.role.name != "Super Admin":
+        raise HTTPException(status_code=403, detail="Only Super Admins can create roles")
+    existing = db.query(RoleModel).filter(RoleModel.name == role_in.role_name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Role already exists")
+    role = RoleModel(name=role_in.role_name)
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+    log_admin_action(db, current_user.id, "create_role", details={"role": role_in.role_name})
+    return {"id": role.id, "name": role.name, "message": f"Role '{role.name}' created"}
+
+
+@router.delete("/roles/{role_id}")
+def delete_role(
+    role_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Roles")),
+) -> Any:
+    """Delete a role (cannot delete system roles)."""
+    if current_user.role and current_user.role.name != "Super Admin":
+        raise HTTPException(status_code=403, detail="Only Super Admins can delete roles")
+    protected = ["Super Admin", "Admin", "Moderator", "User", "Citizen"]
+    role = db.query(RoleModel).filter(RoleModel.id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    if role.name in protected:
+        raise HTTPException(status_code=400, detail=f"Cannot delete system role '{role.name}'")
+    db.delete(role)
+    db.commit()
+    log_admin_action(db, current_user.id, "delete_role", details={"role": role.name})
+    return {"message": f"Role '{role.name}' deleted"}
+
+
+# ── Shop Management (Admin) ───────────────────────────────────────────────────
+
+@router.get("/shops")
+def admin_list_shops(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Shops")),
+    status: Optional[str] = Query("pending", description="pending | approved | all"),
+) -> Any:
+    """[Admin] List shops by approval status."""
+    from app.models.shop import Shop as ShopModel
+    query = db.query(ShopModel)
+    if status == "pending":
+        query = query.filter(ShopModel.is_approved == False)
+    elif status == "approved":
+        query = query.filter(ShopModel.is_approved == True)
+    shops = query.order_by(ShopModel.created_at.desc()).all()
+
+    result = []
+    for shop in shops:
+        owner_profile = db.query(ProfileModel).filter(ProfileModel.user_id == shop.owner_id).first()
+        owner_user = db.query(UserModel).filter(UserModel.id == shop.owner_id).first()
+        owner_name = None
+        owner_phone = None
+        owner_email = None
+        if owner_profile:
+            owner_name = f"{owner_profile.first_name or ''} {owner_profile.last_name or ''}".strip() or None
+            owner_phone = owner_profile.phone
+        if owner_user:
+            owner_email = owner_user.email
+
+        from app.models.shop import ShopCategory
+        cat = db.query(ShopCategory).filter(ShopCategory.id == shop.category_id).first() if shop.category_id else None
+
+        result.append({
+            "id": shop.id,
+            "name": shop.name,
+            "description": shop.description,
+            "address": shop.address,
+            "phone": shop.phone,
+            "logo_url": shop.logo_url,
+            "category": {"id": cat.id, "name": cat.name, "icon": cat.icon} if cat else None,
+            "is_approved": shop.is_approved,
+            "is_verified": shop.is_verified,
+            "is_open": shop.is_open,
+            "created_at": shop.created_at.isoformat() if shop.created_at else None,
+            "owner_name": owner_name,
+            "owner_phone": owner_phone,
+            "owner_email": owner_email,
+            "owner_id": shop.owner_id,
+        })
+    return result
+
+
+@router.put("/shops/{shop_id}/approve")
+def admin_approve_shop(
+    shop_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Shops")),
+) -> Any:
+    """[Admin] Approve a pending shop."""
+    from app.models.shop import Shop as ShopModel
+    shop = db.query(ShopModel).filter(ShopModel.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    shop.is_approved = True
+    db.commit()
+    try:
+        from app.models.system import NotificationQueue
+        db.add(NotificationQueue(
+            user_id=shop.owner_id,
+            title="🎉 Shop Approved!",
+            message=f"Your shop '{shop.name}' has been approved and is now live on MyHarur!",
+            status="unread", priority="High"
+        ))
+        db.commit()
+    except Exception:
+        pass
+    log_admin_action(db, current_user.id, "approve_shop", target_id=shop_id, details={"shop": shop.name})
+    return {"message": f"Shop '{shop.name}' approved", "shop_id": shop_id}
+
+
+@router.put("/shops/{shop_id}/reject")
+def admin_reject_shop(
+    shop_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Shops")),
+) -> Any:
+    """[Admin] Reject and remove a shop."""
+    from app.models.shop import Shop as ShopModel
+    shop = db.query(ShopModel).filter(ShopModel.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    shop_name = shop.name
+    owner_id = shop.owner_id
+    try:
+        from app.models.system import NotificationQueue
+        db.add(NotificationQueue(
+            user_id=owner_id,
+            title="Shop Not Approved",
+            message=f"Your shop '{shop_name}' registration was not approved. Contact admin for details.",
+            status="unread", priority="normal"
+        ))
+    except Exception:
+        pass
+    db.delete(shop)
+    db.commit()
+    log_admin_action(db, current_user.id, "reject_shop", target_id=shop_id, details={"shop": shop_name})
+    return {"message": f"Shop '{shop_name}' rejected and removed"}
+
+
+@router.put("/shops/{shop_id}/verify")
+def admin_verify_shop(
+    shop_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Manage Shops")),
+) -> Any:
+    """[Admin] Grant verified badge to a shop."""
+    from app.models.shop import Shop as ShopModel
+    shop = db.query(ShopModel).filter(ShopModel.id == shop_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    shop.is_verified = True
+    if not shop.is_approved:
+        shop.is_approved = True
+    db.commit()
+    log_admin_action(db, current_user.id, "verify_shop", target_id=shop_id)
+    return {"message": f"Shop '{shop.name}' is now verified"}
+
+
+@router.get("/stats")
+def get_admin_stats_v2(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(check_permissions("Read")),
+) -> Any:
+    """Get extended platform statistics."""
+    from app.models.shop import Shop as ShopModel
+    total_users = db.query(UserModel).count()
+    active_users = db.query(UserModel).filter(UserModel.is_active == True).count()
+    banned_users = db.query(UserModel).filter(UserModel.is_banned == True).count()
+    pending_news = db.query(NewsModel).filter(NewsModel.is_approved == False).count()
+    approved_news = db.query(NewsModel).filter(NewsModel.is_approved == True).count()
+    users_no_username = db.query(UserModel).filter(UserModel.username_required == True).count()
+    pending_shops = db.query(ShopModel).filter(ShopModel.is_approved == False).count()
+    approved_shops = db.query(ShopModel).filter(ShopModel.is_approved == True).count()
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "banned_users": banned_users,
+        "users_without_username": users_no_username,
+        "pending_news": pending_news,
+        "approved_news": approved_news,
+        "pending_shops": pending_shops,
+        "approved_shops": approved_shops,
+    }

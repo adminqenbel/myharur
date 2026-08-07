@@ -72,6 +72,7 @@ class UserUpdate(UserBase):
 class UsernameSet(BaseModel):
     username: str
     display_name: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class User(UserBase):

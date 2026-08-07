@@ -247,7 +247,7 @@ def create_or_link_google_user(db: Session, email: str, first_name: str, last_na
     return user
 
 
-def set_username(db: Session, user: User, username: str, display_name: Optional[str] = None) -> tuple[User, Optional[str]]:
+def set_username(db: Session, user: User, username: str, display_name: Optional[str] = None, phone: Optional[str] = None) -> tuple[User, Optional[str]]:
     """Set username for user. Returns (user, error_str)."""
     ensure_user_identifiers(db, user)
     available, err = is_username_available(db, username, exclude_user_id=user.id)
@@ -272,6 +272,14 @@ def set_username(db: Session, user: User, username: str, display_name: Optional[
         user.display_name = display_name.strip()[:60]
     elif not user.display_name:
         user.display_name = username
+        
+    if phone:
+        if not user.profile:
+            profile = Profile(user_id=user.id)
+            db.add(profile)
+            user.profile = profile
+        user.profile.phone = phone
+        
     db.commit()
     db.refresh(user)
     return user, None

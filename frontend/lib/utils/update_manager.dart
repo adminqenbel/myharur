@@ -51,8 +51,8 @@ class UpdateManager {
     showDialog(
       context: context,
       barrierDismissible: !isForced,
-      builder: (ctx) => WillPopScope(
-        onWillPop: () async => !isForced,
+      builder: (ctx) => PopScope(
+        canPop: !isForced,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
@@ -92,8 +92,8 @@ class UpdateManager {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => WillPopScope(
-        onWillPop: () async => false,
+      builder: (ctx) => PopScope(
+        canPop: false,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(

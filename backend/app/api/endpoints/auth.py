@@ -149,6 +149,7 @@ def set_username(
         current_user,
         payload.username,
         display_name=payload.display_name,
+        phone=payload.phone,
     )
     if err:
         raise HTTPException(status_code=422, detail=err)

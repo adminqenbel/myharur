@@ -136,7 +136,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
         itemCount: _polls.length,
         itemBuilder: (ctx, i) => _buildPollCard(_polls[i]),
       ),
@@ -378,7 +378,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
         itemCount: _events.length,
         itemBuilder: (ctx, i) {
           final event = _events[i];
@@ -566,7 +566,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView.builder(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
+        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
         itemCount: _questions.length,
         itemBuilder: (ctx, i) {
           final q = _questions[i];
@@ -759,7 +759,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> with SingleTi
     }
 
     return ListView.builder(
-      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 180),
+      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
       itemCount: _chatRooms.length,
       itemBuilder: (ctx, i) {
         final room = _chatRooms[i];

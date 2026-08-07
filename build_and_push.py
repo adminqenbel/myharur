@@ -33,18 +33,19 @@ def main():
     subprocess.run([r"d:\flutter\bin\flutter.bat", "build", "apk", "--release"], cwd=r"d:\harur\frontend", check=True)
 
     prod_apk = r"d:\harur\myharur.apk"
-    beta_apk = r"d:\harur\myharur-beta.apk"
     
     print("Copying APKs...")
     shutil.copy2(src_apk, prod_apk)
-    shutil.copy2(src_apk, beta_apk)
     
     # Optional: also copy to backend/static if required
     static_apk = r"d:\harur\backend\static\myharur.apk"
-    static_beta_apk = r"d:\harur\backend\static\myharur-beta.apk"
     if os.path.exists(os.path.dirname(static_apk)):
         shutil.copy2(src_apk, static_apk)
-        shutil.copy2(src_apk, static_beta_apk)
+
+    # Clean up beta apks if they exist
+    for f in [r"d:\harur\myharur-beta.apk", r"d:\harur\backend\static\myharur-beta.apk"]:
+        if os.path.exists(f):
+            os.remove(f)
 
     # 3. Git commit and push
     print("Committing and pushing to git...")

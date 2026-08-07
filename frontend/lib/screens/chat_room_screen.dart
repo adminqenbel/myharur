@@ -528,8 +528,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 if (reason == null) return;
               }
               try {
-                String url = '/community/chat/messages/\${msg['id']}';
-                if (reason != null && reason.isNotEmpty) url += '?reason=\$reason';
+                String url = '/community/chat/messages/${msg['id']}';
+                if (reason != null && reason.isNotEmpty) url += '?reason=$reason';
                 await ApiClient.dio.delete(url);
                 setState(() {
                   final idx = _messages.indexWhere((m) => m['id'] == msg['id']);
@@ -538,7 +538,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                   }
                 });
               } catch (e) {
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: \$e')));
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
               }
             }
           },

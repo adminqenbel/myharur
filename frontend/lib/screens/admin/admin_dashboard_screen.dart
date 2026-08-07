@@ -19,6 +19,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Map<String, dynamic> _stats = {};
   List<dynamic> _users = [];
   List<dynamic> _pendingNews = [];
+  List<dynamic> _pendingShops = [];
+  List<dynamic> _roles = [];
   
   final TextEditingController _searchCtrl = TextEditingController();
   Timer? _debounce;
@@ -44,6 +46,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         ApiClient.dio.get('/admin/stats'),
         ApiClient.dio.get('/admin/users', queryParameters: {'q': _searchCtrl.text}),
         ApiClient.dio.get('/admin/news/pending'),
+        ApiClient.dio.get('/admin/shops', queryParameters: {'status': 'pending'}).catchError((_) => null),
+        ApiClient.dio.get('/admin/roles').catchError((_) => null),
       ]);
       if (!mounted) return;
       setState(() {
@@ -51,6 +55,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         _stats = results[1].data;
         _users = results[2].data;
         _pendingNews = results[3].data;
+        if (results[4] != null) _pendingShops = results[4].data ?? [];
+        if (results[5] != null) _roles = results[5].data ?? [];
       });
     } catch (_) {} finally {
       if (mounted) setState(() => _isLoading = false);
@@ -88,13 +94,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   void _changeRole(int userId, String currentRole) {
-    final roles = ['User', 'Moderator', 'Admin', 'Super Admin'];
-    String selectedRole = currentRole;
+    final roles = [
+      'User', 'Citizen', 'Moderator', 'Admin', 'Super Admin',
+      'Government', 'Government Official', 'Police', 'Hospital', 'Municipality',
+      'Shop Admin', 'Verified Business',
+      'Event Head', 'Organizing Secretary', 'Volunteer',
+    ];
+    String selectedRole = roles.contains(currentRole) ? currentRole : 'User';
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('Change Role'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: userId == 0
+              ? const Text('Role Information')
+              : const Text('Change Role'),
           content: DropdownButton<String>(
             isExpanded: true,
             value: roles.contains(selectedRole) ? selectedRole : 'User',
@@ -214,34 +228,55 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingShopCount = _pendingShops.length;
+    final pendingNewsCount = _pendingNews.length;
     return DefaultTabController(
-      length: 3,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Admin Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
-          elevation: 2,
+          title: const Text('Admin Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+          elevation: 0,
           bottom: TabBar(
-            indicatorColor: Colors.blue,
+            indicatorColor: AppTheme.accent,
             indicatorWeight: 3,
-            labelColor: Colors.blue,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            labelColor: AppTheme.accent,
+            unselectedLabelColor: AppTheme.textSecondaryLight,
+            isScrollable: true,
             tabs: [
-              Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
-              Tab(icon: Icon(Icons.people), text: 'Users'),
-              Tab(icon: Icon(Icons.article), text: 'News'),
+              const Tab(icon: Icon(Icons.dashboard_rounded), text: 'Overview'),
+              const Tab(icon: Icon(Icons.people_rounded), text: 'Users'),
+              Tab(
+                icon: Badge(
+                  label: Text('$pendingNewsCount'),
+                  isLabelVisible: pendingNewsCount > 0,
+                  child: const Icon(Icons.article_rounded),
+                ),
+                text: 'News',
+              ),
+              Tab(
+                icon: Badge(
+                  label: Text('$pendingShopCount'),
+                  isLabelVisible: pendingShopCount > 0,
+                  child: const Icon(Icons.store_rounded),
+                ),
+                text: 'Shops',
+              ),
+              const Tab(icon: Icon(Icons.manage_accounts_rounded), text: 'Roles'),
             ],
           ),
           actions: [
-            IconButton(icon: Icon(Icons.refresh), onPressed: _fetchData),
+            IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _fetchData),
           ],
         ),
         body: _isLoading && _users.isEmpty
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : TabBarView(
                 children: [
                   _buildOverviewTab(),
                   _buildUsersTab(),
                   _buildNewsTab(),
+                  _buildShopsTab(),
+                  _buildRolesTab(),
                 ],
               ),
       ),
@@ -274,12 +309,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             mainAxisSpacing: 12,
             childAspectRatio: 1.5,
             children: [
-              _buildStatCard('Total Users', _stats['total_users']?.toString() ?? '0', Icons.people, Colors.blue),
-              _buildStatCard('Active Users', _stats['active_users']?.toString() ?? '0', Icons.check_circle, Colors.green),
-              _buildStatCard('Banned Users', _stats['banned_users']?.toString() ?? '0', Icons.block, AppTheme.danger),
-              _buildStatCard('Incomplete Setup', _stats['users_without_username']?.toString() ?? '0', Icons.warning, Colors.orange),
+              _buildStatCard('Total Users', _stats['total_users']?.toString() ?? '0', Icons.people_rounded, Colors.blue),
+              _buildStatCard('Active Users', _stats['active_users']?.toString() ?? '0', Icons.check_circle_rounded, Colors.green),
+              _buildStatCard('Banned Users', _stats['banned_users']?.toString() ?? '0', Icons.block_rounded, AppTheme.danger),
               _buildStatCard('Pending News', _stats['pending_news']?.toString() ?? '0', Icons.article_outlined, Colors.purple),
-              _buildStatCard('Approved News', _stats['approved_news']?.toString() ?? '0', Icons.article, Colors.teal),
+              _buildStatCard('Approved Shops', _stats['approved_shops']?.toString() ?? '0', Icons.store_rounded, Colors.green),
+              _buildStatCard('Pending Shops', _stats['pending_shops']?.toString() ?? '0', Icons.hourglass_empty_rounded, Colors.orange),
             ],
           ),
         ],
@@ -477,6 +512,216 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ),
         );
       },
+    );
+  }
+
+  // ── Shops Approval Tab ────────────────────────────────────────────────────
+
+  Future<void> _approveShop(int shopId) async {
+    try {
+      await ApiClient.dio.put('/admin/shops/$shopId/approve');
+      _fetchData();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Shop approved and live!'), backgroundColor: AppTheme.success),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> _rejectShop(int shopId) async {
+    try {
+      await ApiClient.dio.put('/admin/shops/$shopId/reject');
+      _fetchData();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Shop rejected'), backgroundColor: AppTheme.danger),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Widget _buildShopsTab() {
+    return _pendingShops.isEmpty
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.success.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_circle_rounded, size: 56, color: AppTheme.success),
+                ),
+                const SizedBox(height: 16),
+                const Text('All Caught Up!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('No shops pending approval.', style: TextStyle(color: AppTheme.textSecondaryLight)),
+              ],
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _pendingShops.length,
+            itemBuilder: (ctx, i) {
+              final shop = _pendingShops[i] as Map<String, dynamic>;
+              final cat = shop['category'] as Map<String, dynamic>?;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: Text(cat?['icon'] ?? '🏪', style: const TextStyle(fontSize: 28)),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(shop['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text('Pending', style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (cat != null) Text(cat['name'], style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 12)),
+                          if (shop['address'] != null) Text(shop['address'], style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 12)),
+                          if (shop['owner_name'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.person_rounded, size: 13, color: AppTheme.textSecondary),
+                                  const SizedBox(width: 4),
+                                  Text('${shop['owner_name']} · ${shop['owner_phone'] ?? ''} · ${shop['owner_email'] ?? ''}',
+                                      style: const TextStyle(fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _rejectShop(shop['id'] as int),
+                            icon: const Icon(Icons.close_rounded, color: AppTheme.danger, size: 18),
+                            label: const Text('Reject', style: TextStyle(color: AppTheme.danger)),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.success,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () => _approveShop(shop['id'] as int),
+                            icon: const Icon(Icons.check_rounded, size: 18),
+                            label: const Text('Approve'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+  }
+
+  // ── Roles Management Tab ──────────────────────────────────────────────────
+
+  Widget _buildRolesTab() {
+    final allRoles = [
+      'Super Admin', 'Admin', 'Moderator', 'User', 'Citizen',
+      'Government', 'Government Official', 'Police', 'Hospital', 'Municipality',
+      'Shop Admin', 'Verified Business',
+      'Event Head', 'Organizing Secretary', 'Volunteer',
+    ];
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Available Roles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('Manage platform roles and permissions', style: TextStyle(color: AppTheme.textSecondaryLight, fontSize: 13)),
+          const SizedBox(height: 16),
+          ..._roles.isEmpty
+              ? allRoles.map((name) => _roleCard(name, null, 0))
+              : _roles.map((r) => _roleCard(r['name'] as String, r['id'] as int?, r['user_count'] as int? ?? 0)),
+        ],
+      ),
+    );
+  }
+
+  Widget _roleCard(String name, int? id, int userCount) {
+    Color roleColor;
+    IconData roleIcon;
+    switch (name) {
+      case 'Super Admin': roleColor = const Color(0xFFFF6B6B); roleIcon = Icons.shield_rounded; break;
+      case 'Admin': roleColor = AppTheme.accent; roleIcon = Icons.admin_panel_settings_rounded; break;
+      case 'Moderator': roleColor = Colors.purple; roleIcon = Icons.manage_accounts_rounded; break;
+      case 'Government':
+      case 'Government Official': roleColor = Colors.teal; roleIcon = Icons.account_balance_rounded; break;
+      case 'Police': roleColor = Colors.indigo; roleIcon = Icons.local_police_rounded; break;
+      case 'Hospital': roleColor = Colors.red; roleIcon = Icons.local_hospital_rounded; break;
+      case 'Municipality': roleColor = Colors.brown; roleIcon = Icons.location_city_rounded; break;
+      case 'Shop Admin': roleColor = Colors.orange; roleIcon = Icons.store_rounded; break;
+      case 'Verified Business': roleColor = Colors.green; roleIcon = Icons.verified_rounded; break;
+      case 'Event Head': roleColor = Colors.pink; roleIcon = Icons.event_rounded; break;
+      default: roleColor = Colors.grey; roleIcon = Icons.person_rounded;
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: roleColor.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: roleColor.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: roleColor.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(roleIcon, color: roleColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: TextStyle(fontWeight: FontWeight.bold, color: roleColor)),
+                Text('$userCount users', style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryLight)),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _changeRole(0, name),
+            style: TextButton.styleFrom(foregroundColor: roleColor),
+            child: const Text('Assign'),
+          ),
+        ],
+      ),
     );
   }
 }
