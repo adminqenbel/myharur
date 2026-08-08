@@ -6,6 +6,7 @@ import 'api_client.dart';
 import 'theme.dart';
 import 'providers/theme_provider.dart';
 import 'screens/splash_screen.dart';
+import 'screens/intro_animation_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/update_screen.dart';
@@ -44,13 +45,13 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>()
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/splash',
+  initialLocation: '/intro',
   redirect: (context, state) {
     final container = ProviderScope.containerOf(context, listen: false);
     final auth = container.read(authProvider);
     final loc = state.matchedLocation;
 
-    if (loc == '/splash' || loc == '/login') return null;
+    if (loc == '/intro' || loc == '/splash' || loc == '/login') return null;
     if (!auth.isLoggedIn) return '/login';
     if (auth.usernameRequired && loc != '/username-setup') return '/username-setup';
     if (!auth.usernameRequired && !auth.isSetupComplete && loc != '/onboarding' && loc != '/username-setup') return '/onboarding';
@@ -58,6 +59,7 @@ final GoRouter appRouter = GoRouter(
     return null;
   },
   routes: [
+    GoRoute(path: '/intro', builder: (context, state) => const IntroAnimationScreen()),
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
