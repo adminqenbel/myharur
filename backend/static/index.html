@@ -86,7 +86,8 @@
         /* The signature text — drawn via stroke-dashoffset */
         .sig-text {
             font-family: 'Pinyon Script', cursive;
-            font-size: 128px;
+            font-size: clamp(52px, 13vw, 128px);
+            white-space: nowrap;
             fill: transparent;
             stroke: rgba(255, 255, 255, 0.93);
             stroke-width: 1.0px;
@@ -363,7 +364,7 @@
         @media (max-width: 600px) {
             .hero { padding: 60px 20px 48px; }
             .hero-icon { width: 86px; height: 86px; border-radius: 22px; }
-            .sig-text { font-size: 80px; }
+            .sig-text { font-size: clamp(44px, 12vw, 84px); }
         }
     </style>
 </head>
@@ -384,12 +385,12 @@
         <div id="pen-cursor"></div>
 
         <!-- SVG signature — stroke-dashoffset drives the writing effect -->
-        <svg id="signature-svg" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+        <svg id="signature-svg" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg">
             <text
                 id="sig-text"
                 class="sig-text"
                 x="50%"
-                y="155"
+                y="150"
                 text-anchor="middle"
                 dominant-baseline="auto">Hemapriyan</text>
         </svg>
