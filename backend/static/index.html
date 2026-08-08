@@ -475,7 +475,7 @@
         });
 
         // ── Step 4: Crossfade video to neutral ───────────────────────────────
-        at(4800, function() {
+        at(10200, function() {
             if (personalVid) {
                 personalVid.style.transition = 'opacity 0.7s ease';
                 personalVid.style.opacity = '0';
@@ -488,19 +488,19 @@
         });
 
         // ── Step 5: QenBel logo ───────────────────────────────────────────────
-        at(5200, function() { qenbelLogo.classList.add('visible'); });
+        at(10600, function() { qenbelLogo.classList.add('visible'); });
 
         // ── Step 6: Divider ───────────────────────────────────────────────────
-        at(5500, function() { if (dividerEl) dividerEl.classList.add('visible'); });
+        at(10900, function() { if (dividerEl) dividerEl.classList.add('visible'); });
 
         // ── Step 7: MyHarur ───────────────────────────────────────────────────
-        at(5650, function() { myharurTxt.classList.add('visible'); });
+        at(11100, function() { myharurTxt.classList.add('visible'); });
 
         // ── Step 8: Tagline ───────────────────────────────────────────────────
-        at(5850, function() { tagline.classList.add('visible'); });
+        at(11300, function() { tagline.classList.add('visible'); });
 
         // ── Step 9: Exit to main content ─────────────────────────────────────
-        at(6250, function() { showMain(); });
+        at(11800, function() { showMain(); });
     }
 
     startAnimation();

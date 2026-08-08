@@ -8,13 +8,14 @@ import '../api_client.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 
-/// Cinematic Intro: Plays the watermark-free personal signature reveal video
-/// ("assets/personal_intro.mp4"), followed by a smooth crossfade into Act 3 (QenBel × MyHarur).
+/// Cinematic Intro: Plays the enhanced 1080p Full HD extended signature reveal video
+/// ("assets/personal_intro.mp4", 10.8s duration), followed by a smooth crossfade into Act 3 (QenBel × MyHarur).
 ///
-/// Timeline (6200ms total):
-///  0–5000ms  Act 1: Watermark-free personal signature reveal video
-///  5000–5600ms Act 2: Smooth crossfade from video to neutral background
-///  5200–6200ms Act 3: QenBel × MyHarur brand reveal
+/// Timeline (11800ms total):
+///  0–7800ms   Act 1: Full HD extended signature reveal video (drawing phase)
+///  7800–10200ms Signature holds clean and sharp
+///  10200–10800ms Act 2: Smooth crossfade from video to neutral background
+///  10800–11800ms Act 3: QenBel × MyHarur brand reveal
 class IntroAnimationScreen extends ConsumerStatefulWidget {
   const IntroAnimationScreen({super.key});
 
@@ -56,53 +57,53 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
 
     _master = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 6200),
+      duration: const Duration(milliseconds: 11800),
     );
 
-    // Crossfade amber/video → neutral: 4800ms → 5500ms (0.774 → 0.887)
+    // Crossfade amber/video → neutral: 10200ms → 10800ms (0.864 → 0.915)
     _crossfade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.774, 0.887, curve: Curves.easeInOut),
+      curve: const Interval(0.864, 0.915, curve: Curves.easeInOut),
     );
 
-    // Act 3 QenBel branding: 5200ms → 6200ms
+    // Act 3 QenBel branding: 10600ms → 11800ms
     _act3Fade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.838, 0.903, curve: Curves.easeOut),
+      curve: const Interval(0.898, 0.940, curve: Curves.easeOut),
     );
     _qenbelFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.838, 0.919, curve: Curves.easeOut),
+      curve: const Interval(0.898, 0.949, curve: Curves.easeOut),
     );
     _qenbelScale = Tween<double>(begin: 0.90, end: 1.0).animate(
       CurvedAnimation(
         parent: _master,
-        curve: const Interval(0.838, 0.935, curve: Curves.easeOutCubic),
+        curve: const Interval(0.898, 0.958, curve: Curves.easeOutCubic),
       ),
     );
     _dividerFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.887, 0.940, curve: Curves.easeOut),
+      curve: const Interval(0.924, 0.966, curve: Curves.easeOut),
     );
     _myharurFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.903, 0.967, curve: Curves.easeOut),
+      curve: const Interval(0.940, 0.975, curve: Curves.easeOut),
     );
     _myharurSlide = Tween<double>(begin: 12.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _master,
-        curve: const Interval(0.903, 0.967, curve: Curves.easeOutCubic),
+        curve: const Interval(0.940, 0.975, curve: Curves.easeOutCubic),
       ),
     );
     _taglineFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.935, 0.985, curve: Curves.easeOut),
+      curve: const Interval(0.958, 0.990, curve: Curves.easeOut),
     );
 
     _contentOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _master,
-        curve: const Interval(0.980, 1.0, curve: Curves.easeIn),
+        curve: const Interval(0.985, 1.0, curve: Curves.easeIn),
       ),
     );
 
