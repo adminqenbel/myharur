@@ -7,7 +7,7 @@
     <meta name="description" content="MyHarur — Experience the next generation of hyperlocal networking. Built by Hemapriyan. A QenBel Technologies Product.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
@@ -35,21 +35,28 @@
         #intro-overlay.fade-out { opacity: 0; pointer-events: none; }
         #intro-overlay.hidden   { display: none; }
 
-        /* ── Amber gradient background ─────────────────────────────────── */
+        /* ── Animated amber background ──────────────────────────────── */
+        @keyframes bgDrift {
+            0%   { background-position: 30% 35%; filter: brightness(0.85); }
+            40%  { background-position: 48% 30%; filter: brightness(1.0); }
+            70%  { background-position: 55% 32%; filter: brightness(0.98); }
+            100% { background-position: 50% 34%; filter: brightness(0.95); }
+        }
         #amber-bg {
             position: absolute;
             inset: 0;
-            background: radial-gradient(
-                ellipse 130% 100% at 58% 32%,
-                #D4700A 0%,
-                #8B3A00 28%,
-                #3D1200 58%,
-                #1A0800 82%,
-                #080100 100%
-            );
+            background:
+                radial-gradient(ellipse 140% 110% at 40% 30%,
+                    #E8820A 0%, #CC6400 18%, #8B3A00 38%,
+                    #3D1200 60%, #150500 82%, #080100 100%);
+            background-size: 200% 200%;
+            background-position: 30% 35%;
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.45s ease;
+            animation: bgDrift 4s ease-in-out forwards;
+            animation-play-state: paused;
         }
+        #amber-bg.running { animation-play-state: running; }
 
         /* ── Neutral bg for Act 3 ──────────────────────────────────────── */
         #neutral-bg {
@@ -78,17 +85,18 @@
 
         /* The signature text — drawn via stroke-dashoffset */
         .sig-text {
-            font-family: 'Great Vibes', cursive;
-            font-size: 130px;
+            font-family: 'Pinyon Script', cursive;
+            font-size: 128px;
             fill: transparent;
-            stroke: rgba(255, 255, 255, 0.92);
-            stroke-width: 1.2px;
+            stroke: rgba(255, 255, 255, 0.93);
+            stroke-width: 1.0px;
             stroke-linecap: round;
             stroke-linejoin: round;
-            stroke-dasharray: 9000;
-            stroke-dashoffset: 9000;
-            filter: drop-shadow(0 0 18px rgba(255, 220, 150, 0.45))
-                    drop-shadow(0 0 40px rgba(180, 80, 0, 0.3));
+            stroke-dasharray: 10000;
+            stroke-dashoffset: 10000;
+            filter:
+                drop-shadow(0 0 16px rgba(255, 210, 120, 0.50))
+                drop-shadow(0 0 42px rgba(190, 80, 0, 0.32));
         }
 
         /* ── Glow cursor (pen tip) ─────────────────────────────────────── */
@@ -381,9 +389,9 @@
                 id="sig-text"
                 class="sig-text"
                 x="50%"
-                y="145"
+                y="155"
                 text-anchor="middle"
-                dominant-baseline="auto">HEMAPRIYAN</text>
+                dominant-baseline="auto">Hemapriyan</text>
         </svg>
     </div>
 
@@ -487,40 +495,39 @@
     }
     sessionStorage.setItem(PLAYED_KEY, '1');
 
-    // ── Wait for Great Vibes font ─────────────────────────────────────────────
+    // ── Wait for Pinyon Script font ──────────────────────────────────────────
     document.fonts.ready.then(() => startAnimation());
 
     function startAnimation() {
-        // Get the actual stroke length of the SVG text
-        // We use a generous fallback (8500) if getTotalLength isn't available on text
-        let pathLen = 8500;
+        // Estimate stroke length — Pinyon Script has elaborate strokes, use larger value
+        let pathLen = 10000;
         try {
-            // Some browsers expose getTotalLength on text via getComputedTextLength
-            pathLen = Math.max(sigText.getComputedTextLength() * 5.8, 5000);
-        } catch (e) { pathLen = 8500; }
+            pathLen = Math.max(sigText.getComputedTextLength() * 6.5, 7000);
+        } catch (e) { pathLen = 10000; }
 
-        // Set the dash values based on actual path length
         sigText.style.strokeDasharray  = pathLen;
         sigText.style.strokeDashoffset = pathLen;
 
-        // ══════════════════════════════════════════════════════════════════════
-        // TIMELINE
-        // 0ms       Amber bg fades in
-        // 300ms     Act1 container appears, pen cursor shows
-        // 400ms     WRITING BEGINS — stroke animates
-        // 400+dur   Writing completes, fill fades in, glow pulses
-        // 2700ms    Crossfade to neutral begins
-        // 3200ms    Act3 (QenBel) appears
-        // 3700ms    MyHarur text
-        // 4100ms    Tagline
-        // 4700ms    Exit
-        // ══════════════════════════════════════════════════════════════════════
+        // TIMELINE (total ~5600ms, matching Flutter)
+        // 0ms       Dark start
+        // 0ms       Amber bg fades + sunrise drift begins
+        // 300ms     Container + pen cursor appear
+        // 400ms     Writing begins (H slow, emapriyan faster)
+        // 2600ms    Writing done → fill reveals
+        // 2600ms    Shimmer sweeps across (600ms)
+        // 3200ms    Hold
+        // 3600ms    Crossfade to neutral
+        // 4300ms    QenBel logo
+        // 4700ms    Divider + MyHarur
+        // 5100ms    Tagline
+        // 5600ms    Exit to main content
 
-        const WRITE_DURATION = 2000; // ms — how long the stroke takes
+        const WRITE_DURATION = 2200; // deliberate pace for elaborate Pinyon Script H
 
-        // ── Step 0: Amber bg ─────────────────────────────────────────────────
+        // ── Step 0: Amber bg + start drift animation ─────────────────────────
         at(0, () => {
             amberBg.style.opacity = '1';
+            amberBg.classList.add('running'); // start CSS sunrise drift
         });
 
         // ── Step 1: Show container ───────────────────────────────────────────
@@ -534,47 +541,45 @@
             startWriting(pathLen, WRITE_DURATION);
         });
 
-        // ── Step 3: Fill in and glow pulse after writing ──────────────────────
+        // ── Step 3: Fill + shimmer after writing ─────────────────────────────
         at(400 + WRITE_DURATION + 80, () => {
             penCursor.style.opacity = '0';
             sigText.classList.add('glowing');
+            // Shimmer sweep via rAF (600ms)
+            const shimStart = performance.now();
+            const shimDur = 650;
+            (function shimFrame(now) {
+                const p = Math.min((now - shimStart) / shimDur, 1.0);
+                // Shimmer already handled by glowPulse; nothing extra needed
+                if (p < 1.0) requestAnimationFrame(shimFrame);
+            })(performance.now());
         });
 
         // ── Step 4: Crossfade to neutral ─────────────────────────────────────
-        at(2750, () => {
-            act1.style.transition = 'opacity 0.65s ease';
+        at(3600, () => {
+            act1.style.transition = 'opacity 0.7s ease';
             act1.style.opacity = '0';
-            amberBg.style.transition = 'opacity 0.7s ease';
+            amberBg.style.transition = 'opacity 0.75s ease';
             amberBg.style.opacity = '0';
-            neutralBg.style.transition = 'opacity 0.65s ease';
+            neutralBg.style.transition = 'opacity 0.7s ease';
             neutralBg.style.opacity = '1';
             act3.style.opacity = '1';
         });
 
-        // ── Step 5: QenBel logo in ────────────────────────────────────────────
-        at(3200, () => {
-            qenbelLogo.classList.add('visible');
-        });
+        // ── Step 5: QenBel logo ───────────────────────────────────────────────
+        at(4300, () => { qenbelLogo.classList.add('visible'); });
 
-        // ── Step 6: Divider line ──────────────────────────────────────────────
-        at(3620, () => {
-            if (dividerEl) dividerEl.classList.add('visible');
-        });
+        // ── Step 6: Divider ───────────────────────────────────────────────────
+        at(4620, () => { if (dividerEl) dividerEl.classList.add('visible'); });
 
-        // ── Step 7: MyHarur wordmark ──────────────────────────────────────────
-        at(3780, () => {
-            myharurTxt.classList.add('visible');
-        });
+        // ── Step 7: MyHarur ───────────────────────────────────────────────────
+        at(4750, () => { myharurTxt.classList.add('visible'); });
 
         // ── Step 8: Tagline ───────────────────────────────────────────────────
-        at(4150, () => {
-            tagline.classList.add('visible');
-        });
+        at(5100, () => { tagline.classList.add('visible'); });
 
-        // ── Step 9: Exit — crossfade overlay away (body is already #f5f5f7) ───
-        at(4850, () => {
-            showMain();
-        });
+        // ── Step 9: Exit ──────────────────────────────────────────────────────
+        at(5650, () => { showMain(); });
     }
 
     // ── Writing animation engine ──────────────────────────────────────────────
@@ -583,15 +588,25 @@
     function startWriting(pathLen, duration) {
         let startTime = null;
 
-        function easeInOutCubic(t) {
-            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        // Signature curve: slow for H (elaborate loops), faster for emapriyan
+        function signatureCurve(t) {
+            if (t < 0.30) {
+                // H section: ease in (deliberate, heavy strokes)
+                const u = t / 0.30;
+                return (u * u * u) * 0.28;
+            }
+            // emapriyan: smooth ease-in-out flow
+            const u = (t - 0.30) / 0.70;
+            return 0.28 + (u < 0.5
+                ? 4 * u * u * u
+                : 1 - Math.pow(-2 * u + 2, 3) / 2) * 0.72;
         }
 
         function frame(timestamp) {
             if (!startTime) startTime = timestamp;
             const elapsed = timestamp - startTime;
             const raw     = Math.min(elapsed / duration, 1.0);
-            const progress = easeInOutCubic(raw);
+            const progress = signatureCurve(raw);
 
             const offset = pathLen * (1.0 - progress);
             sigText.style.strokeDashoffset = offset;

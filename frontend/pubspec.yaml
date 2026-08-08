@@ -93,6 +93,9 @@ flutter:
     - family: GreatVibes
       fonts:
         - asset: assets/fonts/GreatVibes-Regular.ttf
+    - family: PinyonScript
+      fonts:
+        - asset: assets/fonts/PinyonScript-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
