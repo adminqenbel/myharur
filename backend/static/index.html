@@ -6,21 +6,22 @@
     <title>MyHarur — A QenBel Technologies Product</title>
     <meta name="description" content="MyHarur — Experience the next generation of hyperlocal networking. Built by Hemapriyan. A QenBel Technologies Product.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ── Reset & Base ───────────────────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
+            background: #0a0200;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
 
-        /* ── INTRO OVERLAY ──────────────────────────────────────────────────── */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* INTRO OVERLAY                                                       */
+        /* ═══════════════════════════════════════════════════════════════════ */
         #intro-overlay {
             position: fixed;
             inset: 0;
@@ -28,129 +29,171 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #0a0200;
-            opacity: 1;
-            transition: opacity 0.5s ease;
+            overflow: hidden;
+            transition: opacity 0.55s ease;
         }
-        #intro-overlay.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-        #intro-overlay.hidden { display: none; }
+        #intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+        #intro-overlay.hidden   { display: none; }
 
-        /* Amber gradient background — Act 1 */
-        #intro-amber-bg {
+        /* ── Amber gradient background ─────────────────────────────────── */
+        #amber-bg {
             position: absolute;
             inset: 0;
             background: radial-gradient(
-                ellipse 120% 90% at 60% 35%,
+                ellipse 130% 100% at 58% 32%,
                 #D4700A 0%,
-                #8B3A00 30%,
-                #3D1200 60%,
-                #1A0800 85%,
+                #8B3A00 28%,
+                #3D1200 58%,
+                #1A0800 82%,
                 #080100 100%
             );
             opacity: 0;
             transition: opacity 0.4s ease;
         }
 
-        /* Neutral bg for Act 3 */
-        #intro-neutral-bg {
+        /* ── Neutral bg for Act 3 ──────────────────────────────────────── */
+        #neutral-bg {
             position: absolute;
             inset: 0;
-            background: #ffffff;
+            background: #f5f5f7;
             opacity: 0;
-            transition: opacity 0.0s linear;
         }
 
-        /* Act 1 — Personal logo */
-        #intro-personal {
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* ACT 1 — SVG SIGNATURE WRITING ANIMATION                            */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #act1-container {
             position: relative;
             z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            width: min(90vw, 700px);
             opacity: 0;
-            transform: scale(1.06);
-            transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.23,1,0.32,1);
-        }
-        #intro-personal img {
-            width: min(72vw, 380px);
-            height: min(72vw, 380px);
-            object-fit: cover;
-            border-radius: 20px;
+            transition: opacity 0.2s ease;
         }
 
-        /* Act 3 — QenBel brand */
-        #intro-brand {
+        #signature-svg {
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+
+        /* The signature text — drawn via stroke-dashoffset */
+        .sig-text {
+            font-family: 'Great Vibes', cursive;
+            font-size: 130px;
+            fill: transparent;
+            stroke: rgba(255, 255, 255, 0.92);
+            stroke-width: 1.2px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 9000;
+            stroke-dashoffset: 9000;
+            filter: drop-shadow(0 0 18px rgba(255, 220, 150, 0.45))
+                    drop-shadow(0 0 40px rgba(180, 80, 0, 0.3));
+        }
+
+        /* ── Glow cursor (pen tip) ─────────────────────────────────────── */
+        #pen-cursor {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow:
+                0 0 12px 4px rgba(255,255,255,0.9),
+                0 0 30px 10px rgba(212, 112, 10, 0.7),
+                0 0 60px 20px rgba(180, 80, 0, 0.4);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        /* ── Fill animation (after stroke completes) ───────────────────── */
+        @keyframes fillIn {
+            from { fill: transparent; }
+            to   { fill: rgba(255, 255, 255, 0.95); }
+        }
+
+        .sig-text.filled {
+            animation: fillIn 0.6s ease forwards;
+            stroke-dashoffset: 0;
+        }
+
+        /* ── Shimmer glow pulse after complete ─────────────────────────── */
+        @keyframes glowPulse {
+            0%   { filter: drop-shadow(0 0 18px rgba(255, 220, 150, 0.5)) drop-shadow(0 0 40px rgba(180, 80, 0, 0.35)); }
+            50%  { filter: drop-shadow(0 0 30px rgba(255, 220, 150, 0.8)) drop-shadow(0 0 60px rgba(212, 112, 10, 0.5)); }
+            100% { filter: drop-shadow(0 0 18px rgba(255, 220, 150, 0.5)) drop-shadow(0 0 40px rgba(180, 80, 0, 0.35)); }
+        }
+        .sig-text.glowing { animation: fillIn 0.6s ease forwards, glowPulse 1.4s ease-in-out 0.6s; }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* ACT 3 — QENBEL BRAND                                               */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #act3-container {
             position: absolute;
             inset: 0;
-            z-index: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 14px;
             opacity: 0;
             pointer-events: none;
         }
-        #intro-qenbel-logo {
-            width: min(55vw, 280px);
+
+        #brand-qenbel-logo {
+            width: min(52vw, 260px);
             object-fit: contain;
             opacity: 0;
-            transform: scale(0.92);
+            transform: scale(0.88);
             transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.23,1,0.32,1);
         }
-        #intro-myharur-text {
-            font-size: clamp(2.4rem, 8vw, 4rem);
+        #brand-qenbel-logo.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #brand-myharur {
+            font-size: clamp(2.6rem, 9vw, 4.2rem);
             font-weight: 700;
             letter-spacing: -0.04em;
             color: #1d1d1f;
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(10px);
             transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.23,1,0.32,1);
         }
-        #intro-tagline-text {
-            font-size: clamp(0.72rem, 2.5vw, 0.85rem);
-            font-weight: 400;
-            letter-spacing: 0.02em;
-            color: rgba(29,29,31,0.45);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        /* ── MAIN CONTENT ────────────────────────────────────────────────────── */
-        #main-content {
-            opacity: 0;
-            transform: translateY(24px);
-            transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.23,1,0.32,1);
-        }
-        #main-content.visible {
+        #brand-myharur.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* ── PAGE STYLES ─────────────────────────────────────────────────────── */
-        :root {
-            --apple-blue: #0071e3;
-            --apple-blue-hover: #0077ED;
-            --bg: #f5f5f7;
-            --text: #1d1d1f;
-            --text-secondary: #86868b;
-            --card-bg: #ffffff;
+        #brand-tagline {
+            font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            color: rgba(29,29,31,0.42);
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
+        #brand-tagline.visible { opacity: 1; }
 
-        .page-wrapper {
-            background: var(--bg);
-            color: var(--text);
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* MAIN CONTENT                                                        */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #main-content {
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.23,1,0.32,1);
         }
+        #main-content.visible { opacity: 1; transform: translateY(0); }
 
-        /* ── HEADER ─────────────────────────────────────────────────────────── */
+        /* ── Header ──────────────────────────────────────────────────────── */
         .site-header {
-            background: rgba(255,255,255,0.82);
+            background: rgba(255,255,255,0.85);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             border-bottom: 1px solid rgba(0,0,0,0.08);
@@ -173,24 +216,11 @@
             gap: 10px;
             text-decoration: none;
         }
-        .header-logo img {
-            width: 28px;
-            height: 28px;
-            border-radius: 7px;
-        }
-        .header-logo span {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text);
-            letter-spacing: -0.02em;
-        }
-        .header-tag {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
+        .header-logo img { width: 28px; height: 28px; border-radius: 7px; }
+        .header-logo span { font-size: 1rem; font-weight: 600; color: #1d1d1f; letter-spacing: -0.02em; }
+        .header-tag { font-size: 0.74rem; color: #86868b; }
 
-        /* ── HERO ────────────────────────────────────────────────────────────── */
+        /* ── Hero ────────────────────────────────────────────────────────── */
         .hero {
             display: flex;
             flex-direction: column;
@@ -199,11 +229,11 @@
             text-align: center;
         }
         .hero-eyebrow {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             font-weight: 600;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.09em;
             text-transform: uppercase;
-            color: var(--apple-blue);
+            color: #0071e3;
             margin-bottom: 14px;
         }
         .hero h1 {
@@ -211,21 +241,18 @@
             font-weight: 700;
             letter-spacing: -0.04em;
             line-height: 1.05;
-            color: var(--text);
-            margin-bottom: 20px;
+            color: #1d1d1f;
+            margin-bottom: 18px;
             max-width: 680px;
         }
-        .hero h1 span { color: var(--apple-blue); }
+        .hero h1 span { color: #0071e3; }
         .hero-sub {
-            font-size: clamp(1rem, 3vw, 1.35rem);
-            font-weight: 400;
-            color: var(--text-secondary);
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #86868b;
             line-height: 1.5;
             max-width: 520px;
             margin-bottom: 40px;
         }
-
-        /* App icon */
         .hero-icon {
             width: 110px;
             height: 110px;
@@ -234,12 +261,12 @@
             box-shadow: 0 14px 40px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
         }
 
-        /* Download button */
+        /* ── Download button ─────────────────────────────────────────────── */
         .btn-primary {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: var(--apple-blue);
+            background: #0071e3;
             color: #fff;
             padding: 15px 30px;
             border-radius: 980px;
@@ -250,20 +277,13 @@
             border: none;
             transition: background 0.2s ease, transform 0.2s ease;
         }
-        .btn-primary:hover {
-            background: var(--apple-blue-hover);
-            transform: scale(1.02);
-        }
+        .btn-primary:hover { background: #0077ED; transform: scale(1.02); }
         .btn-primary svg { width: 18px; height: 18px; fill: currentColor; }
 
-        .alt-link {
-            margin-top: 14px;
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-        }
-        .alt-link a { color: var(--apple-blue); text-decoration: underline; }
+        .alt-link { margin-top: 14px; font-size: 0.82rem; color: #86868b; }
+        .alt-link a { color: #0071e3; text-decoration: underline; }
 
-        /* ── BRAND SECTION ───────────────────────────────────────────────────── */
+        /* ── Brand section ───────────────────────────────────────────────── */
         .brand-section {
             background: #fff;
             padding: 60px 24px;
@@ -271,103 +291,99 @@
             border-top: 1px solid rgba(0,0,0,0.06);
         }
         .brand-section-inner {
-            max-width: 720px;
+            max-width: 640px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
         .brand-divider {
             font-size: 0.72rem;
             font-weight: 500;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
+            color: #86868b;
         }
-        .brand-section img.qenbel-logo {
-            width: min(48vw, 200px);
-            opacity: 0.85;
-        }
-        .brand-section .creator-note {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-        .brand-section .creator-note strong {
-            color: var(--text);
-            font-weight: 600;
-        }
+        .brand-section .qenbel-logo { width: min(44vw, 190px); opacity: 0.82; }
+        .creator-note { font-size: 0.85rem; color: #86868b; }
+        .creator-note strong { color: #1d1d1f; font-weight: 600; }
 
-        /* ── FOOTER ─────────────────────────────────────────────────────────── */
+        /* ── Footer ──────────────────────────────────────────────────────── */
         .site-footer {
             padding: 28px 24px;
             text-align: center;
             font-size: 0.78rem;
-            color: var(--text-secondary);
+            color: #86868b;
             border-top: 1px solid rgba(0,0,0,0.06);
         }
-        .site-footer a { color: var(--text-secondary); text-decoration: none; }
 
-        /* ── THANK YOU ───────────────────────────────────────────────────────── */
+        /* ── Thank you ───────────────────────────────────────────────────── */
         #thank-you-content {
             display: none;
             flex-direction: column;
             align-items: center;
             padding: 100px 24px;
             text-align: center;
+            background: #f5f5f7;
+            min-height: 100vh;
         }
         #thank-you-content h1 {
             font-size: 3rem;
             font-weight: 700;
             margin-bottom: 16px;
+            color: #1d1d1f;
         }
-        #thank-you-content p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            max-width: 500px;
-            line-height: 1.6;
-            margin-bottom: 32px;
-        }
+        #thank-you-content p { font-size: 1.05rem; color: #86868b; max-width: 500px; line-height: 1.65; margin-bottom: 32px; }
 
-        /* ── Responsive ──────────────────────────────────────────────────────── */
         @media (max-width: 600px) {
             .hero { padding: 60px 20px 48px; }
-            .hero-icon { width: 90px; height: 90px; border-radius: 22px; }
+            .hero-icon { width: 86px; height: 86px; border-radius: 22px; }
+            .sig-text { font-size: 80px; }
         }
     </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════════════════════════ -->
-<!-- INTRO OVERLAY                                                           -->
-<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- INTRO OVERLAY                                                              -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div id="intro-overlay">
-    <!-- Amber warm background -->
-    <div id="intro-amber-bg"></div>
-    <!-- Neutral (white) background for Act 3 -->
-    <div id="intro-neutral-bg"></div>
+    <!-- Amber background (Act 1) -->
+    <div id="amber-bg"></div>
+    <!-- Neutral bg (Act 3) -->
+    <div id="neutral-bg"></div>
 
-    <!-- Act 1: Hemapriyan -->
-    <div id="intro-personal">
-        <img src="/img/personal_logo.png" alt="Hemapriyan" draggable="false">
+    <!-- ── Act 1: SVG Signature ──────────────────────────────────────────── -->
+    <div id="act1-container">
+        <!-- Glowing pen-tip cursor -->
+        <div id="pen-cursor"></div>
+
+        <!-- SVG signature — stroke-dashoffset drives the writing effect -->
+        <svg id="signature-svg" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+            <text
+                id="sig-text"
+                class="sig-text"
+                x="50%"
+                y="145"
+                text-anchor="middle"
+                dominant-baseline="auto">HEMAPRIYAN</text>
+        </svg>
     </div>
 
-    <!-- Act 3: QenBel's MyHarur brand -->
-    <div id="intro-brand">
-        <img id="intro-qenbel-logo" src="/img/qenbel_light.png" alt="QenBel" draggable="false">
-        <div id="intro-myharur-text">MyHarur</div>
-        <div id="intro-tagline-text">A QenBel Technologies Product</div>
+    <!-- ── Act 3: QenBel brand ───────────────────────────────────────────── -->
+    <div id="act3-container">
+        <img id="brand-qenbel-logo" src="/img/qenbel_light.png" alt="QenBel Technologies" draggable="false">
+        <div id="brand-myharur">MyHarur</div>
+        <div id="brand-tagline">A QenBel Technologies Product</div>
     </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════════════════ -->
-<!-- MAIN CONTENT                                                            -->
-<!-- ════════════════════════════════════════════════════════════════════════ -->
-<div id="main-content" class="page-wrapper">
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT                                                               -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div id="main-content">
 
-    <!-- Header -->
     <header class="site-header">
         <div class="header-inner">
             <a class="header-logo" href="#">
@@ -378,155 +394,234 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
     <section id="hero-section" class="hero">
         <img src="/img/logo.png" alt="MyHarur" class="hero-icon">
         <div class="hero-eyebrow">QenBel Technologies</div>
         <h1>Get <span>MyHarur</span></h1>
         <p class="hero-sub">The next generation of hyperlocal networking. Simple. Fast. Built for your town.</p>
-
         <a href="/myharur.apk" download="myharur.apk" class="btn-primary" id="download-btn">
             <svg viewBox="0 0 24 24"><path d="M16.59 9H15V4c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v5H7.41c-.89 0-1.34 1.08-.71 1.71l4.59 4.59c.39.39 1.02.39 1.41 0l4.59-4.59c.63-.63.19-1.71-.7-1.71zM5 19c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"/></svg>
             Download APK
         </a>
         <div class="alt-link">
             <a href="https://raw.githubusercontent.com/adminqenbel/myharur/main/backend/static/myharur.apk">Alternative Download (GitHub)</a><br>
-            <span style="font-size:0.75rem;opacity:0.7;">Use this if the above download fails or is incomplete</span>
+            <span style="font-size:0.75rem;opacity:0.7;">Use this if the above download fails</span>
         </div>
     </section>
 
-    <!-- Brand Strip -->
     <section class="brand-section">
         <div class="brand-section-inner">
             <p class="brand-divider">Crafted by</p>
             <img class="qenbel-logo" src="/img/qenbel_light.png" alt="QenBel Technologies">
-            <p class="creator-note">Designed & developed by <strong>Hemapriyan</strong> · Founder, QenBel Technologies</p>
+            <p class="creator-note">Designed &amp; developed by <strong>Hemapriyan</strong> · Founder, QenBel Technologies</p>
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="site-footer">
         &copy; 2026 QenBel Technologies. MyHarur Platform. All rights reserved.
     </footer>
 </div>
 
 <!-- Thank You State -->
-<div id="thank-you-content" class="page-wrapper">
+<div id="thank-you-content">
     <img src="/img/logo.png" alt="MyHarur" style="width:100px;height:100px;border-radius:24px;margin-bottom:28px;box-shadow:0 10px 30px rgba(0,0,0,.1)">
     <h1>Thank You!</h1>
     <p>Your download should begin automatically.<br><br>
-    If it doesn't start, <a href="https://raw.githubusercontent.com/adminqenbel/myharur/main/backend/static/myharur.apk" style="color:var(--apple-blue);font-weight:600;">click here for the GitHub mirror</a>.<br><br>
+    If it doesn't start, <a href="https://raw.githubusercontent.com/adminqenbel/myharur/main/backend/static/myharur.apk" style="color:#0071e3;font-weight:600;">click here for the GitHub mirror</a>.<br><br>
     Please <b>allow installation from unknown sources</b> in your device settings.</p>
-    <button onclick="location.reload()" class="btn-primary" style="background:var(--text-secondary)">Back to Home</button>
+    <button onclick="location.reload()" class="btn-primary" style="background:#86868b;">Back to Home</button>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════════════════ -->
-<!-- ANIMATION SCRIPT                                                        -->
-<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- ANIMATION ENGINE                                                           -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
 <script>
 (function () {
-    // Play only once per browser session
-    const PLAYED_KEY = 'mh_intro_played';
-    const overlay    = document.getElementById('intro-overlay');
-    const mainContent = document.getElementById('main-content');
+    'use strict';
 
-    function showMainContent() {
+    const PLAYED_KEY = 'mh_intro_v2';
+
+    // ── Elements ──────────────────────────────────────────────────────────────
+    const overlay    = document.getElementById('intro-overlay');
+    const amberBg    = document.getElementById('amber-bg');
+    const neutralBg  = document.getElementById('neutral-bg');
+    const act1       = document.getElementById('act1-container');
+    const sigText    = document.getElementById('sig-text');
+    const penCursor  = document.getElementById('pen-cursor');
+    const act3       = document.getElementById('act3-container');
+    const qenbelLogo = document.getElementById('brand-qenbel-logo');
+    const myharurTxt = document.getElementById('brand-myharur');
+    const tagline    = document.getElementById('brand-tagline');
+    const mainContent= document.getElementById('main-content');
+
+    function showMain() {
         overlay.classList.add('fade-out');
         mainContent.classList.add('visible');
-        setTimeout(() => overlay.classList.add('hidden'), 550);
+        setTimeout(() => overlay.classList.add('hidden'), 600);
     }
 
-    // Skip if already played this session
+    // Skip on repeat sessions
     if (sessionStorage.getItem(PLAYED_KEY)) {
         overlay.classList.add('hidden');
-        mainContent.style.opacity = '1';
-        mainContent.style.transform = 'translateY(0)';
+        mainContent.style.cssText = 'opacity:1;transform:none;';
+        setupDownloadBtn();
         return;
     }
-
     sessionStorage.setItem(PLAYED_KEY, '1');
 
-    // ── Element references ───────────────────────────────────────────────
-    const amberBg       = document.getElementById('intro-amber-bg');
-    const neutralBg     = document.getElementById('intro-neutral-bg');
-    const personal      = document.getElementById('intro-personal');
-    const brand         = document.getElementById('intro-brand');
-    const qenbelLogo    = document.getElementById('intro-qenbel-logo');
-    const myharurText   = document.getElementById('intro-myharur-text');
-    const taglineText   = document.getElementById('intro-tagline-text');
+    // ── Wait for Great Vibes font ─────────────────────────────────────────────
+    document.fonts.ready.then(() => startAnimation());
 
-    // ── Timeline (all times in ms) ────────────────────────────────────────
-    // Act 1 — Hemapriyan
-    const T_AMBER_BG_IN   = 0;       // amber bg fades in
-    const T_PERSONAL_IN   = 380;     // personal logo appears
-    const T_PERSONAL_HOLD = 2000;    // hold
+    function startAnimation() {
+        // Get the actual stroke length of the SVG text
+        // We use a generous fallback (8500) if getTotalLength isn't available on text
+        let pathLen = 8500;
+        try {
+            // Some browsers expose getTotalLength on text via getComputedTextLength
+            pathLen = Math.max(sigText.getComputedTextLength() * 5.8, 5000);
+        } catch (e) { pathLen = 8500; }
 
-    // Act 2 — Crossfade
-    const T_CROSS_START   = 2500;    // begin fade to white
-    const T_CROSS_MID     = 3150;    // brand content starts
+        // Set the dash values based on actual path length
+        sigText.style.strokeDasharray  = pathLen;
+        sigText.style.strokeDashoffset = pathLen;
 
-    // Act 3 — QenBel
-    const T_QENBEL_IN     = 3150;
-    const T_MYHARUR_IN    = 3750;
-    const T_TAGLINE_IN    = 4050;
-    const T_EXIT          = 4600;    // total ~4.8s
+        // ══════════════════════════════════════════════════════════════════════
+        // TIMELINE
+        // 0ms       Amber bg fades in
+        // 300ms     Act1 container appears, pen cursor shows
+        // 400ms     WRITING BEGINS — stroke animates
+        // 400+dur   Writing completes, fill fades in, glow pulses
+        // 2700ms    Crossfade to neutral begins
+        // 3200ms    Act3 (QenBel) appears
+        // 3700ms    MyHarur text
+        // 4100ms    Tagline
+        // 4700ms    Exit
+        // ══════════════════════════════════════════════════════════════════════
 
+        const WRITE_DURATION = 2000; // ms — how long the stroke takes
+
+        // ── Step 0: Amber bg ─────────────────────────────────────────────────
+        at(0, () => {
+            amberBg.style.opacity = '1';
+        });
+
+        // ── Step 1: Show container ───────────────────────────────────────────
+        at(300, () => {
+            act1.style.opacity = '1';
+            penCursor.style.opacity = '1';
+        });
+
+        // ── Step 2: Begin writing animation ──────────────────────────────────
+        at(400, () => {
+            startWriting(pathLen, WRITE_DURATION);
+        });
+
+        // ── Step 3: Fill in and glow pulse after writing ──────────────────────
+        at(400 + WRITE_DURATION + 80, () => {
+            penCursor.style.opacity = '0';
+            sigText.classList.add('glowing');
+        });
+
+        // ── Step 4: Crossfade to neutral ─────────────────────────────────────
+        at(2750, () => {
+            // Fade out act1
+            act1.style.transition = 'opacity 0.65s ease';
+            act1.style.opacity = '0';
+            // Fade out amber
+            amberBg.style.transition = 'opacity 0.7s ease';
+            amberBg.style.opacity = '0';
+            // Fade in neutral
+            neutralBg.style.transition = 'opacity 0.65s ease';
+            neutralBg.style.opacity = '1';
+            // Show act3 container
+            act3.style.opacity = '1';
+        });
+
+        // ── Step 5: QenBel logo in ────────────────────────────────────────────
+        at(3200, () => {
+            qenbelLogo.classList.add('visible');
+        });
+
+        // ── Step 6: MyHarur wordmark ──────────────────────────────────────────
+        at(3750, () => {
+            myharurTxt.classList.add('visible');
+        });
+
+        // ── Step 7: Tagline ───────────────────────────────────────────────────
+        at(4100, () => {
+            tagline.classList.add('visible');
+        });
+
+        // ── Step 8: Exit ──────────────────────────────────────────────────────
+        at(4750, () => {
+            showMain();
+        });
+    }
+
+    // ── Writing animation engine ──────────────────────────────────────────────
+    // Animates stroke-dashoffset from pathLen → 0 using requestAnimationFrame
+    // and tracks the position of the leading stroke point for the cursor.
+    function startWriting(pathLen, duration) {
+        let startTime = null;
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function frame(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const raw     = Math.min(elapsed / duration, 1.0);
+            const progress = easeInOutCubic(raw);
+
+            const offset = pathLen * (1.0 - progress);
+            sigText.style.strokeDashoffset = offset;
+
+            // ── Move pen cursor ───────────────────────────────────────────────
+            // Approximate cursor position by sampling SVG text bounding box
+            // The cursor tracks left→right across the text bounds
+            try {
+                const bbox    = sigText.getBBox();
+                const cursorX = bbox.x + bbox.width * progress;
+                // Y position follows a gentle wave to simulate natural writing
+                const waveY   = bbox.y + bbox.height * 0.65 +
+                                Math.sin(progress * Math.PI * 4) * (bbox.height * 0.12);
+
+                // Convert SVG coords to screen coords
+                const svgElem = document.getElementById('signature-svg');
+                const pt      = svgElem.createSVGPoint();
+                pt.x = cursorX;
+                pt.y = waveY;
+                const screenPt = pt.matrixTransform(svgElem.getScreenCTM());
+
+                penCursor.style.left = screenPt.x + 'px';
+                penCursor.style.top  = screenPt.y + 'px';
+            } catch (e) {}
+
+            if (raw < 1.0) {
+                requestAnimationFrame(frame);
+            }
+        }
+
+        requestAnimationFrame(frame);
+    }
+
+    // ── Utility ───────────────────────────────────────────────────────────────
     function at(ms, fn) { setTimeout(fn, ms); }
 
-    // ── Act 1 ─────────────────────────────────────────────────────────────
-    at(T_AMBER_BG_IN, () => {
-        amberBg.style.transition = 'opacity 0.4s ease';
-        amberBg.style.opacity = '1';
-    });
+    // ── Download button ───────────────────────────────────────────────────────
+    function setupDownloadBtn() {
+        const btn = document.getElementById('download-btn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            setTimeout(function () {
+                document.getElementById('hero-section').style.display = 'none';
+                document.getElementById('thank-you-content').style.display = 'flex';
+            }, 500);
+        });
+    }
+    setupDownloadBtn();
 
-    at(T_PERSONAL_IN, () => {
-        personal.style.opacity = '1';
-        personal.style.transform = 'scale(1.0)';
-    });
-
-    // ── Act 2 — Crossfade ─────────────────────────────────────────────────
-    at(T_CROSS_START, () => {
-        // Fade personal out
-        personal.style.transition = 'opacity 0.65s ease, transform 0.7s ease';
-        personal.style.opacity = '0';
-        personal.style.transform = 'scale(0.96)';
-
-        // Fade amber bg out, neutral in
-        amberBg.style.transition = 'opacity 0.7s ease';
-        amberBg.style.opacity = '0';
-
-        neutralBg.style.transition = 'opacity 0.65s ease';
-        neutralBg.style.opacity = '1';
-    });
-
-    // ── Act 3 — QenBel brand ──────────────────────────────────────────────
-    at(T_QENBEL_IN, () => {
-        brand.style.opacity = '1';
-        qenbelLogo.style.opacity = '1';
-        qenbelLogo.style.transform = 'scale(1.0)';
-    });
-
-    at(T_MYHARUR_IN, () => {
-        myharurText.style.opacity = '1';
-        myharurText.style.transform = 'translateY(0)';
-    });
-
-    at(T_TAGLINE_IN, () => {
-        taglineText.style.opacity = '1';
-    });
-
-    // ── Exit ──────────────────────────────────────────────────────────────
-    at(T_EXIT, () => {
-        showMainContent();
-    });
-
-    // ── Download button ───────────────────────────────────────────────────
-    document.getElementById('download-btn').addEventListener('click', function () {
-        setTimeout(function () {
-            document.getElementById('hero-section').style.display = 'none';
-            document.getElementById('thank-you-content').style.display = 'flex';
-        }, 500);
-    });
 })();
 </script>
 </body>
