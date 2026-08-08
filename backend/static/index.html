@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0a0200;
+            background: #f5f5f7;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
@@ -137,28 +137,42 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 14px;
+            gap: 0;
             opacity: 0;
             pointer-events: none;
         }
 
         #brand-qenbel-logo {
-            width: min(52vw, 260px);
+            width: min(58vw, 290px);
             object-fit: contain;
             opacity: 0;
             transform: scale(0.88);
             transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.23,1,0.32,1);
+            display: block;
+            margin: 0 auto;
         }
         #brand-qenbel-logo.visible {
             opacity: 1;
             transform: scale(1);
         }
 
+        #brand-divider {
+            width: 32px;
+            height: 1px;
+            background: rgba(29,29,31,0.12);
+            margin: 26px auto;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #brand-divider.visible { opacity: 1; }
+
         #brand-myharur {
-            font-size: clamp(2.6rem, 9vw, 4.2rem);
+            font-size: clamp(3rem, 10vw, 4.8rem);
             font-weight: 700;
             letter-spacing: -0.04em;
+            line-height: 1;
             color: #1d1d1f;
+            text-align: center;
             opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.23,1,0.32,1);
@@ -169,10 +183,12 @@
         }
 
         #brand-tagline {
-            font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+            font-size: clamp(0.72rem, 2.4vw, 0.82rem);
             font-weight: 400;
-            letter-spacing: 0.02em;
-            color: rgba(29,29,31,0.42);
+            letter-spacing: 0.04em;
+            color: rgba(29,29,31,0.38);
+            text-align: center;
+            margin-top: 10px;
             opacity: 0;
             transition: opacity 0.5s ease;
         }
@@ -374,6 +390,7 @@
     <!-- ── Act 3: QenBel brand ───────────────────────────────────────────── -->
     <div id="act3-container">
         <img id="brand-qenbel-logo" src="/img/qenbel_light.png" alt="QenBel Technologies" draggable="false">
+        <div id="brand-divider"></div>
         <div id="brand-myharur">MyHarur</div>
         <div id="brand-tagline">A QenBel Technologies Product</div>
     </div>
@@ -450,6 +467,7 @@
     const penCursor  = document.getElementById('pen-cursor');
     const act3       = document.getElementById('act3-container');
     const qenbelLogo = document.getElementById('brand-qenbel-logo');
+    const dividerEl  = document.getElementById('brand-divider');
     const myharurTxt = document.getElementById('brand-myharur');
     const tagline    = document.getElementById('brand-tagline');
     const mainContent= document.getElementById('main-content');
@@ -524,16 +542,12 @@
 
         // ── Step 4: Crossfade to neutral ─────────────────────────────────────
         at(2750, () => {
-            // Fade out act1
             act1.style.transition = 'opacity 0.65s ease';
             act1.style.opacity = '0';
-            // Fade out amber
             amberBg.style.transition = 'opacity 0.7s ease';
             amberBg.style.opacity = '0';
-            // Fade in neutral
             neutralBg.style.transition = 'opacity 0.65s ease';
             neutralBg.style.opacity = '1';
-            // Show act3 container
             act3.style.opacity = '1';
         });
 
@@ -542,18 +556,23 @@
             qenbelLogo.classList.add('visible');
         });
 
-        // ── Step 6: MyHarur wordmark ──────────────────────────────────────────
-        at(3750, () => {
+        // ── Step 6: Divider line ──────────────────────────────────────────────
+        at(3620, () => {
+            if (dividerEl) dividerEl.classList.add('visible');
+        });
+
+        // ── Step 7: MyHarur wordmark ──────────────────────────────────────────
+        at(3780, () => {
             myharurTxt.classList.add('visible');
         });
 
-        // ── Step 7: Tagline ───────────────────────────────────────────────────
-        at(4100, () => {
+        // ── Step 8: Tagline ───────────────────────────────────────────────────
+        at(4150, () => {
             tagline.classList.add('visible');
         });
 
-        // ── Step 8: Exit ──────────────────────────────────────────────────────
-        at(4750, () => {
+        // ── Step 9: Exit — crossfade overlay away (body is already #f5f5f7) ───
+        at(4850, () => {
             showMain();
         });
     }

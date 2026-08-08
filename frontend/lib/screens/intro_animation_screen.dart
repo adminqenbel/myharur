@@ -9,8 +9,11 @@ import '../providers/theme_provider.dart';
 
 // ─── Intro Animation Screen ────────────────────────────────────────────────────
 // Act 1 (0–2.6s): HEMAPRIYAN written stroke-by-stroke on warm amber gradient
-// Act 2 (2.6–3.3s): Crossfade amber → neutral white/black
-// Act 3 (3.3–4.9s): QenBel logo + MyHarur + tagline fade in
+// Act 2 (2.6–3.3s): Crossfade amber → neutral white/dark
+// Act 3 (3.3–5.0s): QenBel logo + MyHarur + tagline
+//
+// BLACK-SCREEN FIX: _boot() runs immediately in parallel with the animation.
+// Navigation fires the instant the animation ends (no extra wait).
 // ──────────────────────────────────────────────────────────────────────────────
 class IntroAnimationScreen extends ConsumerStatefulWidget {
   const IntroAnimationScreen({super.key});
@@ -23,45 +26,39 @@ class IntroAnimationScreen extends ConsumerStatefulWidget {
 class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
     with TickerProviderStateMixin {
 
-  // Master controller driving everything
   late final AnimationController _master;
 
   // ── Act 1 — Amber bg ────────────────────────────────────────────────────────
-  late final Animation<double> _amberIn;   // bg fades in
+  late final Animation<double> _amberIn;
 
-  // ── Act 1 — Text write-on ───────────────────────────────────────────────────
-  // Each letter of HEMAPRIYAN gets its own progress value, staggered
+  // ── Act 1 — Staggered letter write-on ───────────────────────────────────────
   late final List<Animation<double>> _letterProgress;
-
-  // ── Act 1 — Glow cursor that follows the writing ────────────────────────────
-  // Combined progress value 0→1 covering the full write span
   late final Animation<double> _writeProgress;
 
   // ── Act 2 — Crossfade ───────────────────────────────────────────────────────
   late final Animation<double> _crossfade;
 
   // ── Act 3 — QenBel brand ────────────────────────────────────────────────────
-  late final Animation<double> _qenbelFade;
+  late final Animation<double> _act3Fade;       // entire act 3 container
   late final Animation<double> _qenbelScale;
+  late final Animation<double> _qenbelFade;
+  late final Animation<double> _dividerFade;
   late final Animation<double> _myharurFade;
   late final Animation<double> _myharurSlide;
   late final Animation<double> _taglineFade;
 
   // ── Exit ─────────────────────────────────────────────────────────────────────
-  late final Animation<double> _exitOpacity;
+  // Fades to neutral (not black) — eliminates the black-screen flash
+  late final Animation<double> _contentOpacity; // 1→0 at end
+  late final Animation<Color?> _bgColor;        // black→neutral during crossfade
+
+  // ── Boot result stored here so navigation fires instantly ───────────────────
+  String? _pendingRoute;
+  bool _animationDone = false;
 
   static const String _letters = 'HEMAPRIYAN';
-  static const int _letterCount = 10;
+  static const int    _letterCount = 10;
 
-  // Timeline fractions (of 4900ms total)
-  // 0.0 → 0.06: amber bg fade
-  // 0.06 → 0.52: letters write in (staggered)
-  // 0.52 → 0.56: hold
-  // 0.56 → 0.68: crossfade
-  // 0.68 → 0.82: QenBel in
-  // 0.82 → 0.90: MyHarur in
-  // 0.90 → 0.96: tagline in
-  // 0.96 → 1.00: fade out
   static const double _writeStart = 0.07;
   static const double _writeEnd   = 0.52;
 
@@ -72,7 +69,7 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
 
     _master = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4900),
+      duration: const Duration(milliseconds: 5000),
     );
 
     // ── Amber bg ──────────────────────────────────────────────────────────────
@@ -81,9 +78,8 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
       curve: const Interval(0.0, 0.06, curve: Curves.easeOut),
     );
 
-    // ── Staggered letter animations ───────────────────────────────────────────
-    const letterSpan = _writeEnd - _writeStart; // 0.45
-    // Each letter occupies 60% of its slot; slots overlap by 40%
+    // ── Staggered letters ─────────────────────────────────────────────────────
+    const letterSpan = _writeEnd - _writeStart;
     const slotSize   = letterSpan / (_letterCount * 0.70);
     _letterProgress = List.generate(_letterCount, (i) {
       final start = _writeStart + i * (letterSpan / _letterCount) * 0.72;
@@ -94,7 +90,6 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
       );
     });
 
-    // Glow cursor: full write-on span
     _writeProgress = CurvedAnimation(
       parent: _master,
       curve: const Interval(_writeStart, _writeEnd, curve: Curves.easeInOut),
@@ -106,41 +101,84 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
       curve: const Interval(0.55, 0.70, curve: Curves.easeInOut),
     );
 
-    // ── QenBel brand ──────────────────────────────────────────────────────────
+    // ── Act 3 ─────────────────────────────────────────────────────────────────
+    _act3Fade = CurvedAnimation(
+      parent: _master,
+      curve: const Interval(0.68, 0.76, curve: Curves.easeOut),
+    );
     _qenbelFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.68, 0.82, curve: Curves.easeOut),
+      curve: const Interval(0.68, 0.80, curve: Curves.easeOut),
     );
-    _qenbelScale = Tween<double>(begin: 0.88, end: 1.0).animate(
+    _qenbelScale = Tween<double>(begin: 0.90, end: 1.0).animate(
       CurvedAnimation(
         parent: _master,
-        curve: const Interval(0.68, 0.84, curve: Curves.easeOutCubic),
+        curve: const Interval(0.68, 0.82, curve: Curves.easeOutCubic),
       ),
+    );
+    _dividerFade = CurvedAnimation(
+      parent: _master,
+      curve: const Interval(0.78, 0.86, curve: Curves.easeOut),
     );
     _myharurFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.82, 0.91, curve: Curves.easeOut),
+      curve: const Interval(0.80, 0.90, curve: Curves.easeOut),
     );
-    _myharurSlide = Tween<double>(begin: 10.0, end: 0.0).animate(
+    _myharurSlide = Tween<double>(begin: 12.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _master,
-        curve: const Interval(0.82, 0.92, curve: Curves.easeOutCubic),
+        curve: const Interval(0.80, 0.92, curve: Curves.easeOutCubic),
       ),
     );
     _taglineFade = CurvedAnimation(
       parent: _master,
-      curve: const Interval(0.89, 0.96, curve: Curves.easeOut),
+      curve: const Interval(0.88, 0.96, curve: Curves.easeOut),
     );
 
-    // ── Exit ──────────────────────────────────────────────────────────────────
-    _exitOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+    // ── Exit: fade content to 0, NOT the background ──────────────────────────
+    // This means the scaffold color (neutral) stays visible, no black flash
+    _contentOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _master,
         curve: const Interval(0.95, 1.0, curve: Curves.easeIn),
       ),
     );
 
-    _master.forward().then((_) => _boot());
+    // ── Start animation ───────────────────────────────────────────────────────
+    _master.forward().then((_) => _onAnimationComplete());
+
+    // ── Boot runs NOW in parallel — result stored for instant navigation ───────
+    _runBoot();
+  }
+
+  Future<void> _runBoot() async {
+    try { await ApiClient.dio.get('/config/'); } catch (_) {}
+    await ref.read(authProvider.notifier).tryAutoLogin();
+    final auth = ref.read(authProvider);
+
+    String route;
+    if (!auth.isLoggedIn)            route = '/login';
+    else if (auth.usernameRequired)   route = '/username-setup';
+    else if (!auth.isSetupComplete)   route = '/onboarding';
+    else                              route = '/home';
+
+    _pendingRoute = route;
+
+    // If animation already finished while boot was running, navigate now
+    if (_animationDone && mounted) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      context.go(route);
+    }
+  }
+
+  void _onAnimationComplete() {
+    _animationDone = true;
+    if (_pendingRoute != null && mounted) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      context.go(_pendingRoute!);
+    }
+    // If boot not done yet, _runBoot() will navigate when it completes
+    // Meanwhile the app stays on the last frame of Act 3 (no black screen)
   }
 
   @override
@@ -150,54 +188,40 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
     super.dispose();
   }
 
-  Future<void> _boot() async {
-    try { await ApiClient.dio.get('/config/'); } catch (_) {}
-    await ref.read(authProvider.notifier).tryAutoLogin();
-    final auth = ref.read(authProvider);
-    if (!mounted) return;
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    if (!auth.isLoggedIn) {
-      context.go('/login');
-    } else if (auth.usernameRequired) {
-      context.go('/username-setup');
-    } else if (!auth.isSetupComplete) {
-      context.go('/onboarding');
-    } else {
-      context.go('/home');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-    final size   = MediaQuery.of(context).size;
+    final isDark   = ref.watch(themeProvider) == ThemeMode.dark;
+    final size     = MediaQuery.of(context).size;
+    // Neutral color matches the app's actual background so exit is seamless
+    final neutralBg = isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: AnimatedBuilder(
-        animation: _master,
-        builder: (context, _) {
-          final crossV = _crossfade.value;
-          final neutral = isDark ? Colors.black : Colors.white;
+    return AnimatedBuilder(
+      animation: _master,
+      builder: (context, _) {
+        final crossV = _crossfade.value;
 
-          return Opacity(
-            opacity: _exitOpacity.value,
+        return Scaffold(
+          // ── Scaffold bg = neutral. So when content fades out there's no black ──
+          backgroundColor: neutralBg,
+          body: Opacity(
+            opacity: _contentOpacity.value,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // ── Amber gradient background (Act 1) ────────────────────────
+
+                // ── Amber gradient (Act 1) ──────────────────────────────────
                 Opacity(
                   opacity: _amberIn.value * (1.0 - crossV),
                   child: const _AmberBg(),
                 ),
 
-                // ── Neutral background (Act 2/3) ─────────────────────────────
+                // ── Neutral overlay (Act 2/3 background) ───────────────────
                 Opacity(
                   opacity: crossV,
-                  child: ColoredBox(color: neutral),
+                  child: ColoredBox(color: neutralBg),
                 ),
 
-                // ── Act 1: Writing animation ──────────────────────────────────
+                // ── Act 1: Writing animation ────────────────────────────────
                 Opacity(
                   opacity: (1.0 - crossV).clamp(0.0, 1.0),
                   child: Center(
@@ -209,81 +233,148 @@ class _IntroAnimationScreenState extends ConsumerState<IntroAnimationScreen>
                   ),
                 ),
 
-                // ── Act 3: QenBel brand ───────────────────────────────────────
+                // ── Act 3: QenBel × MyHarur ────────────────────────────────
                 Opacity(
-                  opacity: crossV,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // QenBel logo
-                        Opacity(
-                          opacity: _qenbelFade.value,
-                          child: Transform.scale(
-                            scale: _qenbelScale.value,
-                            child: Image.asset(
-                              isDark
-                                  ? 'assets/qenbel_dark.png'
-                                  : 'assets/qenbel_light.png',
-                              width: size.width * 0.52,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        // MyHarur wordmark
-                        Opacity(
-                          opacity: _myharurFade.value,
-                          child: Transform.translate(
-                            offset: Offset(0, _myharurSlide.value),
-                            child: Text(
-                              'MyHarur',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 40,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -1.4,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Tagline
-                        Opacity(
-                          opacity: _taglineFade.value,
-                          child: Text(
-                            'A QenBel Technologies Product',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              letterSpacing: 0.3,
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.42)
-                                  : Colors.black.withOpacity(0.38),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  opacity: _act3Fade.value,
+                  child: _Act3Brand(
+                    isDark: isDark,
+                    screenWidth: size.width,
+                    qenbelFade: _qenbelFade.value,
+                    qenbelScale: _qenbelScale.value,
+                    dividerFade: _dividerFade.value,
+                    myharurFade: _myharurFade.value,
+                    myharurSlide: _myharurSlide.value,
+                    taglineFade: _taglineFade.value,
                   ),
                 ),
+
               ],
             ),
-          );
-        },
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Act 3 Brand Widget ────────────────────────────────────────────────────────
+// Professionally centered QenBel logo → divider → MyHarur wordmark → tagline
+class _Act3Brand extends StatelessWidget {
+  final bool   isDark;
+  final double screenWidth;
+  final double qenbelFade;
+  final double qenbelScale;
+  final double dividerFade;
+  final double myharurFade;
+  final double myharurSlide;
+  final double taglineFade;
+
+  const _Act3Brand({
+    required this.isDark,
+    required this.screenWidth,
+    required this.qenbelFade,
+    required this.qenbelScale,
+    required this.dividerFade,
+    required this.myharurFade,
+    required this.myharurSlide,
+    required this.taglineFade,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor     = isDark ? Colors.white : Colors.black;
+    final subtleColor   = isDark
+        ? Colors.white.withOpacity(0.35)
+        : Colors.black.withOpacity(0.30);
+    final dividerColor  = isDark
+        ? Colors.white.withOpacity(0.15)
+        : Colors.black.withOpacity(0.10);
+
+    return Center(
+      child: SizedBox(
+        width: screenWidth * 0.80,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+
+            // ── QenBel logo ──────────────────────────────────────────────────
+            Opacity(
+              opacity: qenbelFade,
+              child: Transform.scale(
+                scale: qenbelScale,
+                child: Image.asset(
+                  isDark ? 'assets/qenbel_dark.png' : 'assets/qenbel_light.png',
+                  width: screenWidth * 0.50,
+                  height: 52,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            // ── Thin divider ─────────────────────────────────────────────────
+            Opacity(
+              opacity: dividerFade,
+              child: Container(
+                width: 32,
+                height: 1,
+                color: dividerColor,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── MyHarur wordmark ─────────────────────────────────────────────
+            Opacity(
+              opacity: myharurFade,
+              child: Transform.translate(
+                offset: Offset(0, myharurSlide),
+                child: Text(
+                  'MyHarur',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 48,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -2.0,
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ── Tagline ──────────────────────────────────────────────────────
+            Opacity(
+              opacity: taglineFade,
+              child: Text(
+                'A QenBel Technologies Product',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 0.4,
+                  color: subtleColor,
+                ),
+              ),
+            ),
+
+          ],
+        ),
       ),
     );
   }
 }
 
 // ─── Hemapriyan Writing Widget ─────────────────────────────────────────────────
-// Draws each letter of HEMAPRIYAN progressively, with a glowing cursor
-// following the leading stroke edge.
 class _HemapriyanWriter extends StatelessWidget {
   final List<Animation<double>> letterProgress;
-  final double writeProgress; // 0→1 overall write progress for cursor
+  final double writeProgress;
   final double screenWidth;
 
   const _HemapriyanWriter({
@@ -305,7 +396,7 @@ class _HemapriyanWriter extends StatelessWidget {
   }
 }
 
-// ─── Custom Painter — renders HEMAPRIYAN with animated letter reveal ────────────
+// ─── Custom Painter ────────────────────────────────────────────────────────────
 class _HemapriyanPainter extends CustomPainter {
   final List<double> letterProgress;
   final double writeProgress;
@@ -313,7 +404,7 @@ class _HemapriyanPainter extends CustomPainter {
 
   static const String _text = 'HEMAPRIYAN';
 
-  _HemapriyanPainter({
+  const _HemapriyanPainter({
     required this.letterProgress,
     required this.writeProgress,
     required this.screenWidth,
@@ -321,158 +412,96 @@ class _HemapriyanPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // ── Font setup ─────────────────────────────────────────────────────────────
-    // Measure total text width first for centering
-    final fullPainter = TextPainter(
-      text: TextSpan(
-        text: _text,
-        style: const TextStyle(
-          fontFamily: 'GreatVibes',
-          fontSize: 96,
-          color: Colors.white,
-          letterSpacing: 2,
-        ),
-      ),
+    const style = TextStyle(
+      fontFamily: 'GreatVibes',
+      fontSize: 96,
+      letterSpacing: 2,
+      color: Colors.white,
+    );
+
+    // Measure full text for centering
+    final fullP = TextPainter(
+      text: const TextSpan(text: _text, style: style),
       textDirection: TextDirection.ltr,
     )..layout();
 
-    final totalWidth = fullPainter.width;
-    final startX = (size.width - totalWidth) / 2;
-    final baseY = size.height / 2 + 28;
+    final startX = (size.width - fullP.width) / 2;
+    final topY   = size.height / 2 - fullP.height / 2;
 
-    // ── Draw each letter with its own opacity based on progress ────────────────
     double cursorX = startX;
-    double cursorY = baseY;
+    double cursorY = topY + fullP.height * 0.6;
 
     for (int i = 0; i < _text.length; i++) {
-      final letter = _text[i];
       final progress = letterProgress[i].clamp(0.0, 1.0);
+      if (progress <= 0.0) continue;
 
-      if (progress <= 0.0) {
-        // Measure and skip cursor position ahead
-        final measurer = TextPainter(
-          text: TextSpan(
-            text: letter,
-            style: const TextStyle(
-              fontFamily: 'GreatVibes',
-              fontSize: 96,
-              color: Colors.transparent,
-              letterSpacing: 2,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        // Don't advance cursor for unrendered letters
-        continue;
-      }
+      final letter = _text[i];
 
-      // Letter paint: fade in + slight vertical drift settling
-      final letterStyle = TextStyle(
-        fontFamily: 'GreatVibes',
-        fontSize: 96,
-        letterSpacing: 2,
+      // Prefix width for x-position
+      final prefixP = TextPainter(
+        text: TextSpan(
+          text: _text.substring(0, i),
+          style: style,
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final letterX = startX + prefixP.width;
+
+      // Letter with fade + settle
+      final letterStyle = style.copyWith(
         color: Colors.white.withOpacity(progress),
-        shadows: progress > 0.5
+        shadows: progress > 0.4
             ? [
                 Shadow(
-                  color: Colors.white.withOpacity(0.25 * progress),
-                  blurRadius: 18,
+                  color: Colors.white.withOpacity(0.22 * progress),
+                  blurRadius: 16,
                 ),
                 Shadow(
-                  color: const Color(0xFFD4700A).withOpacity(0.3 * progress),
-                  blurRadius: 30,
+                  color: const Color(0xFFD4700A).withOpacity(0.28 * progress),
+                  blurRadius: 28,
                 ),
               ]
             : null,
       );
 
-      // Measure prefix to find this letter's x position
-      final prefixPainter = TextPainter(
-        text: TextSpan(
-          text: _text.substring(0, i),
-          style: const TextStyle(
-            fontFamily: 'GreatVibes',
-            fontSize: 96,
-            letterSpacing: 2,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-
-      final letterX = startX + prefixPainter.width;
-
-      // Measure this letter width
-      final letterPainter = TextPainter(
+      final letterP = TextPainter(
         text: TextSpan(text: letter, style: letterStyle),
         textDirection: TextDirection.ltr,
       )..layout();
 
-      // Subtle vertical settle: drops slightly from above
-      final yOffset = (1.0 - progress) * -6.0;
+      final ySettle = (1.0 - progress) * -5.0; // drops from above
 
-      letterPainter.paint(
-        canvas,
-        Offset(letterX, baseY - fullPainter.height + yOffset),
-      );
+      letterP.paint(canvas, Offset(letterX, topY + ySettle));
 
-      // Update cursor to right edge of this letter (for glow placement)
-      if (progress > 0.3) {
-        cursorX = letterX + letterPainter.width;
-        cursorY = baseY - fullPainter.height / 2;
+      if (progress > 0.25) {
+        cursorX = letterX + letterP.width;
+        cursorY = topY + fullP.height * 0.62;
       }
     }
 
-    // ── Glowing pen-tip cursor ─────────────────────────────────────────────────
-    if (writeProgress > 0.02 && writeProgress < 0.98) {
-      final glowOpacity = math.sin(writeProgress * math.pi).clamp(0.0, 1.0);
+    // ── Glowing pen-tip cursor ─────────────────────────────────────────────
+    if (writeProgress > 0.02 && writeProgress < 0.97) {
+      final glow = math.sin(writeProgress * math.pi).clamp(0.0, 1.0);
 
-      // Outer amber glow
       canvas.drawCircle(
-        Offset(cursorX, cursorY + 8),
+        Offset(cursorX, cursorY),
         22,
         Paint()
-          ..color = const Color(0xFFD4700A).withOpacity(0.28 * glowOpacity)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
+          ..color = const Color(0xFFD4700A).withOpacity(0.25 * glow)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
       );
-
-      // Mid white glow
       canvas.drawCircle(
-        Offset(cursorX, cursorY + 8),
-        10,
+        Offset(cursorX, cursorY),
+        9,
         Paint()
-          ..color = Colors.white.withOpacity(0.6 * glowOpacity)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+          ..color = Colors.white.withOpacity(0.55 * glow)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
       );
-
-      // Core bright dot
       canvas.drawCircle(
-        Offset(cursorX, cursorY + 8),
-        3.5,
-        Paint()..color = Colors.white.withOpacity(0.95 * glowOpacity),
-      );
-    }
-
-    // ── Trailing ambient shimmer under text ────────────────────────────────────
-    if (writeProgress > 0.1 && writeProgress < 0.95) {
-      final shimmerPaint = Paint()
-        ..shader = RadialGradient(
-          colors: [
-            Colors.white.withOpacity(0.06),
-            Colors.transparent,
-          ],
-          radius: 0.5,
-        ).createShader(Rect.fromCenter(
-          center: Offset(size.width / 2, baseY - 20),
-          width: totalWidth * 1.1,
-          height: 60,
-        ));
-      canvas.drawRect(
-        Rect.fromCenter(
-          center: Offset(size.width / 2, baseY - 20),
-          width: totalWidth * 1.1,
-          height: 60,
-        ),
-        shimmerPaint,
+        Offset(cursorX, cursorY),
+        3,
+        Paint()..color = Colors.white.withOpacity(0.95 * glow),
       );
     }
   }
@@ -480,10 +509,10 @@ class _HemapriyanPainter extends CustomPainter {
   @override
   bool shouldRepaint(_HemapriyanPainter old) =>
       old.writeProgress != writeProgress ||
-      old.letterProgress != letterProgress;
+      old.letterProgress.toString() != letterProgress.toString();
 }
 
-// ─── Warm Amber Background ─────────────────────────────────────────────────────
+// ─── Amber Background ──────────────────────────────────────────────────────────
 class _AmberBg extends StatelessWidget {
   const _AmberBg();
 
@@ -495,10 +524,10 @@ class _AmberBg extends StatelessWidget {
           center: Alignment(0.2, -0.15),
           radius: 1.5,
           colors: [
-            Color(0xFFD4700A), // golden amber highlight
-            Color(0xFF8B3A00), // warm amber mid
-            Color(0xFF3D1200), // deep warm brown
-            Color(0xFF1A0800), // near-black brown
+            Color(0xFFD4700A),
+            Color(0xFF8B3A00),
+            Color(0xFF3D1200),
+            Color(0xFF1A0800),
           ],
           stops: [0.0, 0.32, 0.62, 1.0],
         ),
