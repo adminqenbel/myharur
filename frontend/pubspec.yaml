@@ -51,6 +51,7 @@ dependencies:
   timeago: ^3.3.0
   flutter_local_notifications: ^17.1.2
   permission_handler: ^11.3.1
+  video_player: ^2.8.2
 
 dev_dependencies:
   flutter_test:
@@ -87,6 +88,7 @@ flutter:
     - assets/personal_logo.png
     - assets/qenbel_dark.png
     - assets/qenbel_light.png
+    - assets/personal_intro.mp4
     - assets/fonts/
 
   fonts:

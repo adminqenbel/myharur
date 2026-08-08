@@ -69,50 +69,17 @@
         /* ═══════════════════════════════════════════════════════════════════ */
         /* ACT 1 — SVG SIGNATURE WRITING ANIMATION                            */
         /* ═══════════════════════════════════════════════════════════════════ */
-        #act1-container {
-            position: relative;
-            z-index: 2;
-            width: min(90vw, 700px);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        #signature-svg {
-            width: 100%;
-            height: auto;
-            overflow: visible;
-        }
-
-        /* The signature text — drawn via stroke-dashoffset */
-        .sig-text {
-            font-family: 'Pinyon Script', cursive;
-            font-size: clamp(52px, 13vw, 128px);
-            white-space: nowrap;
-            fill: transparent;
-            stroke: rgba(255, 255, 255, 0.93);
-            stroke-width: 1.0px;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            stroke-dasharray: 10000;
-            stroke-dashoffset: 10000;
-            filter:
-                drop-shadow(0 0 16px rgba(255, 210, 120, 0.50))
-                drop-shadow(0 0 42px rgba(190, 80, 0, 0.32));
-        }
-
-        /* ── Glow cursor (pen tip) ─────────────────────────────────────── */
-        #pen-cursor {
+        /* ── Act 1 Video Container ───────────────────────────────────── */
+        #personal-video {
             position: absolute;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #ffffff;
-            box-shadow:
-                0 0 12px 4px rgba(255,255,255,0.9),
-                0 0 30px 10px rgba(212, 112, 10, 0.7),
-                0 0 60px 20px rgba(180, 80, 0, 0.4);
-            transform: translate(-50%, -50%);
-            pointer-events: none;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 2;
+        }
             opacity: 0;
             transition: opacity 0.15s ease;
         }
@@ -379,22 +346,8 @@
     <!-- Neutral bg (Act 3) -->
     <div id="neutral-bg"></div>
 
-    <!-- ── Act 1: SVG Signature ──────────────────────────────────────────── -->
-    <div id="act1-container">
-        <!-- Glowing pen-tip cursor -->
-        <div id="pen-cursor"></div>
-
-        <!-- SVG signature — stroke-dashoffset drives the writing effect -->
-        <svg id="signature-svg" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg">
-            <text
-                id="sig-text"
-                class="sig-text"
-                x="50%"
-                y="150"
-                text-anchor="middle"
-                dominant-baseline="auto">Hemapriyan</text>
-        </svg>
-    </div>
+    <!-- ── Act 1: Video Reveal ────────────────────────────────────────── -->
+    <video id="personal-video" src="/img/personal_intro.mp4" autoplay muted playsinline preload="auto"></video>
 
     <!-- ── Act 3: QenBel brand ───────────────────────────────────────────── -->
     <div id="act3-container">
@@ -468,18 +421,16 @@
     const PLAYED_KEY = 'mh_intro_v2';
 
     // ── Elements ──────────────────────────────────────────────────────────────
-    const overlay    = document.getElementById('intro-overlay');
-    const amberBg    = document.getElementById('amber-bg');
-    const neutralBg  = document.getElementById('neutral-bg');
-    const act1       = document.getElementById('act1-container');
-    const sigText    = document.getElementById('sig-text');
-    const penCursor  = document.getElementById('pen-cursor');
-    const act3       = document.getElementById('act3-container');
-    const qenbelLogo = document.getElementById('brand-qenbel-logo');
-    const dividerEl  = document.getElementById('brand-divider');
-    const myharurTxt = document.getElementById('brand-myharur');
-    const tagline    = document.getElementById('brand-tagline');
-    const mainContent= document.getElementById('main-content');
+    const overlay     = document.getElementById('intro-overlay');
+    const amberBg     = document.getElementById('amber-bg');
+    const neutralBg   = document.getElementById('neutral-bg');
+    const personalVid = document.getElementById('personal-video');
+    const act3        = document.getElementById('act3-container');
+    const qenbelLogo  = document.getElementById('brand-qenbel-logo');
+    const dividerEl   = document.getElementById('brand-divider');
+    const myharurTxt  = document.getElementById('brand-myharur');
+    const tagline     = document.getElementById('brand-tagline');
+    const mainContent = document.getElementById('main-content');
 
     function showMain() {
         overlay.classList.add('fade-out');
@@ -496,17 +447,7 @@
     }
     sessionStorage.setItem(PLAYED_KEY, '1');
 
-    // ── Wait for Pinyon Script font ──────────────────────────────────────────
-    document.fonts.ready.then(() => startAnimation());
-
     function startAnimation() {
-        // Estimate stroke length — Pinyon Script has elaborate strokes, use larger value
-        let pathLen = 10000;
-        try {
-            pathLen = Math.max(sigText.getComputedTextLength() * 6.5, 7000);
-        } catch (e) { pathLen = 10000; }
-
-        sigText.style.strokeDasharray  = pathLen;
         sigText.style.strokeDashoffset = pathLen;
 
         // TIMELINE (total ~5600ms, matching Flutter)
@@ -523,43 +464,22 @@
         // 5100ms    Tagline
         // 5600ms    Exit to main content
 
-        const WRITE_DURATION = 2200; // deliberate pace for elaborate Pinyon Script H
-
-        // ── Step 0: Amber bg + start drift animation ─────────────────────────
-        at(0, () => {
+        // ── Step 0: Amber bg + play video ─────────────────────────────────────
+        at(0, function() {
             amberBg.style.opacity = '1';
-            amberBg.classList.add('running'); // start CSS sunrise drift
+            if (personalVid) {
+                personalVid.currentTime = 0;
+                personalVid.play().catch(function() {});
+                personalVid.style.opacity = '1';
+            }
         });
 
-        // ── Step 1: Show container ───────────────────────────────────────────
-        at(300, () => {
-            act1.style.opacity = '1';
-            penCursor.style.opacity = '1';
-        });
-
-        // ── Step 2: Begin writing animation ──────────────────────────────────
-        at(400, () => {
-            startWriting(pathLen, WRITE_DURATION);
-        });
-
-        // ── Step 3: Fill + shimmer after writing ─────────────────────────────
-        at(400 + WRITE_DURATION + 80, () => {
-            penCursor.style.opacity = '0';
-            sigText.classList.add('glowing');
-            // Shimmer sweep via rAF (600ms)
-            const shimStart = performance.now();
-            const shimDur = 650;
-            (function shimFrame(now) {
-                const p = Math.min((now - shimStart) / shimDur, 1.0);
-                // Shimmer already handled by glowPulse; nothing extra needed
-                if (p < 1.0) requestAnimationFrame(shimFrame);
-            })(performance.now());
-        });
-
-        // ── Step 4: Crossfade to neutral ─────────────────────────────────────
-        at(3600, () => {
-            act1.style.transition = 'opacity 0.7s ease';
-            act1.style.opacity = '0';
+        // ── Step 4: Crossfade video to neutral ───────────────────────────────
+        at(4800, function() {
+            if (personalVid) {
+                personalVid.style.transition = 'opacity 0.7s ease';
+                personalVid.style.opacity = '0';
+            }
             amberBg.style.transition = 'opacity 0.75s ease';
             amberBg.style.opacity = '0';
             neutralBg.style.transition = 'opacity 0.7s ease';
@@ -568,78 +488,22 @@
         });
 
         // ── Step 5: QenBel logo ───────────────────────────────────────────────
-        at(4300, () => { qenbelLogo.classList.add('visible'); });
+        at(5200, function() { qenbelLogo.classList.add('visible'); });
 
         // ── Step 6: Divider ───────────────────────────────────────────────────
-        at(4620, () => { if (dividerEl) dividerEl.classList.add('visible'); });
+        at(5500, function() { if (dividerEl) dividerEl.classList.add('visible'); });
 
         // ── Step 7: MyHarur ───────────────────────────────────────────────────
-        at(4750, () => { myharurTxt.classList.add('visible'); });
+        at(5650, function() { myharurTxt.classList.add('visible'); });
 
         // ── Step 8: Tagline ───────────────────────────────────────────────────
-        at(5100, () => { tagline.classList.add('visible'); });
+        at(5850, function() { tagline.classList.add('visible'); });
 
-        // ── Step 9: Exit ──────────────────────────────────────────────────────
-        at(5650, () => { showMain(); });
+        // ── Step 9: Exit to main content ─────────────────────────────────────
+        at(6250, function() { showMain(); });
     }
 
-    // ── Writing animation engine ──────────────────────────────────────────────
-    // Animates stroke-dashoffset from pathLen → 0 using requestAnimationFrame
-    // and tracks the position of the leading stroke point for the cursor.
-    function startWriting(pathLen, duration) {
-        let startTime = null;
-
-        // Signature curve: slow for H (elaborate loops), faster for emapriyan
-        function signatureCurve(t) {
-            if (t < 0.30) {
-                // H section: ease in (deliberate, heavy strokes)
-                const u = t / 0.30;
-                return (u * u * u) * 0.28;
-            }
-            // emapriyan: smooth ease-in-out flow
-            const u = (t - 0.30) / 0.70;
-            return 0.28 + (u < 0.5
-                ? 4 * u * u * u
-                : 1 - Math.pow(-2 * u + 2, 3) / 2) * 0.72;
-        }
-
-        function frame(timestamp) {
-            if (!startTime) startTime = timestamp;
-            const elapsed = timestamp - startTime;
-            const raw     = Math.min(elapsed / duration, 1.0);
-            const progress = signatureCurve(raw);
-
-            const offset = pathLen * (1.0 - progress);
-            sigText.style.strokeDashoffset = offset;
-
-            // ── Move pen cursor ───────────────────────────────────────────────
-            // Approximate cursor position by sampling SVG text bounding box
-            // The cursor tracks left→right across the text bounds
-            try {
-                const bbox    = sigText.getBBox();
-                const cursorX = bbox.x + bbox.width * progress;
-                // Y position follows a gentle wave to simulate natural writing
-                const waveY   = bbox.y + bbox.height * 0.65 +
-                                Math.sin(progress * Math.PI * 4) * (bbox.height * 0.12);
-
-                // Convert SVG coords to screen coords
-                const svgElem = document.getElementById('signature-svg');
-                const pt      = svgElem.createSVGPoint();
-                pt.x = cursorX;
-                pt.y = waveY;
-                const screenPt = pt.matrixTransform(svgElem.getScreenCTM());
-
-                penCursor.style.left = screenPt.x + 'px';
-                penCursor.style.top  = screenPt.y + 'px';
-            } catch (e) {}
-
-            if (raw < 1.0) {
-                requestAnimationFrame(frame);
-            }
-        }
-
-        requestAnimationFrame(frame);
-    }
+    startAnimation();
 
     // ── Utility ───────────────────────────────────────────────────────────────
     function at(ms, fn) { setTimeout(fn, ms); }
