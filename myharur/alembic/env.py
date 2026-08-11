@@ -4,12 +4,13 @@ from sqlalchemy import pool
 from alembic import context
 import os
 
-config = context.config
-
-if config.config_file_name:
-    fileConfig(config.config_file_name)
-
-target_metadata = None
+db_url = os.getenv("SUPABASE_URL") or config.get_main_option("sqlalchemy.url")
+if db_url:
+    if "asyncpg" in db_url:
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+    elif db_url.startswith("postgresql://"):
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg2://")
+    config.set_main_option("sqlalchemy.url", db_url)
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
