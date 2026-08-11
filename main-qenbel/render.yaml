@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: qenbel-identity
+    name: qenbel
     env: python
     region: singapore
     plan: starter

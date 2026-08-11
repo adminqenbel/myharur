@@ -9,7 +9,7 @@ class ApiConfig {
 
   static const String qenbelIdentityUrl = String.fromEnvironment(
     'QENBEL_IDENTITY_URL',
-    defaultValue: 'https://qenbel-identity.onrender.com',
+    defaultValue: 'https://qenbel.onrender.com',
   );
 }
 

@@ -10,7 +10,7 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: QENBEL_IDENTITY_URL
-        value: https://qenbel-identity.onrender.com
+        value: https://qenbel.onrender.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
