@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: myharur-app
+    env: python
+    region: singapore
+    plan: starter
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: QENBEL_IDENTITY_URL
+        value: https://qenbel-identity.onrender.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_PUBLIC_KEY_PEM
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: qenbel-redis
+          property: connectionString
+
+  - type: worker
+    name: myharur-worker
+    env: python
+    region: singapore
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A app.workers.celery_app worker -B -l info
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: qenbel-redis
+          property: connectionString

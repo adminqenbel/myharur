@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Download  — QenBel </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --alabaster-grey: #D9D9D9;
+      --racing-red: #DD0200;
+      --black-cherry: #55100D;
+      --coffee-bean: #1A0706;
+      --deep-bg: #050607;
+      --cyan-glow: #00E5FF;
+      --glass-bg: rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--deep-bg);
+      color: #F5F5F5;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Dynamic Glow Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .glow-blob-1 {
+      position: absolute;
+      top: -10%;
+      left: -10%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, var(--coffee-bean) 0%, transparent 70%);
+      opacity: 0.6;
+      filter: blur(60px);
+      animation: floatGlow1 14s ease-in-out infinite alternate;
+    }
+
+    .glow-blob-2 {
+      position: absolute;
+      bottom: -15%;
+      right: -10%;
+      width: 70vw;
+      height: 70vw;
+      background: radial-gradient(circle, var(--black-cherry) 0%, var(--racing-red) 40%, transparent 75%);
+      opacity: 0.35;
+      filter: blur(80px);
+      animation: floatGlow2 16s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatGlow1 {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(40px, 30px); }
+    }
+
+    @keyframes floatGlow2 {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-30px, -40px); }
+    }
+
+    /* Main Glass Card Container */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 90%;
+      max-width: 440px;
+      padding: 36px 28px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(35px);
+      -webkit-backdrop-filter: blur(35px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.4s ease, border-color 0.4s ease;
+    }
+
+    .header-title {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      color: #F5F5F5;
+    }
+
+    .header-sub {
+      font-size: 14px;
+      color: #A9A9A9;
+      margin-bottom: 28px;
+    }
+
+    /* Download Symbol Base */
+    .icon-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(0, 229, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.25);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .icon-wrapper.idle {
+      animation: idleFloat 4s ease-in-out infinite;
+    }
+
+    .icon-wrapper.downloading {
+      border-color: var(--cyan-glow);
+      animation: pulseGlow 1.8s ease-in-out infinite alternate;
+    }
+
+    .icon-wrapper.complete {
+      border-color: var(--racing-red);
+      box-shadow: 0 0 40px var(--racing-red);
+      animation: completeRipple 0.6s ease-out forwards;
+    }
+
+    @keyframes idleFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(1); box-shadow: 0 0 25px rgba(0, 229, 255, 0.3); }
+      100% { transform: scale(1.06); box-shadow: 0 0 45px rgba(0, 229, 255, 0.6); }
+    }
+
+    @keyframes completeRipple {
+      0% { transform: scale(0.9); }
+      50% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+
+    /* SVG Diamond & Parachute Icon */
+    .icon-svg {
+      width: 52px;
+      height: 52px;
+      filter: drop-shadow(0 0 8px var(--cyan-glow));
+    }
+
+    /* Progress Display */
+    .percentage {
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--cyan-glow);
+      margin-bottom: 14px;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+    }
+
+    /* Progress Bar Track */
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(0,229,255,0.6) 0%, var(--cyan-glow) 100%);
+      border-radius: 4px;
+      box-shadow: 0 0 12px var(--cyan-glow);
+      position: relative;
+      transition: width 0.08s linear;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -2px;
+      bottom: -2px;
+      width: 8px;
+      background: #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 0 14px var(--cyan-glow), 0 0 24px #FFFFFF;
+    }
+
+    /* File Metadata */
+    .file-meta {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--alabaster-grey);
+      margin-bottom: 22px;
+    }
+
+    .cancel-btn {
+      background: none;
+      border: none;
+      color: var(--racing-red);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .cancel-btn:hover {
+      background: rgba(221, 2, 0, 0.15);
+    }
+
+    /* Primary Action Buttons */
+    .action-btn {
+      width: 100%;
+      height: 52px;
+      background: var(--racing-red);
+      border: none;
+      border-radius: 20px;
+      color: #FFFFFF;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(221, 2, 0, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .action-btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .secondary-btn {
+      flex: 1;
+      height: 52px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      color: #F5F5F5;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* State toggles visibility */
+    .state-panel {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .state-panel.active {
+      display: flex;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .glow-blob-1, .glow-blob-2, .icon-wrapper {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Shifting Background Glow -->
+  <div class="ambient-bg">
+    <div class="glow-blob-1"></div>
+    <div class="glow-blob-2"></div>
+  </div>
+
+  <!-- Main Glassmorphism Download Card -->
+  <div class="container">
+    <h1 class="header-title">Download Button</h1>
+    <p class="header-sub">QenBel × MyHarur Luxury System</p>
+
+    <!-- Central Glowing Parachute/Diamond Icon -->
+    <div class="icon-wrapper idle" id="iconWrapper">
+      <svg class="icon-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path id="checkPath" d="M18 32L28 42L46 22" stroke="#F5F5F5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="display: none;"/>
+        <g id="diamondGroup">
+          <path d="M32 10L50 26L32 46L14 26L32 10Z" fill="rgba(0, 229, 255, 0.18)" stroke="#00E5FF" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M32 20V34M26 30L32 36L38 30" stroke="#00E5FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- 1. Idle Panel -->
+    <div class="state-panel active" id="idlePanel">
+      <div class="file-meta">
+        <span>paradrop-kit.txt</span>
+        <span>7 KB</span>
+      </div>
+      <button class="action-btn" id="startBtn">START DOWNLOAD</button>
+    </div>
+
+    <!-- 2. Downloading Panel -->
+    <div class="state-panel" id="downloadingPanel">
+      <div class="percentage" id="percentText">0%</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="file-meta">
+        <span>paradrop-kit.txt</span>
+        <span>7 KB</span>
+      </div>
+      <button class="cancel-btn" id="cancelBtn">CANCEL</button>
+    </div>
+
+    <!-- 3. Completion Panel -->
+    <div class="state-panel" id="completePanel">
+      <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 4px;">Download Complete</h2>
+      <div class="file-meta" style="justify-content: center; margin-bottom: 20px;">
+        <span>paradrop-kit.txt • 7 KB</span>
+      </div>
+      <div class="btn-row">
+        <button class="secondary-btn" id="resetBtn">RESET</button>
+        <button class="action-btn" style="flex: 1.2;">OPEN FILE</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Download Animation Controller
+    const DURATION_SECONDS = 8; // Configurable duration in seconds
+
+    const iconWrapper = document.getElementById('iconWrapper');
+    const diamondGroup = document.getElementById('diamondGroup');
+    const checkPath = document.getElementById('checkPath');
+
+    const idlePanel = document.getElementById('idlePanel');
+    const downloadingPanel = document.getElementById('downloadingPanel');
+    const completePanel = document.getElementById('completePanel');
+
+    const percentText = document.getElementById('percentText');
+    const progressFill = document.getElementById('progressFill');
+
+    const startBtn = document.getElementById('startBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let animFrame = null;
+    let startTime = null;
+
+    function showPanel(panelName) {
+      idlePanel.classList.remove('active');
+      downloadingPanel.classList.remove('active');
+      completePanel.classList.remove('active');
+
+      if (panelName === 'idle') idlePanel.classList.add('active');
+      if (panelName === 'downloading') downloadingPanel.classList.add('active');
+      if (panelName === 'complete') completePanel.classList.add('active');
+    }
+
+    function startDownload() {
+      showPanel('downloading');
+      iconWrapper.className = 'icon-wrapper downloading';
+      diamondGroup.style.display = 'block';
+      checkPath.style.display = 'none';
+
+      startTime = performance.now();
+      animateProgress(startTime);
+    }
+
+    function animateProgress(now) {
+      const elapsed = (now - startTime) / 1000;
+      let progress = Math.min(elapsed / DURATION_SECONDS, 1.0);
+      let percent = Math.floor(progress * 100);
+
+      percentText.textContent = `${percent}%`;
+      progressFill.style.width = `${progress * 100}%`;
+
+      if (progress < 1.0) {
+        animFrame = requestAnimationFrame(animateProgress);
+      } else {
+        finishDownload();
+      }
+    }
+
+    function finishDownload() {
+      iconWrapper.className = 'icon-wrapper complete';
+      diamondGroup.style.display = 'none';
+      checkPath.style.display = 'block';
+      showPanel('complete');
+    }
+
+    function cancelDownload() {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      iconWrapper.className = 'icon-wrapper idle';
+      progressFill.style.width = '0%';
+      percentText.textContent = '0%';
+      showPanel('idle');
+    }
+
+    startBtn.addEventListener('click', startDownload);
+    cancelBtn.addEventListener('click', cancelDownload);
+    resetBtn.addEventListener('click', cancelDownload);
+  </script>
+</body>
+</html>
