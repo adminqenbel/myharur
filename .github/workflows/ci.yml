@@ -1,0 +1,33 @@
+name: MyHarur CI & Web Preview
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze_and_test:
+    name: Flutter Analyze, Test & Web Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Analyze Project
+        run: flutter analyze
+
+      - name: Run Widget Tests
+        run: flutter test
+
+      - name: Build Web Release Bundle
+        run: flutter build web --release

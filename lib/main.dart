@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'features/phase_two_pages.dart';
+import 'features/marketplace_page.dart';
+import 'features/jobs_page.dart';
+import 'features/events_page.dart';
+import 'features/chat_page.dart';
+import 'features/shops_page.dart';
+import 'features/rankings_page.dart';
+import 'features/auth_page.dart';
+import 'features/admin_dashboard_page.dart';
+
 void main() => runApp(const MyHarurApp());
 
 class MyHarurApp extends StatelessWidget {
@@ -225,20 +235,25 @@ class LocationPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-      decoration: BoxDecoration(
-          color: AppTheme.mist,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.line)),
-      child: const Row(mainAxisSize: MainAxisSize.min, children: [
-        AppIcon('pin', color: AppTheme.green, size: 18),
-        SizedBox(width: 7),
-        Text('Harur, Dharmapuri',
-            style: TextStyle(fontWeight: FontWeight.w800)),
-        SizedBox(width: 5),
-        Icon(Icons.keyboard_arrow_down_rounded, size: 20),
-      ]),
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const LocationSelectionPage())),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+        decoration: BoxDecoration(
+            color: AppTheme.mist,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppTheme.line)),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          AppIcon('pin', color: AppTheme.green, size: 18),
+          SizedBox(width: 7),
+          Text('Harur, Dharmapuri',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          SizedBox(width: 5),
+          Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+        ]),
+      ),
     );
   }
 }
@@ -267,7 +282,10 @@ class CategoryRail extends StatelessWidget {
           final item = items[index];
           return SizedBox(
             width: 74,
-            child: Column(children: [
+            child: InkWell(
+              borderRadius: BorderRadius.circular(21),
+              onTap: () => _openCategory(context, item.$1),
+              child: Column(children: [
               Container(
                 width: 64,
                 height: 64,
@@ -291,11 +309,24 @@ class CategoryRail extends StatelessWidget {
                       fontSize: 12,
                       fontWeight:
                           index == 0 ? FontWeight.w800 : FontWeight.w600)),
-            ]),
+              ]),
+            ),
           );
         },
       ),
     );
+  }
+
+  void _openCategory(BuildContext context, String category) {
+    final page = switch (category) {
+      'news' => const NewsHubPage(),
+      'cloud' => const WeatherHubPage(),
+      'heart' => const EmergencyReportPage(),
+      _ => null,
+    };
+    if (page != null) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    }
   }
 }
 
@@ -404,42 +435,47 @@ class MapLinesPainter extends CustomPainter {
 class FeaturedNewsCard extends StatelessWidget {
   const FeaturedNewsCard({super.key});
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(19),
-        decoration: BoxDecoration(
-            color: const Color(0xFFFFF7E8),
-            borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: const Color(0xFFF1E0BE))),
-        child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                AppIcon('news', color: Color(0xFFC17600), size: 21),
-                SizedBox(width: 8),
-                Text('LOCAL NEWS · DEMO',
+  Widget build(BuildContext context) => InkWell(
+        borderRadius: BorderRadius.circular(25),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const NewsHubPage())),
+        child: Container(
+          padding: const EdgeInsets.all(19),
+          decoration: BoxDecoration(
+              color: const Color(0xFFFFF7E8),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: const Color(0xFFF1E0BE))),
+          child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  AppIcon('news', color: Color(0xFFC17600), size: 21),
+                  SizedBox(width: 8),
+                  Text('LOCAL NEWS · DEMO',
+                      style: TextStyle(
+                          color: Color(0xFFC17600),
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          fontWeight: FontWeight.w900)),
+                  Spacer(),
+                  Icon(Icons.arrow_forward_rounded, color: AppTheme.ink)
+                ]),
+                SizedBox(height: 17),
+                Text('A calmer, connected town starts here.',
                     style: TextStyle(
-                        color: Color(0xFFC17600),
-                        fontSize: 11,
-                        letterSpacing: 1,
-                        fontWeight: FontWeight.w900)),
-                Spacer(),
-                Icon(Icons.arrow_forward_rounded, color: AppTheme.ink)
+                        fontSize: 23, height: 1.1, fontWeight: FontWeight.w900)),
+                SizedBox(height: 9),
+                Text(
+                    'Verified local news, weather, help and community updates — all in one place.',
+                    style: TextStyle(color: AppTheme.muted, height: 1.35)),
+                SizedBox(height: 17),
+                Text('Today · Harur',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.muted,
+                        fontWeight: FontWeight.w700)),
               ]),
-              SizedBox(height: 17),
-              Text('A calmer, connected town starts here.',
-                  style: TextStyle(
-                      fontSize: 23, height: 1.1, fontWeight: FontWeight.w900)),
-              SizedBox(height: 9),
-              Text(
-                  'Verified local news, weather, help and community updates — all in one place.',
-                  style: TextStyle(color: AppTheme.muted, height: 1.35)),
-              SizedBox(height: 17),
-              Text('Today · Harur',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.muted,
-                      fontWeight: FontWeight.w700)),
-            ]),
+        ),
       );
 }
 
@@ -463,22 +499,40 @@ class QuickActions extends StatelessWidget {
             mainAxisSpacing: 12),
         itemBuilder: (context, index) {
           final item = items[index];
-          return SoftCard(
-              child: Row(children: [
-            Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                    color: item.$3.withValues(alpha: .1),
-                    borderRadius: BorderRadius.circular(13)),
-                child:
-                    Center(child: AppIcon(item.$1, color: item.$3, size: 21))),
-            const SizedBox(width: 10),
-            Expanded(
-                child: Text(item.$2,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w800)))
-          ]));
+          return InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () {
+              if (item.$1 == 'alert') {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const EmergencyReportPage()));
+              } else if (item.$1 == 'news') {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const NewsHubPage()));
+              } else if (item.$1 == 'calendar') {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EventsPage()));
+              } else if (item.$1 == 'chat') {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const TownChatPage()));
+              }
+            },
+            child: SoftCard(
+                child: Row(children: [
+              Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                      color: item.$3.withValues(alpha: .1),
+                      borderRadius: BorderRadius.circular(13)),
+                  child: Center(
+                      child: AppIcon(item.$1, color: item.$3, size: 21))),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: Text(item.$2,
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w800)))
+            ])),
+          );
         },
       );
 }
@@ -507,18 +561,23 @@ class WeatherCard extends StatelessWidget {
       required this.caption});
   final String place, temperature, caption;
   @override
-  Widget build(BuildContext context) => SoftCard(
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const AppIcon('cloud', color: AppTheme.blue, size: 26),
-        const SizedBox(height: 16),
-        Text(temperature,
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
-        Text(place, style: const TextStyle(fontWeight: FontWeight.w800)),
-        const SizedBox(height: 3),
-        Text(caption,
-            style: const TextStyle(fontSize: 12, color: AppTheme.muted))
-      ]));
+  Widget build(BuildContext context) => InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const WeatherHubPage())),
+        child: SoftCard(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const AppIcon('cloud', color: AppTheme.blue, size: 26),
+          const SizedBox(height: 16),
+          Text(temperature,
+              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
+          Text(place, style: const TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 3),
+          Text(caption,
+              style: const TextStyle(fontSize: 12, color: AppTheme.muted))
+        ])),
+      );
 }
 
 class ExplorePage extends StatelessWidget {
@@ -565,30 +624,45 @@ class ExplorePage extends StatelessWidget {
                       mainAxisSpacing: 14),
                   itemBuilder: (context, index) {
                     final card = cards[index];
-                    return SoftCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                  color: AppTheme.mist,
-                                  borderRadius: BorderRadius.circular(16)),
-                              child: Center(
-                                  child: AppIcon(card.$1,
-                                      color: AppTheme.green, size: 25))),
-                          const Spacer(),
-                          Text(card.$2,
-                              style: const TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w900)),
-                          const SizedBox(height: 4),
-                          Text(card.$3,
-                              style: const TextStyle(
-                                  fontSize: 12, color: AppTheme.muted)),
-                          const SizedBox(height: 8),
-                          const Icon(Icons.arrow_forward_rounded, size: 19),
-                        ],
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () {
+                        final Widget page = switch (card.$1) {
+                          'bag' => const MarketplacePage(),
+                          'briefcase' => const JobsPage(),
+                          'calendar' => const EventsPage(),
+                          'store' => const ShopsPage(),
+                          'award' => const RankingsPage(),
+                          'heart' => const EmergencyReportPage(),
+                          _ => const HomePage(),
+                        };
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+                      },
+                      child: SoftCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                    color: AppTheme.mist,
+                                    borderRadius: BorderRadius.circular(16)),
+                                child: Center(
+                                    child: AppIcon(card.$1,
+                                        color: AppTheme.green, size: 25))),
+                            const Spacer(),
+                            Text(card.$2,
+                                style: const TextStyle(
+                                    fontSize: 17, fontWeight: FontWeight.w900)),
+                            const SizedBox(height: 4),
+                            Text(card.$3,
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppTheme.muted)),
+                            const SizedBox(height: 8),
+                            const Icon(Icons.arrow_forward_rounded, size: 19),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -623,31 +697,36 @@ class AlertsPage extends StatelessWidget {
                   .bodyLarge
                   ?.copyWith(color: AppTheme.muted)),
           const SizedBox(height: 25),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-                color: const Color(0xFFFFECEB),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFF8C9C5))),
-            child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    AppIcon('alert', color: AppTheme.red, size: 27),
-                    Spacer(),
-                    Icon(Icons.arrow_forward_rounded, color: AppTheme.red)
+          InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EmergencyReportPage())),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFFFECEB),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: const Color(0xFFF8C9C5))),
+              child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      AppIcon('alert', color: AppTheme.red, size: 27),
+                      Spacer(),
+                      Icon(Icons.arrow_forward_rounded, color: AppTheme.red)
+                    ]),
+                    SizedBox(height: 23),
+                    Text('Need immediate help?',
+                        style:
+                            TextStyle(fontSize: 23, fontWeight: FontWeight.w900)),
+                    SizedBox(height: 6),
+                    Text('Raise a nearby-help request or report an emergency.',
+                        style: TextStyle(color: AppTheme.muted)),
+                    SizedBox(height: 18),
+                    _AlertAction()
                   ]),
-                  SizedBox(height: 23),
-                  Text('Need immediate help?',
-                      style:
-                          TextStyle(fontSize: 23, fontWeight: FontWeight.w900)),
-                  SizedBox(height: 6),
-                  Text('Raise a nearby-help request or report an emergency.',
-                      style: TextStyle(color: AppTheme.muted)),
-                  SizedBox(height: 18),
-                  _AlertAction()
-                ]),
+            ),
           ),
           const SizedBox(height: 28),
           const SectionHeader(label: 'TRACK REQUEST'),
@@ -671,23 +750,28 @@ class AlertsPage extends StatelessWidget {
           const SizedBox(height: 28),
           const SectionHeader(label: 'GOVERNMENT UPDATES'),
           const SizedBox(height: 12),
-          const SoftCard(
-              child:
-                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            AppIcon('news', color: AppTheme.blue, size: 22),
-            SizedBox(width: 12),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text('Official updates will appear here',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                  SizedBox(height: 4),
-                  Text(
-                      'Only verified government officials can publish to this channel.',
-                      style: TextStyle(fontSize: 12, color: AppTheme.muted))
-                ]))
-          ])),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NewsHubPage())),
+            child: const SoftCard(
+                child:
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              AppIcon('news', color: AppTheme.blue, size: 22),
+              SizedBox(width: 12),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text('Official updates will appear here',
+                        style: TextStyle(fontWeight: FontWeight.w800)),
+                    SizedBox(height: 4),
+                    Text(
+                        'Only verified government officials can publish to this channel.',
+                        style: TextStyle(fontSize: 12, color: AppTheme.muted))
+                  ]))
+            ])),
+          ),
         ],
       ),
     );
@@ -712,12 +796,12 @@ class _AlertAction extends StatelessWidget {
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
   @override
-  Widget build(BuildContext context) => const SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, 18, 20, 28),
+  Widget build(BuildContext context) => SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        TownHeader(showSearch: false),
-        SizedBox(height: 30),
-        Row(children: [
+        const TownHeader(showSearch: false),
+        const SizedBox(height: 30),
+        const Row(children: [
           CircleAvatar(
               radius: 31,
               backgroundColor: Color(0xFFE9F6F1),
@@ -731,39 +815,52 @@ class AccountPage extends StatelessWidget {
                 style: TextStyle(color: AppTheme.muted))
           ])
         ]),
-        SizedBox(height: 25),
-        SoftCard(
-            child: Row(children: [
-          AppIcon('shield', color: AppTheme.green, size: 22),
-          SizedBox(width: 12),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text('Account security',
-                    style: TextStyle(fontWeight: FontWeight.w800)),
-                SizedBox(height: 3),
-                Text('Google sign-in and optional MFA',
-                    style: TextStyle(fontSize: 12, color: AppTheme.muted))
-              ])),
-          Icon(Icons.chevron_right_rounded)
-        ])),
-        SizedBox(height: 28),
-        SectionHeader(label: 'YOUR MYHARUR'),
-        SizedBox(height: 12),
-        AccountRows(),
-        SizedBox(height: 28),
-        SectionHeader(label: 'SUPPORT'),
-        SizedBox(height: 12),
-        SoftCard(
-            child: Row(children: [
-          AppIcon('chat', color: AppTheme.blue, size: 22),
-          SizedBox(width: 12),
-          Expanded(
-              child: Text('Chat with support',
-                  style: TextStyle(fontWeight: FontWeight.w800))),
-          Icon(Icons.chevron_right_rounded)
-        ]))
+        const SizedBox(height: 25),
+        InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AuthPage())),
+          child: const SoftCard(
+              child: Row(children: [
+            AppIcon('shield', color: AppTheme.green, size: 22),
+            SizedBox(width: 12),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text('Account security & Sign In',
+                      style: TextStyle(fontWeight: FontWeight.w800)),
+                  SizedBox(height: 3),
+                  Text('Google OAuth, Staff Argon2id & MFA',
+                      style: TextStyle(fontSize: 12, color: AppTheme.muted))
+                ])),
+            Icon(Icons.chevron_right_rounded)
+          ])),
+        ),
+        const SizedBox(height: 28),
+        const SectionHeader(label: 'YOUR MYHARUR'),
+        const SizedBox(height: 12),
+        const AccountRows(),
+        const SizedBox(height: 28),
+        const SectionHeader(label: 'SUPPORT'),
+        const SizedBox(height: 12),
+        InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const EmergencyReportPage())),
+          child: const SoftCard(
+              child: Row(children: [
+            AppIcon('chat', color: AppTheme.blue, size: 22),
+            SizedBox(width: 12),
+            Expanded(
+                child: Text('Chat with support',
+                    style: TextStyle(fontWeight: FontWeight.w800))),
+            Icon(Icons.chevron_right_rounded)
+          ])),
+        ),
+        const SizedBox(height: 32),
+        const QenbelBrandBadge(),
+        const SizedBox(height: 12),
       ]));
 }
 
@@ -774,19 +871,27 @@ class AccountRows extends StatelessWidget {
       decoration: BoxDecoration(
           border: Border.all(color: AppTheme.line),
           borderRadius: BorderRadius.circular(24)),
-      child: const Column(children: [
+      child: Column(children: [
         AccountRow(
-            icon: 'pin', label: 'My location', detail: 'Harur, Dharmapuri'),
-        Divider(height: 1),
+            icon: 'pin',
+            label: 'My location',
+            detail: 'Harur, Dharmapuri',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const LocationSelectionPage()))),
+        const Divider(height: 1),
         AccountRow(
             icon: 'bell',
-            label: 'Notifications',
-            detail: 'Local updates and alerts'),
-        Divider(height: 1),
+            label: 'Notifications & Alerts',
+            detail: 'Local updates and nearby SOS alerts',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const EmergencyReportPage()))),
+        const Divider(height: 1),
         AccountRow(
             icon: 'shield',
-            label: 'Privacy & permissions',
-            detail: 'Manage your data')
+            label: 'Privacy & Credentials',
+            detail: 'Argon2id KDF & Google Account Link',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const AuthPage()))),
       ]));
 }
 
@@ -795,24 +900,28 @@ class AccountRow extends StatelessWidget {
       {super.key,
       required this.icon,
       required this.label,
-      required this.detail});
+      required this.detail,
+      this.onTap});
   final String icon, label, detail;
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(children: [
-        AppIcon(icon, color: AppTheme.ink, size: 22),
-        const SizedBox(width: 12),
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 3),
-          Text(detail,
-              style: const TextStyle(fontSize: 12, color: AppTheme.muted))
-        ])),
-        const Icon(Icons.chevron_right_rounded)
-      ]));
+  Widget build(BuildContext context) => InkWell(
+      onTap: onTap,
+      child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(children: [
+            AppIcon(icon, color: AppTheme.ink, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+                child:
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 3),
+              Text(detail,
+                  style: const TextStyle(fontSize: 12, color: AppTheme.muted))
+            ])),
+            const Icon(Icons.chevron_right_rounded)
+          ])));
 }
 
 class TownDrawer extends StatelessWidget {
@@ -836,33 +945,103 @@ class TownDrawer extends StatelessWidget {
                           style: TextStyle(color: AppTheme.muted))
                     ])),
             const Divider(height: 1),
-            const DrawerItem(icon: 'chat', label: 'Town chat'),
-            const DrawerItem(icon: 'news', label: 'Government updates'),
-            const DrawerItem(icon: 'news', label: 'Submit news'),
-            const DrawerItem(icon: 'calendar', label: 'My events'),
-            const DrawerItem(icon: 'heart', label: 'Help & support'),
+            DrawerItem(
+                icon: 'chat',
+                label: 'Town chat',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const TownChatPage()));
+                }),
+            DrawerItem(
+                icon: 'news',
+                label: 'Government updates',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const NewsHubPage()));
+                }),
+            DrawerItem(
+                icon: 'news',
+                label: 'Submit news',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const NewsHubPage()));
+                }),
+            DrawerItem(
+                icon: 'calendar',
+                label: 'Events & Tournaments',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsPage()));
+                }),
+            DrawerItem(
+                icon: 'heart',
+                label: 'Help & support',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const EmergencyReportPage()));
+                }),
             const Spacer(),
-            Container(
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                    color: AppTheme.mist,
-                    borderRadius: BorderRadius.circular(18)),
-                child: const Text(
-                    'Admin tools automatically appear here when your role grants access.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.muted)))
+            InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const AdminDashboardPage()));
+              },
+              child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFE9F6F1),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFF9DD8C5))),
+                  child: const Row(
+                    children: [
+                      AppIcon('shield', color: AppTheme.green, size: 20),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Admin & Super Admin Tools',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.green)),
+                            Text('Moderation, 3-Vote termination & AIDs',
+                                style: TextStyle(
+                                    fontSize: 11, color: AppTheme.muted)),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded,
+                          color: AppTheme.green, size: 18),
+                    ],
+                  )),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: QenbelBrandBadge(),
+            ),
           ])));
 }
 
 class DrawerItem extends StatelessWidget {
-  const DrawerItem({super.key, required this.icon, required this.label});
+  const DrawerItem(
+      {super.key, required this.icon, required this.label, this.onTap});
   final String icon, label;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => ListTile(
       leading: AppIcon(icon, color: AppTheme.ink, size: 22),
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       trailing: const Icon(Icons.chevron_right_rounded),
-      onTap: () => Navigator.pop(context));
+      onTap: onTap ?? () => Navigator.pop(context));
 }
 
 class SectionHeader extends StatelessWidget {
@@ -933,4 +1112,110 @@ class AppIcon extends StatelessWidget {
           height: size,
           colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
           semanticsLabel: name);
+}
+
+/// Animated Qenbel Technologies branding badge
+class QenbelBrandBadge extends StatefulWidget {
+  const QenbelBrandBadge({super.key});
+
+  @override
+  State<QenbelBrandBadge> createState() => _QenbelBrandBadgeState();
+}
+
+class _QenbelBrandBadgeState extends State<QenbelBrandBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FBF9),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFDCE5E1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Color(0xFF007F63), Color(0xFF267AF4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x33007F63),
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  )
+                ],
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/sparkle.svg',
+                  width: 14,
+                  height: 14,
+                  colorFilter:
+                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'A PRODUCT OF',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: AppTheme.muted,
+                ),
+              ),
+              Text(
+                'Qenbel Technologies',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.ink,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

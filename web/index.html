@@ -1,16 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="MyHarur — your digital town for Harur and Dharmapuri.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <title>MyHarur — Digital Town for Harur & Dharmapuri</title>
+  <meta name="description" content="MyHarur is the hyper-local digital town app for Harur, Dharmapuri, and surrounding Tamil Nadu communities. Verified news, weather, emergencies, marketplace, jobs, and community chat.">
+  <meta name="keywords" content="Harur, Dharmapuri, MyHarur, Tamil Nadu, Harur News, Harur Weather, Harur Emergency, Harur Marketplace">
+  <meta name="author" content="MyHarur Digital Town">
+
+  <!-- Google OAuth Client ID -->
+  <meta name="google-signin-client_id" content="976428818123-tr1tgub2a690vh7g88s2icpq19smmuvv.apps.googleusercontent.com">
+
+  <!-- iOS / Apple Web App Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyHarur">
   <meta name="theme-color" content="#007F63">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Manifest -->
   <link rel="manifest" href="manifest.json">
-  <title>MyHarur</title>
+
+  <!-- Google Fonts for Apple-like Clean Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'SF Pro Display', Roboto, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #loading-splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .brand-icon {
+      width: 76px;
+      height: 76px;
+      background: linear-gradient(135deg, #007F63 0%, #005F4A 100%);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 32px rgba(0, 127, 99, 0.28);
+      animation: pulseGlow 2.4s infinite ease-in-out;
+    }
+    .brand-icon svg {
+      width: 40px;
+      height: 40px;
+      fill: #FFFFFF;
+    }
+    .brand-title {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+      color: #15211F;
+    }
+    .brand-subtitle {
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #697570;
+    }
+    .spinner-bar {
+      margin-top: 28px;
+      width: 48px;
+      height: 4px;
+      background-color: #F2F6F5;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .spinner-bar::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 40%;
+      background: #007F63;
+      border-radius: 4px;
+      animation: progressSweep 1.2s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 12px 32px rgba(0, 127, 99, 0.28);
+      }
+      50% {
+        transform: scale(1.04);
+        box-shadow: 0 16px 40px rgba(0, 127, 99, 0.42);
+      }
+    }
+    @keyframes progressSweep {
+      0% { left: -40%; width: 30%; }
+      50% { left: 30%; width: 50%; }
+      100% { left: 100%; width: 30%; }
+    }
+  </style>
 </head>
 <body>
+  <div id="loading-splash">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+      </svg>
+    </div>
+    <div class="brand-title">myharur</div>
+    <div class="brand-subtitle">digital town</div>
+    <div class="spinner-bar"></div>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

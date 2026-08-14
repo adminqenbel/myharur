@@ -25,3 +25,8 @@ Thumbs.db
 
 # Local Supabase state
 .supabase/
+
+# Build logs and Kotlin cache
+*.log
+.kotlin/
+

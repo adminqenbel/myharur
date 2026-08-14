@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: myharur-web
+    env: static
+    buildCommand: "git clone https://github.com/flutter/flutter.git --depth 1 -b stable flutter-sdk && export PATH=\"$PATH:`pwd`/flutter-sdk/bin\" && flutter channel stable && flutter upgrade && flutter build web --release"
+    staticPublishPath: build/web
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
