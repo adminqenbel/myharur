@@ -1,0 +1,10 @@
+{
+  "name": "MyHarur",
+  "short_name": "MyHarur",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#007F63",
+  "description": "Your digital town for Harur and Dharmapuri.",
+  "orientation": "portrait-primary"
+}
