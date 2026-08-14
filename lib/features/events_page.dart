@@ -23,7 +23,7 @@ class _EventsPageState extends State<EventsPage> {
       'formUrl': 'https://forms.gle/harur-cricket-tournament',
       'registered': 16,
       'maxSlots': 24,
-      'color': Color(0xFF007F63),
+      'color': const Color(0xFF007F63),
     },
     {
       'title': 'Theerthamalai Maha Shivaratri & Temple Ther Festival',
@@ -35,7 +35,7 @@ class _EventsPageState extends State<EventsPage> {
       'isPaid': false,
       'registered': 240,
       'maxSlots': 500,
-      'color': Color(0xFFF59E0B),
+      'color': const Color(0xFFF59E0B),
     },
     {
       'title': 'Organic Paddy Cultivation & Drip Irrigation Workshop',
@@ -47,7 +47,7 @@ class _EventsPageState extends State<EventsPage> {
       'isPaid': false,
       'registered': 45,
       'maxSlots': 80,
-      'color': Color(0xFF267AF4),
+      'color': const Color(0xFF267AF4),
     },
   ];
 
@@ -318,7 +318,8 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
               title: const Text('Paid Event / Entry Fee', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
               subtitle: const Text('Requires external Google Form for payment tracking', style: TextStyle(fontSize: 11, color: Color(0xFF697570))),
               value: isPaid,
-              activeColor: const Color(0xFF007F63),
+              activeThumbColor: const Color(0xFF007F63),
+              activeTrackColor: const Color(0xFF007F63).withValues(alpha: 0.5),
               onChanged: (val) => setState(() => isPaid = val),
             ),
             if (isPaid) ...[

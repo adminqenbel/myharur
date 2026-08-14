@@ -28,5 +28,6 @@ Thumbs.db
 
 # Build logs and Kotlin cache
 *.log
+android/*.log
 .kotlin/
-
+android/.kotlin/

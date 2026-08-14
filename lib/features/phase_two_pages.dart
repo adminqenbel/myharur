@@ -1025,7 +1025,7 @@ class _EmergencyReportPageState extends State<EmergencyReportPage> {
     {'name': 'Police Control (Harur)', 'number': '100 / 112', 'icon': Icons.local_police_rounded, 'color': PhaseTwoTheme.blue},
     {'name': 'Harur Fire & Rescue', 'number': '101', 'icon': Icons.fire_truck_rounded, 'color': PhaseTwoTheme.amber},
     {'name': 'Harur GH Hotline', 'number': '04346-222033', 'icon': Icons.medical_services_rounded, 'color': PhaseTwoTheme.green},
-    {'name': 'Women Helpline', 'number': '181', 'icon': Icons.shield_rounded, 'color': Color(0xFF8B5CF6)},
+    {'name': 'Women Helpline', 'number': '181', 'icon': Icons.shield_rounded, 'color': const Color(0xFF8B5CF6)},
   ];
 
   final List<String> emergencyTypes = [

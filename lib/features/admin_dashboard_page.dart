@@ -17,14 +17,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       'title': 'New Drinking Water Pipeline Sanctioned for Morappur Road',
       'author': 'Selvam (Resident)',
       'status': 'Pending Approval',
-      'color': Color(0xFF267AF4),
+      'color': const Color(0xFF267AF4),
     },
     {
       'type': 'Event',
       'title': 'Harur Town Badminton Open Championship',
       'author': 'Rajesh K. (Applicant for Event Head)',
       'status': 'Pending Verification',
-      'color': Color(0xFF007F63),
+      'color': const Color(0xFF007F63),
     },
   ];
 

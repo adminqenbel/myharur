@@ -22,7 +22,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       'seller': 'Venkatesh K.',
       'phone': '9842011223',
       'time': '2h ago',
-      'color': Color(0xFF007F63),
+      'color': const Color(0xFF007F63),
     },
     {
       'title': 'Hero Splendor Plus (2022 Model, Low KM)',
@@ -33,7 +33,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       'seller': 'Prakash R.',
       'phone': '9443219876',
       'time': '5h ago',
-      'color': Color(0xFF267AF4),
+      'color': const Color(0xFF267AF4),
     },
     {
       'title': 'Samsung 32-inch Smart LED TV',
@@ -44,7 +44,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       'seller': 'Karthik S.',
       'phone': '9789012345',
       'time': '1d ago',
-      'color': Color(0xFFE44545),
+      'color': const Color(0xFFE44545),
     },
     {
       'title': 'Teakwood Dining Table with 4 Chairs',
@@ -55,7 +55,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
       'seller': 'Anand M.',
       'phone': '9944055667',
       'time': '2d ago',
-      'color': Color(0xFFF59E0B),
+      'color': const Color(0xFFF59E0B),
     },
   ];
 

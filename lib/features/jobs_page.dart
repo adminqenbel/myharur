@@ -20,7 +20,7 @@ class _JobsPageState extends State<JobsPage> {
       'location': 'Harur Town Bazaar',
       'phone': '9842099881',
       'posted': '1d ago',
-      'color': Color(0xFF007F63),
+      'color': const Color(0xFF007F63),
     },
     {
       'title': 'Sugarcane & Paddy Field Harvesting Team',
@@ -30,7 +30,7 @@ class _JobsPageState extends State<JobsPage> {
       'location': 'Theerthamalai',
       'phone': '9443211224',
       'posted': '3h ago',
-      'color': Color(0xFFF59E0B),
+      'color': const Color(0xFFF59E0B),
     },
     {
       'title': 'Heavy Vehicle Driver (Eicher / Tipper)',
@@ -40,7 +40,7 @@ class _JobsPageState extends State<JobsPage> {
       'location': 'Morappur Road',
       'phone': '9789044556',
       'posted': '2d ago',
-      'color': Color(0xFF267AF4),
+      'color': const Color(0xFF267AF4),
     },
     {
       'title': 'Store Supervisor & Billing Assistant',
@@ -50,7 +50,7 @@ class _JobsPageState extends State<JobsPage> {
       'location': 'Harur Bus Stand',
       'phone': '9944088990',
       'posted': '4h ago',
-      'color': Color(0xFF8B5CF6),
+      'color': const Color(0xFF8B5CF6),
     },
   ];
 

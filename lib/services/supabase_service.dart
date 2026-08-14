@@ -20,6 +20,7 @@ class SupabaseConfig {
       try {
         await Supabase.initialize(
           url: targetUrl,
+          // ignore: deprecated_member_use
           anonKey: targetKey,
         );
         _activeUrl = targetUrl;

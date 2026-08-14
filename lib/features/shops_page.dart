@@ -22,7 +22,7 @@ class _ShopsPageState extends State<ShopsPage> {
       'rating': '4.9 (128 reviews)',
       'productsCount': 34,
       'isVerified': true,
-      'color': Color(0xFF007F63),
+      'color': const Color(0xFF007F63),
     },
     {
       'name': 'Dharmapuri Handloom Silk Sarees',
@@ -33,7 +33,7 @@ class _ShopsPageState extends State<ShopsPage> {
       'rating': '4.8 (94 reviews)',
       'productsCount': 52,
       'isVerified': true,
-      'color': Color(0xFFE44545),
+      'color': const Color(0xFFE44545),
     },
     {
       'name': 'Vasantham Digital & Mobile Care',
@@ -44,7 +44,7 @@ class _ShopsPageState extends State<ShopsPage> {
       'rating': '4.7 (76 reviews)',
       'productsCount': 28,
       'isVerified': true,
-      'color': Color(0xFF267AF4),
+      'color': const Color(0xFF267AF4),
     },
   ];
 

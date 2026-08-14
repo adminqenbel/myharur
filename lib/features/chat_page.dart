@@ -10,9 +10,9 @@ class TownChatPage extends StatefulWidget {
 class _TownChatPageState extends State<TownChatPage> {
   int selectedRoom = 0;
   final rooms = [
-    {'name': 'Public Town Chat', 'type': 'public', 'icon': 'chat', 'color': Color(0xFF007F63)},
-    {'name': 'Government & Collector Updates', 'type': 'gov', 'icon': 'news', 'color': Color(0xFF267AF4)},
-    {'name': 'Cricket Tournament (Event Room)', 'type': 'event', 'icon': 'calendar', 'color': Color(0xFFF59E0B)},
+    {'name': 'Public Town Chat', 'type': 'public', 'icon': 'chat', 'color': const Color(0xFF007F63)},
+    {'name': 'Government & Collector Updates', 'type': 'gov', 'icon': 'news', 'color': const Color(0xFF267AF4)},
+    {'name': 'Cricket Tournament (Event Room)', 'type': 'event', 'icon': 'calendar', 'color': const Color(0xFFF59E0B)},
   ];
 
   final List<Map<String, dynamic>> messages = [
