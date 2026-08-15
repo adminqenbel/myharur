@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../services/supabase_service.dart';
 
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});
@@ -11,53 +12,26 @@ class MarketplacePage extends StatefulWidget {
 class _MarketplacePageState extends State<MarketplacePage> {
   int selectedCategory = 0;
   final categories = ['All', 'Farm & Tools', 'Vehicles', 'Electronics', 'Furniture', 'Books'];
+  List<Map<String, dynamic>> items = [];
+  bool isLoading = true;
 
-  final List<Map<String, dynamic>> items = [
-    {
-      'title': 'Power Tiller & Paddy Weeder Attachment',
-      'price': '₹18,500',
-      'condition': 'Like New',
-      'category': 'Farm & Tools',
-      'location': 'Harur Town',
-      'seller': 'Venkatesh K.',
-      'phone': '9842011223',
-      'time': '2h ago',
-      'color': const Color(0xFF007F63),
-    },
-    {
-      'title': 'Hero Splendor Plus (2022 Model, Low KM)',
-      'price': '₹42,000',
-      'condition': 'Used - Good',
-      'category': 'Vehicles',
-      'location': 'Morappur Road',
-      'seller': 'Prakash R.',
-      'phone': '9443219876',
-      'time': '5h ago',
-      'color': const Color(0xFF267AF4),
-    },
-    {
-      'title': 'Samsung 32-inch Smart LED TV',
-      'price': '₹8,900',
-      'condition': 'Used - Good',
-      'category': 'Electronics',
-      'location': 'Bazaar Street, Harur',
-      'seller': 'Karthik S.',
-      'phone': '9789012345',
-      'time': '1d ago',
-      'color': const Color(0xFFE44545),
-    },
-    {
-      'title': 'Teakwood Dining Table with 4 Chairs',
-      'price': '₹12,000',
-      'condition': 'Like New',
-      'category': 'Furniture',
-      'location': 'Theerthamalai',
-      'seller': 'Anand M.',
-      'phone': '9944055667',
-      'time': '2d ago',
-      'color': const Color(0xFFF59E0B),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadListings();
+  }
+
+  Future<void> _loadListings() async {
+    setState(() => isLoading = true);
+    final category = categories[selectedCategory];
+    final data = await MarketplaceService.fetchListings(category: category);
+    if (mounted) {
+      setState(() {
+        items = data;
+        isLoading = false;
+      });
+    }
+  }
 
   void _openPostItemSheet() {
     showModalBottomSheet(
@@ -67,15 +41,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => const _PostMarketplaceItemSheet(),
+      builder: (ctx) => _PostMarketplaceItemSheet(onCreated: _loadListings),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = selectedCategory == 0
-        ? items
-        : items.where((i) => i['category'] == categories[selectedCategory]).toList();
+    final filtered = items;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -347,7 +319,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
 }
 
 class _PostMarketplaceItemSheet extends StatefulWidget {
-  const _PostMarketplaceItemSheet();
+  final VoidCallback? onCreated;
+  const _PostMarketplaceItemSheet({this.onCreated});
 
   @override
   State<_PostMarketplaceItemSheet> createState() => _PostMarketplaceItemSheetState();
@@ -357,12 +330,26 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
   final _titleCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  String condition = 'Used - Good';
+  String selectedCondition = 'Like New';
+  String selectedCategory = 'Farm & Tools';
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _priceCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -372,10 +359,7 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
               child: Container(
                 width: 44,
                 height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCE5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFFDCE5E1), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
@@ -430,11 +414,26 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Item published to Harur Marketplace!')),
-                  );
+                onPressed: () async {
+                  final title = _titleCtrl.text.trim();
+                  final price = double.tryParse(_priceCtrl.text.trim()) ?? 0.0;
+                  final desc = _descCtrl.text.trim();
+                  if (title.isNotEmpty && price > 0) {
+                    await MarketplaceService.createListing(
+                      title: title,
+                      description: desc,
+                      price: price,
+                      condition: selectedCondition,
+                      category: selectedCategory,
+                    );
+                    widget.onCreated?.call();
+                  }
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Item published to Harur Marketplace!')),
+                    );
+                  }
                 },
                 child: const Text('Publish Item', style: TextStyle(fontWeight: FontWeight.w800)),
               ),

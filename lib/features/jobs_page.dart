@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
 
 class JobsPage extends StatefulWidget {
   const JobsPage({super.key});
@@ -10,49 +11,26 @@ class JobsPage extends StatefulWidget {
 class _JobsPageState extends State<JobsPage> {
   int selectedCategory = 0;
   final categories = ['All', 'Full-time', 'Daily Wage', 'Farm & Harvest', 'Driver / Logistics', 'Retail'];
+  List<Map<String, dynamic>> jobs = [];
+  bool isLoading = true;
 
-  final List<Map<String, dynamic>> jobs = [
-    {
-      'title': 'Senior Accounts & Billing Clerk',
-      'company': 'Sri Murugan Agro Traders',
-      'type': 'Full-time',
-      'salary': '₹18,000 - ₹22,000 / mo',
-      'location': 'Harur Town Bazaar',
-      'phone': '9842099881',
-      'posted': '1d ago',
-      'color': const Color(0xFF007F63),
-    },
-    {
-      'title': 'Sugarcane & Paddy Field Harvesting Team',
-      'company': 'Theerthamalai Farming Collective',
-      'type': 'Daily Wage',
-      'salary': '₹750 / day + Meals',
-      'location': 'Theerthamalai',
-      'phone': '9443211224',
-      'posted': '3h ago',
-      'color': const Color(0xFFF59E0B),
-    },
-    {
-      'title': 'Heavy Vehicle Driver (Eicher / Tipper)',
-      'company': 'Dharmapuri Mineral Transports',
-      'type': 'Driver / Logistics',
-      'salary': '₹24,000 / mo + Trip Bata',
-      'location': 'Morappur Road',
-      'phone': '9789044556',
-      'posted': '2d ago',
-      'color': const Color(0xFF267AF4),
-    },
-    {
-      'title': 'Store Supervisor & Billing Assistant',
-      'company': 'Harur Supermarket',
-      'type': 'Retail',
-      'salary': '₹14,000 - ₹16,000 / mo',
-      'location': 'Harur Bus Stand',
-      'phone': '9944088990',
-      'posted': '4h ago',
-      'color': const Color(0xFF8B5CF6),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadJobs();
+  }
+
+  Future<void> _loadJobs() async {
+    setState(() => isLoading = true);
+    final category = categories[selectedCategory];
+    final data = await JobsService.fetchJobs(category: category);
+    if (mounted) {
+      setState(() {
+        jobs = data;
+        isLoading = false;
+      });
+    }
+  }
 
   void _openPostJobSheet() {
     showModalBottomSheet(
@@ -62,7 +40,7 @@ class _JobsPageState extends State<JobsPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => const _PostJobSheet(),
+      builder: (ctx) => _PostJobSheet(onCreated: _loadJobs),
     );
   }
 
@@ -227,7 +205,8 @@ class _JobsPageState extends State<JobsPage> {
 }
 
 class _PostJobSheet extends StatefulWidget {
-  const _PostJobSheet();
+  final VoidCallback? onCreated;
+  const _PostJobSheet({this.onCreated});
 
   @override
   State<_PostJobSheet> createState() => _PostJobSheetState();
@@ -238,11 +217,26 @@ class _PostJobSheetState extends State<_PostJobSheet> {
   final _orgCtrl = TextEditingController();
   final _salaryCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  String selectedType = 'Full-time';
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _orgCtrl.dispose();
+    _salaryCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -252,10 +246,7 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               child: Container(
                 width: 44,
                 height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCE5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFFDCE5E1), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
@@ -319,11 +310,28 @@ class _PostJobSheetState extends State<_PostJobSheet> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Job vacancy published to Harur community!')),
-                  );
+                onPressed: () async {
+                  final title = _titleCtrl.text.trim();
+                  final org = _orgCtrl.text.trim();
+                  final phone = _phoneCtrl.text.trim();
+                  final salary = _salaryCtrl.text.trim();
+                  if (title.isNotEmpty && phone.isNotEmpty) {
+                    await JobsService.postJob(
+                      title: title,
+                      company: org.isNotEmpty ? org : 'Harur Business',
+                      jobType: selectedType,
+                      description: 'Direct hiring in Harur region.',
+                      phone: phone,
+                      salary: salary,
+                    );
+                    widget.onCreated?.call();
+                  }
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Job vacancy published to Harur community!')),
+                    );
+                  }
                 },
                 child: const Text('Publish Requirement', style: TextStyle(fontWeight: FontWeight.w800)),
               ),

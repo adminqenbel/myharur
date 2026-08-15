@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../services/supabase_service.dart';
 
 // Reuse AppTheme colors and icons consistent with main.dart
 class PhaseTwoTheme {
@@ -306,45 +307,35 @@ class NewsHubPage extends StatefulWidget {
 class _NewsHubPageState extends State<NewsHubPage> {
   int selectedCategoryIndex = 0;
   final List<String> categories = ['All', 'Official', 'Agriculture', 'Civic', 'Events'];
+  List<Map<String, dynamic>> newsList = [];
+  bool isLoading = true;
 
-  final List<Map<String, dynamic>> newsList = [
-    {
-      'title': 'Dharmapuri District Collector Inspects Harur Lake Desilting Work',
-      'summary': 'Pre-monsoon preparedness work accelerated across Harur taluk tanks to improve irrigation storage.',
-      'category': 'Official',
-      'source': 'Harur Tahsildar Office',
-      'time': '1 hour ago',
-      'isVerified': true,
-      'badgeColor': PhaseTwoTheme.green,
-    },
-    {
-      'title': 'Morappur-Dharmapuri Railway Track Doubling Survey Progresses',
-      'summary': 'Key transport corridor survey enters final phase, connecting Harur trade commuters seamlessly.',
-      'category': 'Civic',
-      'source': 'Southern Railways Press',
-      'time': '3 hours ago',
-      'isVerified': true,
-      'badgeColor': PhaseTwoTheme.blue,
-    },
-    {
-      'title': 'Millets & Sugarcane Procurement Advisory for Harur Farmers',
-      'summary': 'Direct purchase centers opened with minimum support price guarantee for this agricultural season.',
-      'category': 'Agriculture',
-      'source': 'Agricultural Dept, Dharmapuri',
-      'time': '5 hours ago',
-      'isVerified': true,
-      'badgeColor': PhaseTwoTheme.amber,
-    },
-    {
-      'title': 'Annual Theerthamalai Temple Car Festival Dates Announced',
-      'summary': 'Special transport arrangements and medical booths confirmed by Harur police and panchayat administration.',
-      'category': 'Events',
-      'source': 'HR&CE Harur',
-      'time': '1 day ago',
-      'isVerified': true,
-      'badgeColor': PhaseTwoTheme.ink,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadNews();
+  }
+
+  Future<void> _loadNews() async {
+    setState(() => isLoading = true);
+    final data = await NewsService.fetchNews();
+    if (mounted) {
+      setState(() {
+        newsList = data.map((item) {
+          return {
+            'title': item['title'] ?? '',
+            'summary': item['summary'] ?? '',
+            'category': item['category'] ?? 'Civic',
+            'source': item['source_name'] ?? 'Local Report',
+            'time': 'Recent',
+            'isVerified': true,
+            'badgeColor': PhaseTwoTheme.green,
+          };
+        }).toList();
+        isLoading = false;
+      });
+    }
+  }
 
   void _openSubmitSheet() {
     showModalBottomSheet(
@@ -354,7 +345,7 @@ class _NewsHubPageState extends State<NewsHubPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => const SubmitNewsSheet(),
+      builder: (ctx) => SubmitNewsSheet(onSubmitted: _loadNews),
     );
   }
 
@@ -649,7 +640,8 @@ class _NewsHubPageState extends State<NewsHubPage> {
 }
 
 class SubmitNewsSheet extends StatefulWidget {
-  const SubmitNewsSheet({super.key});
+  final VoidCallback? onSubmitted;
+  const SubmitNewsSheet({super.key, this.onSubmitted});
 
   @override
   State<SubmitNewsSheet> createState() => _SubmitNewsSheetState();
@@ -662,30 +654,37 @@ class _SubmitNewsSheetState extends State<SubmitNewsSheet> {
   String category = 'Civic';
   bool isSubmitting = false;
 
-  void _submit() {
-    if (_titleCtrl.text.trim().isEmpty) {
+  Future<void> _submit() async {
+    final title = _titleCtrl.text.trim();
+    final body = _bodyCtrl.text.trim();
+    if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a news headline')),
       );
       return;
     }
     setState(() => isSubmitting = true);
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: PhaseTwoTheme.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            content: const Text(
-              'News submitted! Sent to Harur moderation queue.',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+    await NewsService.submitNews(
+      title: title,
+      summary: body.isNotEmpty ? body : title,
+      sourceUrl: _sourceCtrl.text.trim().isNotEmpty ? _sourceCtrl.text.trim() : null,
+      category: category,
+    );
+    widget.onSubmitted?.call();
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: PhaseTwoTheme.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: const Text(
+            'News submitted! Sent to Harur moderation queue.',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-        );
-      }
-    });
+        ),
+      );
+    }
   }
 
   @override

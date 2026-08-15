@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" fill="none">
+  <defs>
+    <linearGradient id="logoPrimaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D09C" />
+      <stop offset="100%" stop-color="#007F63" />
+    </linearGradient>
+    <linearGradient id="logoAccentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF" />
+      <stop offset="100%" stop-color="#00D09C" />
+    </linearGradient>
+  </defs>
+
+  <!-- Emblem on left -->
+  <g transform="translate(10, 10) scale(0.27)">
+    <rect width="512" height="512" rx="128" fill="#0E1B17" />
+    <rect width="508" height="508" x="2" y="2" rx="126" stroke="rgba(0, 208, 156, 0.3)" stroke-width="6" />
+    <path d="M140 370V170C140 153.431 153.431 140 170 140H184C200.569 140 214 153.431 214 170V370C214 386.569 200.569 400 184 400H170C153.431 400 140 386.569 140 370Z" fill="url(#logoPrimaryGrad)" />
+    <path d="M298 370V170C298 153.431 311.431 140 328 140H342C358.569 140 372 153.431 372 170V370C372 386.569 358.569 400 342 400H328C311.431 400 298 386.569 298 370Z" fill="url(#logoPrimaryGrad)" />
+    <path d="M190 270C190 230 220 200 256 200C292 200 322 230 322 270" stroke="url(#logoAccentGrad)" stroke-width="28" stroke-linecap="round" />
+    <circle cx="256" cy="140" r="26" fill="url(#logoAccentGrad)" />
+  </g>
+
+  <!-- Brand Typography -->
+  <text x="170" y="86" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" font-weight="900" font-size="52" fill="#15211F" letter-spacing="-1.5">myharur</text>
+  <text x="172" y="118" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" font-weight="800" font-size="14" fill="#007F63" letter-spacing="3.5">DIGITAL TOWN</text>
+
+  <!-- Verified Dot -->
+  <circle cx="390" cy="56" r="6" fill="#00D09C" />
+</svg>

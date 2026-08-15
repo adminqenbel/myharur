@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/supabase_service.dart';
 
 class ShopsPage extends StatefulWidget {
   const ShopsPage({super.key});
@@ -12,42 +13,26 @@ class ShopsPage extends StatefulWidget {
 class _ShopsPageState extends State<ShopsPage> {
   int selectedCategory = 0;
   final categories = ['All', 'Groceries & Agro', 'Electronics', 'Textiles & Silk', 'Sweets & Bakery'];
+  List<Map<String, dynamic>> shops = [];
+  bool isLoading = true;
 
-  final List<Map<String, dynamic>> shops = [
-    {
-      'name': 'Sri Lakshmi Agro & Seed Agency',
-      'category': 'Groceries & Agro',
-      'owner': 'K. Ramanathan (Shop Admin)',
-      'address': 'No. 14, Bazaar Street, Harur',
-      'phone': '9842011445',
-      'rating': '4.9 (128 reviews)',
-      'productsCount': 34,
-      'isVerified': true,
-      'color': const Color(0xFF007F63),
-    },
-    {
-      'name': 'Dharmapuri Handloom Silk Sarees',
-      'category': 'Textiles & Silk',
-      'owner': 'M. Sundaram (Shop Admin)',
-      'address': 'Opposite Old Bus Stand, Harur',
-      'phone': '9443277889',
-      'rating': '4.8 (94 reviews)',
-      'productsCount': 52,
-      'isVerified': true,
-      'color': const Color(0xFFE44545),
-    },
-    {
-      'name': 'Vasantham Digital & Mobile Care',
-      'category': 'Electronics',
-      'owner': 'R. Vijay (Shop Admin)',
-      'address': 'Kamarajar Salai, Harur',
-      'phone': '9789066778',
-      'rating': '4.7 (76 reviews)',
-      'productsCount': 28,
-      'isVerified': true,
-      'color': const Color(0xFF267AF4),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadShops();
+  }
+
+  Future<void> _loadShops() async {
+    setState(() => isLoading = true);
+    final category = categories[selectedCategory];
+    final data = await ShopsService.fetchShops(category: category);
+    if (mounted) {
+      setState(() {
+        shops = data;
+        isLoading = false;
+      });
+    }
+  }
 
   void _openRegisterShopSheet() {
     showModalBottomSheet(
@@ -57,7 +42,7 @@ class _ShopsPageState extends State<ShopsPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => const _RegisterShopSheet(),
+      builder: (ctx) => _RegisterShopSheet(onCreated: _loadShops),
     );
   }
 
@@ -281,7 +266,8 @@ class _ShopsPageState extends State<ShopsPage> {
 }
 
 class _RegisterShopSheet extends StatefulWidget {
-  const _RegisterShopSheet();
+  final VoidCallback? onCreated;
+  const _RegisterShopSheet({this.onCreated});
 
   @override
   State<_RegisterShopSheet> createState() => _RegisterShopSheetState();
@@ -291,11 +277,25 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  String selectedCategory = 'Groceries & Agro';
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _addressCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -362,11 +362,25 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Shop registered! Promoted to Shop-Admin role.')),
-                  );
+                onPressed: () async {
+                  final name = _nameCtrl.text.trim();
+                  final address = _addressCtrl.text.trim();
+                  final phone = _phoneCtrl.text.trim();
+                  if (name.isNotEmpty && phone.isNotEmpty) {
+                    await ShopsService.registerShop(
+                      name: name,
+                      category: selectedCategory,
+                      address: address.isNotEmpty ? address : 'Harur Town',
+                      phone: phone,
+                    );
+                    widget.onCreated?.call();
+                  }
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Shop registered! Promoted to Shop-Admin role.')),
+                    );
+                  }
                 },
                 child: const Text('Create Shop & Storefront', style: TextStyle(fontWeight: FontWeight.w800)),
               ),

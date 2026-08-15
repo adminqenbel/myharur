@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../services/supabase_service.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -14,11 +15,24 @@ class _AuthPageState extends State<AuthPage> {
   final _passwordCtrl = TextEditingController();
   bool isLinkingGoogle = false;
 
-  void _signInWithGoogle() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Signing in with Google OAuth... Verified Resident profile created.')),
-    );
-    Navigator.pop(context);
+  Future<void> _signInWithGoogle() async {
+    final success = await AuthService.signInWithGoogle();
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFF007F63),
+            content: Text('✓ Signed in with Google OAuth. Verified Resident profile active.'),
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google Sign-in initialized. Complete authentication in browser.')),
+        );
+        Navigator.pop(context);
+      }
+    }
   }
 
   void _staffLogin() {

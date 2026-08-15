@@ -430,19 +430,31 @@ class TownHeader extends StatelessWidget {
             builder: (context) => RoundIconButton(
                 icon: 'menu', onTap: () => Scaffold.of(context).openDrawer())),
         const Spacer(),
-        const Column(
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text('myharur',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -.7)),
-            Text('digital town',
-                style: TextStyle(
-                    fontSize: 10,
-                    color: AppTheme.muted,
-                    letterSpacing: 1.3,
-                    fontWeight: FontWeight.w800)),
+            SvgPicture.asset(
+              'assets/brand/myharur_icon.svg',
+              width: 28,
+              height: 28,
+            ),
+            const SizedBox(width: 8),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('myharur',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -.7)),
+                Text('digital town',
+                    style: TextStyle(
+                        fontSize: 9,
+                        color: AppTheme.muted,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w800)),
+              ],
+            ),
           ],
         ),
         const Spacer(),
@@ -1178,18 +1190,29 @@ class TownDrawer extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-            const Padding(
-                padding: EdgeInsets.fromLTRB(24, 26, 24, 22),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('myharur',
-                          style: TextStyle(
-                              fontSize: 28, fontWeight: FontWeight.w900)),
-                      SizedBox(height: 4),
-                      Text('Your digital town',
-                          style: TextStyle(color: AppTheme.muted))
-                    ])),
+            Padding(
+                padding: const EdgeInsets.fromLTRB(24, 26, 24, 22),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/brand/myharur_icon.svg',
+                      width: 44,
+                      height: 44,
+                    ),
+                    const SizedBox(width: 14),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('myharur',
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                        SizedBox(height: 2),
+                        Text('Your digital town',
+                            style: TextStyle(color: AppTheme.muted, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
+                )),
             const Divider(height: 1),
             DrawerItem(
                 icon: 'chat',

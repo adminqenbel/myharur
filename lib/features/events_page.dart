@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -10,46 +11,26 @@ class EventsPage extends StatefulWidget {
 class _EventsPageState extends State<EventsPage> {
   int selectedCategory = 0;
   final categories = ['All', 'Tournaments', 'Festivals', 'Workshops', 'Polls'];
+  List<Map<String, dynamic>> events = [];
+  bool isLoading = true;
 
-  final List<Map<String, dynamic>> events = [
-    {
-      'title': 'Dharmapuri District Cricket Premier League',
-      'venue': 'Harur Government Higher Secondary School Ground',
-      'date': 'Aug 22 - Aug 25, 2026',
-      'time': '7:00 AM onwards',
-      'type': 'Tournaments',
-      'head': 'K. Rajesh (Event Head)',
-      'isPaid': true,
-      'formUrl': 'https://forms.gle/harur-cricket-tournament',
-      'registered': 16,
-      'maxSlots': 24,
-      'color': const Color(0xFF007F63),
-    },
-    {
-      'title': 'Theerthamalai Maha Shivaratri & Temple Ther Festival',
-      'venue': 'Theerthagirishwarar Temple, Theerthamalai',
-      'date': 'Sep 10 - Sep 14, 2026',
-      'time': 'All Day',
-      'type': 'Festivals',
-      'head': 'Harur Devotees Committee',
-      'isPaid': false,
-      'registered': 240,
-      'maxSlots': 500,
-      'color': const Color(0xFFF59E0B),
-    },
-    {
-      'title': 'Organic Paddy Cultivation & Drip Irrigation Workshop',
-      'venue': 'Krishi Vigyan Kendra Hall, Dharmapuri Road',
-      'date': 'Aug 30, 2026',
-      'time': '10:00 AM - 1:00 PM',
-      'type': 'Workshops',
-      'head': 'Dr. S. Ramesh (KVK Scientist)',
-      'isPaid': false,
-      'registered': 45,
-      'maxSlots': 80,
-      'color': const Color(0xFF267AF4),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() => isLoading = true);
+    final category = categories[selectedCategory];
+    final data = await EventsService.fetchEvents(category: category);
+    if (mounted) {
+      setState(() {
+        events = data;
+        isLoading = false;
+      });
+    }
+  }
 
   void _openCreateEventSheet() {
     showModalBottomSheet(
@@ -59,7 +40,7 @@ class _EventsPageState extends State<EventsPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => const _CreateEventSheet(),
+      builder: (ctx) => _CreateEventSheet(onCreated: _loadEvents),
     );
   }
 
@@ -251,7 +232,8 @@ class _EventsPageState extends State<EventsPage> {
 }
 
 class _CreateEventSheet extends StatefulWidget {
-  const _CreateEventSheet();
+  final VoidCallback? onCreated;
+  const _CreateEventSheet({this.onCreated});
 
   @override
   State<_CreateEventSheet> createState() => _CreateEventSheetState();
@@ -262,11 +244,25 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
   final _venueCtrl = TextEditingController();
   final _formCtrl = TextEditingController();
   bool isPaid = false;
+  String selectedType = 'Tournaments';
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _venueCtrl.dispose();
+    _formCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -276,15 +272,12 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
               child: Container(
                 width: 44,
                 height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCE5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFFDCE5E1), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Submit Event or Tournament',
+              'Create Community Event / Tournament',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
             ),
             const SizedBox(height: 4),
@@ -344,11 +337,26 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Event submitted for Admin verification!')),
-                  );
+                onPressed: () async {
+                  final title = _titleCtrl.text.trim();
+                  final venue = _venueCtrl.text.trim();
+                  if (title.isNotEmpty && venue.isNotEmpty) {
+                    await EventsService.createEvent(
+                      title: title,
+                      venue: venue,
+                      type: selectedType,
+                      description: 'Community event organized in Harur.',
+                      isPaid: isPaid,
+                      formUrl: isPaid ? _formCtrl.text.trim() : null,
+                    );
+                    widget.onCreated?.call();
+                  }
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Event submitted for Admin verification!')),
+                    );
+                  }
                 },
                 child: const Text('Submit for Approval', style: TextStyle(fontWeight: FontWeight.w800)),
               ),
