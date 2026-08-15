@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseConfig {
@@ -1078,31 +1080,76 @@ class EmergencyService {
   }
 }
 
-/// Service for Weather
+/// Service for Weather with Automated Live Meteorological API Fetching
 class WeatherService {
   static Future<Map<String, dynamic>> getLatestSnapshot(String locationName) async {
-    final client = SupabaseConfig.client;
-    if (client != null) {
-      try {
-        final response = await client
-            .from('weather_snapshots')
-            .select()
-            .order('observed_at', ascending: false)
-            .limit(1)
-            .maybeSingle();
-        if (response != null) {
-          return response;
+    final isDharmapuri = locationName.toLowerCase().contains('dharmapuri');
+    final double lat = isDharmapuri ? 12.1357 : 12.0624;
+    final double lon = isDharmapuri ? 78.1584 : 78.4983;
+
+    try {
+      final uri = Uri.parse(
+        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&timezone=auto',
+      );
+      final res = await http.get(uri).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final current = data['current'];
+        if (current != null) {
+          final temp = (current['temperature_2m'] as num?)?.toDouble() ?? 32.0;
+          final feelsLike = (current['apparent_temperature'] as num?)?.toDouble() ?? temp;
+          final humidity = (current['relative_humidity_2m'] as num?)?.toInt() ?? 62;
+          final wind = (current['wind_speed_10m'] as num?)?.toDouble() ?? 12.0;
+          final code = (current['weather_code'] as num?)?.toInt() ?? 1;
+
+          String condition = 'Partly Cloudy & Breeze';
+          if (code == 0) {
+            condition = 'Clear Sky & Sunny';
+          } else if (code >= 1 && code <= 3) {
+            condition = 'Partly Cloudy & Breeze';
+          } else if (code == 45 || code == 48) {
+            condition = 'Morning Mist';
+          } else if (code >= 51 && code <= 67) {
+            condition = 'Passing Rain Showers';
+          } else if (code >= 80 && code <= 82) {
+            condition = 'Heavy Monsoon Rain';
+          } else if (code >= 95) {
+            condition = 'Thunderstorm & Lightning';
+          }
+
+          final snapshot = {
+            'temperature_c': temp,
+            'feels_like_c': feelsLike,
+            'condition': condition,
+            'humidity_percent': humidity,
+            'wind_kph': wind,
+            'source_name': isDharmapuri ? 'Dharmapuri Automatic Station' : 'Harur Automatic Station',
+            'observed_at': DateTime.now().toIso8601String(),
+          };
+
+          // Cache in Supabase if connected
+          final client = SupabaseConfig.client;
+          if (client != null) {
+            try {
+              await client.from('weather_snapshots').insert(snapshot);
+            } catch (_) {}
+          }
+
+          return snapshot;
         }
-      } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Live weather fetch notice: $e');
     }
 
+    // Fallback if network offline
     return {
-      'temperature_c': 32.4,
-      'feels_like_c': 35.1,
+      'temperature_c': isDharmapuri ? 33.1 : 32.4,
+      'feels_like_c': isDharmapuri ? 35.8 : 35.1,
       'condition': 'Partly Cloudy & Breeze',
       'humidity_percent': 64,
       'wind_kph': 14.2,
-      'source_name': 'Harur Automatic Weather Station',
+      'source_name': isDharmapuri ? 'Dharmapuri Station' : 'Harur AWS Station',
       'observed_at': DateTime.now().toIso8601String(),
     };
   }

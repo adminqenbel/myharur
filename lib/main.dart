@@ -1,9 +1,11 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'services/supabase_service.dart';
+import 'features/onboarding_page.dart';
 import 'features/phase_two_pages.dart';
 import 'features/marketplace_page.dart';
 import 'features/jobs_page.dart';
@@ -25,7 +27,9 @@ class MyHarurApp extends StatelessWidget {
       title: 'MyHarur',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const TownShell(),
+      home: kIsWeb
+          ? const TownShell()
+          : (AuthService.isAuthenticated ? const TownShell() : const TownOnboardingFlowPage()),
     );
   }
 }
@@ -529,13 +533,13 @@ class TownHeader extends StatelessWidget {
       ],
     );
   }
-}
-
-class LocationPill extends StatelessWidget {
+}class LocationPill extends StatelessWidget {
   const LocationPill({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final locationName = AuthService.currentProfile.wardLocality;
+
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: () => Navigator.of(context).push(
@@ -546,13 +550,13 @@ class LocationPill extends StatelessWidget {
             color: AppTheme.mist,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.line)),
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-          AppIcon('pin', color: AppTheme.green, size: 18),
-          SizedBox(width: 7),
-          Text('Harur, Dharmapuri',
-              style: TextStyle(fontWeight: FontWeight.w800)),
-          SizedBox(width: 5),
-          Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const AppIcon('pin', color: AppTheme.green, size: 18),
+          const SizedBox(width: 7),
+          Text(locationName,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+          const SizedBox(width: 5),
+          const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
         ]),
       ),
     );
@@ -574,7 +578,7 @@ class CategoryRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 98,
+      height: 108,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
@@ -598,18 +602,18 @@ class CategoryRail extends StatelessWidget {
                             : AppTheme.mist),
                     borderRadius: BorderRadius.circular(21)),
                 child: Center(
-                    child: AppIcon(item.$1,
-                        color: index == 0 ? AppTheme.green : AppTheme.ink,
-                        size: 27)),
+                  child: AppIcon(item.$1,
+                      color: index == 0 ? AppTheme.green : AppTheme.ink,
+                      size: 26),
+                ),
               ),
               const SizedBox(height: 8),
               Text(item.$2,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight:
-                          index == 0 ? FontWeight.w800 : FontWeight.w600)),
+                          index == 0 ? FontWeight.w800 : FontWeight.w600,
+                      color: index == 0 ? AppTheme.green : AppTheme.ink))
               ]),
             ),
           );
@@ -617,18 +621,36 @@ class CategoryRail extends StatelessWidget {
       ),
     );
   }
+}
 
-  void _openCategory(BuildContext context, String category) {
-    final page = switch (category) {
-      'news' => const NewsHubPage(),
-      'cloud' => const WeatherHubPage(),
-      'heart' => const EmergencyReportPage(),
-      _ => null,
-    };
-    if (page != null) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-    }
+void _openCategory(BuildContext context, String category) {
+  Widget page;
+  switch (category) {
+    case 'news':
+      page = const NewsHubPage();
+      break;
+    case 'cloud':
+      page = const WeatherHubPage();
+      break;
+    case 'heart':
+      page = const EmergencyReportPage();
+      break;
+    case 'bag':
+      page = const MarketplacePage();
+      break;
+    case 'briefcase':
+      page = const JobsPage();
+      break;
+    case 'calendar':
+      page = const EventsPage();
+      break;
+    case 'chat':
+      page = const TownChatPage();
+      break;
+    default:
+      page = const NewsHubPage();
   }
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
 }
 
 class MiniMapCard extends StatelessWidget {
@@ -636,49 +658,68 @@ class MiniMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 192,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-          color: const Color(0xFFE8F2E9),
-          borderRadius: BorderRadius.circular(28)),
-      child: Stack(children: [
-        Positioned.fill(child: CustomPaint(painter: MapLinesPainter())),
-        Positioned(
-            left: 22,
-            top: 20,
-            child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .9),
-                    borderRadius: BorderRadius.circular(20)),
-                child: const Text('Your local view',
-                    style:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.w800)))),
-        const Positioned(right: 36, bottom: 40, child: _MapMarker()),
-        Positioned(
-            left: 20,
-            right: 20,
-            bottom: 16,
-            child: Container(
-                padding: const EdgeInsets.all(13),
-                decoration: BoxDecoration(
-                    color: const Color(0xFF15211F),
-                    borderRadius: BorderRadius.circular(18)),
-                child: const Row(children: [
-                  AppIcon('pin', color: Colors.white, size: 18),
-                  SizedBox(width: 9),
-                  Expanded(
-                      child: Text(
-                          'Location is used only when you choose to share it.',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600))),
-                  Icon(Icons.chevron_right_rounded, color: Colors.white)
-                ]))),
-      ]),
+    final locationName = AuthService.currentProfile.wardLocality;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(28),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LocationSelectionPage()),
+      ),
+      child: Container(
+        height: 192,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+            color: const Color(0xFFE8F2E9),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFF9DD8C5))),
+        child: Stack(children: [
+          Positioned.fill(child: CustomPaint(painter: MapLinesPainter())),
+          Positioned(
+              left: 22,
+              top: 20,
+              child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .9),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(color: Color(0xFF007F63), shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('Pinned: $locationName',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                    ],
+                  ))),
+          const Positioned(right: 36, bottom: 40, child: _MapMarker()),
+          Positioned(
+              left: 20,
+              right: 20,
+              bottom: 16,
+              child: Container(
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF15211F),
+                      borderRadius: BorderRadius.circular(18)),
+                  child: const Row(children: [
+                    AppIcon('pin', color: Color(0xFF00D09C), size: 18),
+                    SizedBox(width: 9),
+                    Expanded(
+                        child: Text(
+                            'GPS 12.0624° N, 78.4983° E · Tap to re-pin location',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600))),
+                    Icon(Icons.chevron_right_rounded, color: Colors.white)
+                  ]))),
+        ]),
+      ),
     );
   }
 }
@@ -840,18 +881,51 @@ class QuickActions extends StatelessWidget {
 
 class WeatherCards extends StatelessWidget {
   const WeatherCards({super.key});
+
   @override
-  Widget build(BuildContext context) => const Row(children: [
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
         Expanded(
-            child: WeatherCard(
-                place: 'Harur', temperature: '28°', caption: 'Partly cloudy')),
-        SizedBox(width: 12),
+          child: FutureBuilder<Map<String, dynamic>>(
+            future: WeatherService.getLatestSnapshot('Harur'),
+            builder: (context, snapshot) {
+              final temp = snapshot.hasData
+                  ? "${(snapshot.data!['temperature_c'] as num).round()}°"
+                  : "32°";
+              final condition = snapshot.hasData
+                  ? (snapshot.data!['condition'] as String)
+                  : "Partly Cloudy";
+              return WeatherCard(
+                place: 'Harur',
+                temperature: temp,
+                caption: condition,
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 12),
         Expanded(
-            child: WeatherCard(
+          child: FutureBuilder<Map<String, dynamic>>(
+            future: WeatherService.getLatestSnapshot('Dharmapuri'),
+            builder: (context, snapshot) {
+              final temp = snapshot.hasData
+                  ? "${(snapshot.data!['temperature_c'] as num).round()}°"
+                  : "33°";
+              final condition = snapshot.hasData
+                  ? (snapshot.data!['condition'] as String)
+                  : "Sunny & Breeze";
+              return WeatherCard(
                 place: 'Dharmapuri',
-                temperature: '30°',
-                caption: 'Clear skies'))
-      ]);
+                temperature: temp,
+                caption: condition,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class WeatherCard extends StatelessWidget {
@@ -876,6 +950,8 @@ class WeatherCard extends StatelessWidget {
           Text(place, style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 3),
           Text(caption,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 12, color: AppTheme.muted))
         ])),
       );
