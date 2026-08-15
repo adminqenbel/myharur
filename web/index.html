@@ -4,12 +4,31 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
+  <!-- Primary Meta Tags -->
   <title>MyHarur — Digital Town for Harur & Dharmapuri</title>
-  <meta name="description" content="MyHarur is the hyper-local digital town app for Harur, Dharmapuri, and surrounding Tamil Nadu communities. Verified news, weather, emergencies, marketplace, jobs, and community chat.">
-  <meta name="keywords" content="Harur, Dharmapuri, MyHarur, Tamil Nadu, Harur News, Harur Weather, Harur Emergency, Harur Marketplace">
+  <meta name="title" content="MyHarur — Digital Town for Harur & Dharmapuri">
+  <meta name="description" content="MyHarur is the hyper-local digital town platform for Harur, Dharmapuri, and surrounding Tamil Nadu communities. Verified civic news, live agro-weather, emergency SOS beacons, jobs, shop directory, and community chat.">
+  <meta name="keywords" content="Harur, Dharmapuri, MyHarur, Tamil Nadu, Harur News, Harur Weather, Harur Emergency, Harur Marketplace, Theerthamalai, Morappur">
   <meta name="author" content="MyHarur Digital Town">
+  <meta name="application-name" content="MyHarur">
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://myharur-web.onrender.com/">
+  <meta property="og:title" content="MyHarur — Digital Town for Harur & Dharmapuri">
+  <meta property="og:description" content="Hyper-local civic news, real-time weather alerts, emergency SOS dispatch, local jobs, and shop directory for Harur & Dharmapuri.">
+  <meta property="og:image" content="https://myharur-web.onrender.com/favicon.png">
+  <meta property="og:site_name" content="MyHarur">
+  <meta property="og:locale" content="en_IN">
+
+  <!-- Twitter / X -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://myharur-web.onrender.com/">
+  <meta property="twitter:title" content="MyHarur — Digital Town for Harur & Dharmapuri">
+  <meta property="twitter:description" content="Hyper-local civic news, real-time weather alerts, emergency SOS dispatch, local jobs, and shop directory for Harur & Dharmapuri.">
+  <meta property="twitter:image" content="https://myharur-web.onrender.com/favicon.png">
 
   <!-- Google OAuth Client ID -->
   <meta name="google-signin-client_id" content="976428818123-tr1tgub2a690vh7g88s2icpq19smmuvv.apps.googleusercontent.com">
@@ -18,9 +37,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MyHarur">
-  <meta name="theme-color" content="#007F63">
+  <link rel="apple-touch-icon" href="favicon.png">
 
-  <!-- Manifest -->
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#007F63" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15211F" media="(prefers-color-scheme: dark)">
+
+  <!-- Favicon & Manifest -->
+  <link rel="icon" type="image/png" href="favicon.png">
   <link rel="manifest" href="manifest.json">
 
   <!-- Google Fonts for Apple-like Clean Typography -->
@@ -35,10 +59,11 @@
       padding: 0;
       -webkit-font-smoothing: antialiased;
     }
-    body {
-      background-color: #FFFFFF;
+    html, body {
+      background-color: #F8FAF9;
       font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'SF Pro Display', Roboto, sans-serif;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -52,24 +77,25 @@
       transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .brand-icon {
-      width: 76px;
-      height: 76px;
-      background: linear-gradient(135deg, #007F63 0%, #005F4A 100%);
-      border-radius: 24px;
+      width: 78px;
+      height: 78px;
+      background: linear-gradient(135deg, #007F63 0%, #004D3C 100%);
+      border-radius: 26px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 12px 32px rgba(0, 127, 99, 0.28);
+      box-shadow: 0 16px 36px rgba(0, 127, 99, 0.3);
       animation: pulseGlow 2.4s infinite ease-in-out;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
     }
     .brand-icon svg {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       fill: #FFFFFF;
     }
     .brand-title {
       margin-top: 20px;
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 900;
       letter-spacing: -0.8px;
       color: #15211F;
@@ -78,15 +104,15 @@
       margin-top: 4px;
       font-size: 11px;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 2.2px;
       text-transform: uppercase;
-      color: #697570;
+      color: #007F63;
     }
     .spinner-bar {
       margin-top: 28px;
-      width: 48px;
+      width: 52px;
       height: 4px;
-      background-color: #F2F6F5;
+      background-color: #E2ECE8;
       border-radius: 4px;
       overflow: hidden;
       position: relative;
@@ -105,11 +131,11 @@
     @keyframes pulseGlow {
       0%, 100% {
         transform: scale(1);
-        box-shadow: 0 12px 32px rgba(0, 127, 99, 0.28);
+        box-shadow: 0 16px 36px rgba(0, 127, 99, 0.3);
       }
       50% {
-        transform: scale(1.04);
-        box-shadow: 0 16px 40px rgba(0, 127, 99, 0.42);
+        transform: scale(1.05);
+        box-shadow: 0 20px 48px rgba(0, 127, 99, 0.45);
       }
     }
     @keyframes progressSweep {

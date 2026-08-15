@@ -135,7 +135,10 @@ class _TownShellState extends State<TownShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = kIsWeb && screenWidth > 720;
+
+    final scaffold = Scaffold(
       drawer: const TownDrawer(),
       body: SafeArea(
         child: AnimatedSwitcher(
@@ -236,6 +239,103 @@ class _TownShellState extends State<TownShell> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+
+    if (!isWide) {
+      return scaffold;
+    }
+
+    return Container(
+      color: const Color(0xFFEBF1EE),
+      child: Center(
+        child: Column(
+          children: [
+            // Responsive Web Header Banner
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF15211F),
+                border: Border(bottom: BorderSide(color: Color(0xFF00D09C), width: 1.5)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF007F63),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'WEB PREVIEW',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.8,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'MyHarur Digital Town — Harur & Dharmapuri',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => launchUrl(
+                      Uri.parse('download.html'),
+                      mode: LaunchMode.platformDefault,
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFF00D09C),
+                      foregroundColor: const Color(0xFF15211F),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    icon: const Icon(Icons.android_rounded, size: 16),
+                    label: const Text(
+                      'Download Android APK',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Centered App Frame for Desktops
+            Expanded(
+              child: Center(
+                child: Container(
+                  width: 540,
+                  margin: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: const Color(0xFFDCE5E1), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF15211F).withValues(alpha: 0.08),
+                        blurRadius: 36,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: scaffold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

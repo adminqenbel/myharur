@@ -1,10 +1,56 @@
 {
-  "name": "MyHarur",
+  "name": "MyHarur — Digital Town for Harur & Dharmapuri",
   "short_name": "MyHarur",
-  "start_url": ".",
+  "start_url": "./",
+  "id": "com.myharur.app",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#007F63",
-  "description": "Your digital town for Harur and Dharmapuri.",
-  "orientation": "portrait-primary"
+  "description": "Your hyper-local digital town platform for Harur and Dharmapuri. Verified civic news, live agro-weather, emergency SOS beacons, jobs, and community commerce.",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "news", "social", "utilities"],
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS Help",
+      "description": "Trigger panic SOS broadcast in Harur",
+      "url": "./#alerts",
+      "icons": [{ "src": "favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Harur News Feed",
+      "short_name": "News",
+      "description": "Verified civic and agriculture news",
+      "url": "./#explore",
+      "icons": [{ "src": "favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live Weather",
+      "short_name": "Weather",
+      "description": "Harur & Dharmapuri meteorological forecast",
+      "url": "./#home",
+      "icons": [{ "src": "favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Town Directory & Shops",
+      "short_name": "Shops",
+      "description": "Local verified businesses in Harur Bazaar",
+      "url": "./#explore",
+      "icons": [{ "src": "favicon.png", "sizes": "192x192" }]
+    }
+  ]
 }
