@@ -1,20 +1,7 @@
 # Multi-stage Dockerfile for MyHarur Flutter Web
 
-# Stage 1: Build Flutter Web Release
-FROM debian:bookworm-slim AS build-stage
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    git \
-    unzip \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Clone Flutter stable SDK
-RUN git clone https://github.com/flutter/flutter.git --depth 1 -b stable /usr/local/flutter
-ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
-
-RUN flutter doctor -v
+# Stage 1: Build Flutter Web Release with pre-configured official Flutter image
+FROM ghcr.io/cirruslabs/flutter:stable AS build-stage
 
 WORKDIR /app
 COPY pubspec.yaml pubspec.lock ./
