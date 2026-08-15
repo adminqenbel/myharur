@@ -41,8 +41,173 @@ class MyHarurApp extends StatelessWidget {
           // does not gate on login. Android/iOS require real auth via
           // AuthService.isAuthenticated.
           : (kIsWeb
-              ? const TownShell()
+              ? const WebDownloadLandingPage()
               : (AuthService.isAuthenticated ? const TownShell() : const TownOnboardingFlowPage())),
+    );
+  }
+}
+
+/// Dedicated web landing page displaying the APK download portal and town overview.
+class WebDownloadLandingPage extends StatelessWidget {
+  const WebDownloadLandingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF070B0A),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: const Color(0xFF121C19).withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    blurRadius: 48,
+                    offset: const Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00D09C).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.circle, color: Color(0xFF00D09C), size: 8),
+                        SizedBox(width: 8),
+                        Text(
+                          'OFFICIAL ANDROID RELEASE',
+                          style: TextStyle(
+                            color: Color(0xFF00D09C),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'MyHarur App',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'The trusted digital-town app for Harur & Dharmapuri district, Tamil Nadu.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF8E9F98), fontSize: 13, height: 1.4),
+                  ),
+                  const SizedBox(height: 24),
+                  // Meta pills
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    children: const [
+                      _MetaCard(label: 'VERSION', value: 'v0.2.0 (Latest)'),
+                      _MetaCard(label: 'PACKAGE', value: 'Universal APK'),
+                      _MetaCard(label: 'COMPATIBILITY', value: 'Android 6.0+'),
+                      _MetaCard(label: 'SECURITY', value: '✓ Verified Build'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Download button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00D09C),
+                        foregroundColor: const Color(0xFF070B0A),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        elevation: 6,
+                      ),
+                      icon: const Icon(Icons.download_for_offline_rounded, size: 24),
+                      label: const Text(
+                        'DOWNLOAD OFFICIAL APK',
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.3),
+                      ),
+                      onPressed: () => launchAppUrl('https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      icon: const Icon(Icons.file_download_outlined, size: 18),
+                      label: const Text('Download Mirror Build (app-release.apk)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      onPressed: () => launchAppUrl('https://github.com/adminqenbel/myharur/releases/latest/download/app-release.apk'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: const Color(0xFF8E9F98)),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: const Text('Browse All Releases on GitHub ↗', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    onPressed: () => launchAppUrl('https://github.com/adminqenbel/myharur/releases'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaCard extends StatelessWidget {
+  final String label;
+  final String value;
+  const _MetaCard({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF54655E), fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(fontSize: 12, color: Color(0xFFF2FBF8), fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+        ],
+      ),
     );
   }
 }
