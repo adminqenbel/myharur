@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'services/supabase_service.dart';
 import 'features/phase_two_pages.dart';
 import 'features/marketplace_page.dart';
 import 'features/jobs_page.dart';
@@ -80,62 +82,103 @@ class _TownShellState extends State<TownShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const TownDrawer(),
-      body: SafeArea(child: pages[selected]),
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          switchInCurve: Curves.easeInOutCubic,
+          switchOutCurve: Curves.easeInOutCubic,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.04, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: KeyedSubtree(
+            key: ValueKey<int>(selected),
+            child: pages[selected],
+          ),
+        ),
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 14),
-          child: Container(
-            height: 76,
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .94),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
-              borderRadius: BorderRadius.circular(38),
-              boxShadow: const [
-                BoxShadow(
-                    color: Color(0x140F2922),
-                    blurRadius: 26,
-                    offset: Offset(0, 8))
-              ],
-            ),
-            child: Row(
-              children: List.generate(labels.length, (index) {
-                final active = selected == index;
-                return Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(28),
-                    onTap: () => setState(() => selected = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: active
-                            ? const Color(0xFFE9F6F1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AppIcon(icons[index],
-                              color: active ? AppTheme.green : AppTheme.ink,
-                              size: 22),
-                          const SizedBox(height: 3),
-                          Text(labels[index],
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: active
-                                      ? FontWeight.w800
-                                      : FontWeight.w600,
-                                  color:
-                                      active ? AppTheme.green : AppTheme.ink)),
-                        ],
-                      ),
+          padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(38),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                height: 76,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.35)),
+                  borderRadius: BorderRadius.circular(38),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF007F63).withValues(alpha: 0.16),
+                      blurRadius: 28,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
-                );
-              }),
+                  ],
+                ),
+                child: Row(
+                  children: List.generate(labels.length, (index) {
+                    final active = selected == index;
+                    return Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(28),
+                        onTap: () => setState(() => selected = index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOut,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? const Color(0xFF007F63)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: active
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF007F63).withValues(alpha: 0.35),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AppIcon(
+                                icons[index],
+                                color: active ? Colors.white : AppTheme.ink,
+                                size: 22,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                labels[index],
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+                                  color: active ? Colors.white : AppTheme.ink,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),
@@ -1054,72 +1097,159 @@ class _AlertAction extends StatelessWidget {
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
+  Widget build(BuildContext context) {
+    final profile = AuthService.currentProfile;
+    final isLoggedIn = AuthService.isAuthenticated;
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const TownHeader(showSearch: false),
-        const SizedBox(height: 30),
-        const Row(children: [
-          CircleAvatar(
-              radius: 31,
-              backgroundColor: Color(0xFFE9F6F1),
-              child: AppIcon('user', color: AppTheme.green, size: 30)),
-          SizedBox(width: 14),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Welcome to MyHarur',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-            SizedBox(height: 3),
-            Text('Sign in to personalise your town',
-                style: TextStyle(color: AppTheme.muted))
-          ])
-        ]),
-        const SizedBox(height: 25),
-        InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AuthPage())),
-          child: const SoftCard(
-              child: Row(children: [
-            AppIcon('shield', color: AppTheme.green, size: 22),
-            SizedBox(width: 12),
-            Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TownHeader(showSearch: false),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9F6F1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF9DD8C5), width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'H',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF007F63)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text('Account security & Sign In',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                  SizedBox(height: 3),
-                  Text('Google OAuth, Staff Argon2id & MFA',
-                      style: TextStyle(fontSize: 12, color: AppTheme.muted))
-                ])),
-            Icon(Icons.chevron_right_rounded)
-          ])),
-        ),
-        const SizedBox(height: 28),
-        const SectionHeader(label: 'YOUR MYHARUR'),
-        const SizedBox(height: 12),
-        const AccountRows(),
-        const SizedBox(height: 28),
-        const SectionHeader(label: 'SUPPORT'),
-        const SizedBox(height: 12),
-        InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EmergencyReportPage())),
-          child: const SoftCard(
-              child: Row(children: [
-            AppIcon('chat', color: AppTheme.blue, size: 22),
-            SizedBox(width: 12),
-            Expanded(
-                child: Text('Chat with support',
-                    style: TextStyle(fontWeight: FontWeight.w800))),
-            Icon(Icons.chevron_right_rounded)
-          ])),
-        ),
-        const SizedBox(height: 32),
-        const QenbelBrandBadge(),
-        const SizedBox(height: 12),
-      ]));
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.fullName,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF007F63),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            profile.role.toUpperCase(),
+                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'MMID: ${profile.mmid}',
+                          style: const TextStyle(color: Color(0xFF697570), fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AuthPage()),
+            ),
+            child: SoftCard(
+              child: Row(
+                children: [
+                  const AppIcon('shield', color: AppTheme.green, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isLoggedIn ? 'Edit Personal Details & Security' : 'Sign In / Register MMID',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          isLoggedIn ? '${profile.wardLocality} • ${profile.bloodGroup}' : 'Google OAuth, Password & MMID generation',
+                          style: const TextStyle(fontSize: 12, color: AppTheme.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          const SectionHeader(label: 'TOWN SERVICES & RECOVERY'),
+          const SizedBox(height: 12),
+          const AccountRows(),
+          const SizedBox(height: 28),
+          const SectionHeader(label: 'ADMINISTRATION & SUPPORT'),
+          const SizedBox(height: 12),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+            ),
+            child: const SoftCard(
+              child: Row(
+                children: [
+                  AppIcon('shield', color: AppTheme.red, size: 22),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('SuperAdmin Governance Console', style: TextStyle(fontWeight: FontWeight.w800)),
+                        SizedBox(height: 2),
+                        Text('Passkey protected moderation & consensus', style: TextStyle(fontSize: 12, color: AppTheme.muted)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const EmergencyReportPage()),
+            ),
+            child: const SoftCard(
+              child: Row(
+                children: [
+                  AppIcon('heart', color: AppTheme.green, size: 22),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Emergency SOS & Hotlines', style: TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                  Icon(Icons.chevron_right_rounded),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          const QenbelBrandBadge(),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
 }
 
 class AccountRows extends StatelessWidget {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
 
 class TownChatPage extends StatefulWidget {
   const TownChatPage({super.key});
@@ -8,168 +9,253 @@ class TownChatPage extends StatefulWidget {
 }
 
 class _TownChatPageState extends State<TownChatPage> {
-  int selectedRoom = 0;
-  final rooms = [
-    {'name': 'Public Town Chat', 'type': 'public', 'icon': 'chat', 'color': const Color(0xFF007F63)},
-    {'name': 'Government & Collector Updates', 'type': 'gov', 'icon': 'news', 'color': const Color(0xFF267AF4)},
-    {'name': 'Cricket Tournament (Event Room)', 'type': 'event', 'icon': 'calendar', 'color': const Color(0xFFF59E0B)},
-  ];
-
-  final List<Map<String, dynamic>> messages = [
+  int selectedRoomIndex = 0;
+  final List<Map<String, dynamic>> rooms = [
     {
-      'sender': 'Muthuvel K.',
-      'mmid': '20260814-4821',
-      'role': 'Resident',
-      'text': 'Good morning everyone! Is the water supply scheduled for Ward 4 today?',
-      'time': '9:15 AM',
-      'isGov': false,
+      'id': 'public_town',
+      'name': 'Public Town Chat',
+      'icon': Icons.forum_rounded,
+      'onlineCount': 148,
+      'color': const Color(0xFF007F63),
     },
     {
-      'sender': 'Panchayat Officer',
-      'mmid': 'AID-HR-0012',
-      'role': 'Government Official',
-      'text': '@Muthuvel Yes, overhead tank pumping will begin at 10:30 AM across Wards 4 and 5.',
-      'time': '9:18 AM',
-      'isGov': true,
+      'id': 'gov_official',
+      'name': 'Govt & Collector Notices',
+      'icon': Icons.campaign_rounded,
+      'onlineCount': 42,
+      'color': const Color(0xFF267AF4),
     },
     {
-      'sender': 'Selvam Agro',
-      'mmid': '20260814-1109',
-      'role': 'Shop Admin',
-      'text': 'Fresh bio-fertilizer stock arrived at Bazaar shop. 15% discount for local farmers today.',
-      'time': '9:42 AM',
-      'isGov': false,
+      'id': 'farmer_agri',
+      'name': 'Farmer & KVK Advisory',
+      'icon': Icons.agriculture_rounded,
+      'onlineCount': 86,
+      'color': const Color(0xFFF59E0B),
+    },
+    {
+      'id': 'sports_events',
+      'name': 'Sports & Festivals',
+      'icon': Icons.sports_cricket_rounded,
+      'onlineCount': 64,
+      'color': const Color(0xFFE44545),
     },
   ];
 
-  final _textCtrl = TextEditingController();
+  List<Map<String, dynamic>> messages = [];
+  bool isLoading = true;
+  final TextEditingController _textCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
 
-  void _sendMessage() {
-    if (_textCtrl.text.trim().isEmpty) return;
-    setState(() {
-      messages.add({
-        'sender': 'You (Resident)',
-        'mmid': '20260814-8890',
-        'role': 'Resident',
-        'text': _textCtrl.text.trim(),
-        'time': 'Now',
-        'isGov': false,
+  final quickReactions = ['🙏 Vanakkam', '🌾 Agri Update', '📢 Announcement', '🚨 Emergency SOS', '👍 Agreed'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+  }
+
+  @override
+  void dispose() {
+    _textCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    setState(() => isLoading = true);
+    final room = rooms[selectedRoomIndex]['id'] as String;
+    final data = await ChatService.fetchMessages(room);
+    if (mounted) {
+      setState(() {
+        messages = data;
+        isLoading = false;
       });
-      _textCtrl.clear();
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
+  }
+
+  Future<void> _sendMessage({String? customText, String? attachment}) async {
+    final text = customText ?? _textCtrl.text.trim();
+    if (text.isEmpty && attachment == null) return;
+
+    final room = rooms[selectedRoomIndex]['id'] as String;
+    final myProfile = AuthService.currentProfile;
+
+    final newMsg = {
+      'id': 'msg-${DateTime.now().millisecondsSinceEpoch}',
+      'sender_name': myProfile.fullName,
+      'sender_mmid': myProfile.mmid,
+      'sender_role': myProfile.role.toUpperCase(),
+      'text': text,
+      'attachment_url': attachment,
+      'created_at': DateTime.now().toIso8601String(),
+      'is_official': myProfile.role == 'admin' || myProfile.role == 'superadmin',
+      'is_me': true,
+    };
+
+    setState(() {
+      messages.add(newMsg);
+    });
+    if (customText == null) _textCtrl.clear();
+    _scrollToBottom();
+
+    await ChatService.sendMessage(
+      roomName: room,
+      text: text,
+      attachmentUrl: attachment,
+    );
+  }
+
+  void _shareLocation() {
+    _sendMessage(
+      customText: '📍 Shared Location: Harur Town Bus Stand Junction (12.0624° N, 78.4983° E)',
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Location shared in town chat.')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentRoom = rooms[selectedRoom];
+    final currentRoom = rooms[selectedRoomIndex];
+    final myProfile = AuthService.currentProfile;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF6F8F7),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        scrolledUnderElevation: 1,
+        titleSpacing: 0,
+        title: Row(
           children: [
-            Text(
-              currentRoom['name'] as String,
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF15211F)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (currentRoom['color'] as Color).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(currentRoom['icon'] as IconData, color: currentRoom['color'] as Color, size: 20),
             ),
-            const Text(
-              'Super Admin Supervised · Anti-Abuse Protected',
-              style: TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    currentRoom['name'] as String,
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF15211F)),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(color: Color(0xFF00D09C), shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${currentRoom['onlineCount']} online • MMID Verified',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 18),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Room switcher strip
+            // Channel Switcher Tabs
             Container(
               height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: const Color(0xFFF2F6F5),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              color: Colors.white,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: rooms.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, i) {
-                  final active = selectedRoom == i;
+                  final active = selectedRoomIndex == i;
                   return ChoiceChip(
                     label: Text(rooms[i]['name'] as String),
                     selected: active,
-                    onSelected: (_) => setState(() => selectedRoom = i),
+                    onSelected: (_) {
+                      setState(() => selectedRoomIndex = i);
+                      _loadMessages();
+                    },
                     selectedColor: const Color(0xFF007F63),
-                    backgroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFF2F6F5),
                     labelStyle: TextStyle(
                       color: active ? Colors.white : const Color(0xFF15211F),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 12,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    side: BorderSide(
+                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                    ),
                   );
                 },
               ),
             ),
 
-            // Messages Stream
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(18),
-                itemCount: messages.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, i) {
-                  final msg = messages[i];
-                  final isGov = msg['isGov'] == true;
+            const Divider(height: 1, color: Color(0xFFE2EBE8)),
 
-                  return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isGov ? const Color(0xFFE9F6F1) : const Color(0xFFF9FBFA),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: isGov ? const Color(0xFF9DD8C5) : const Color(0xFFE2EBE8)),
+            // Real-Time Chat Message Stream
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF007F63)))
+                  : ListView.builder(
+                      controller: _scrollCtrl,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      itemCount: messages.length,
+                      itemBuilder: (context, i) {
+                        final msg = messages[i];
+                        final isMe = msg['is_me'] == true || msg['sender_mmid'] == myProfile.mmid;
+                        final isOfficial = msg['is_official'] == true || msg['sender_role'] == 'GOVERNMENT OFFICIAL' || msg['sender_role'] == 'SUPERADMIN';
+
+                        return _buildChatBubble(msg, isMe, isOfficial);
+                      },
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              msg['sender'],
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF15211F)),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isGov ? const Color(0xFF007F63) : const Color(0xFF697570),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                msg['role'],
-                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              msg['time'],
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF697570), fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          msg['text'],
-                          style: const TextStyle(fontSize: 14, height: 1.35, color: Color(0xFF15211F)),
-                        ),
-                      ],
-                    ),
+            ),
+
+            // Quick Reaction Chips
+            Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              color: Colors.white,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: quickReactions.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                itemBuilder: (context, i) {
+                  return ActionChip(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    backgroundColor: const Color(0xFFF2F6F5),
+                    label: Text(quickReactions[i], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15211F))),
+                    onPressed: () => _sendMessage(customText: quickReactions[i]),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side: const BorderSide(color: Color(0xFFDCE5E1)),
                   );
                 },
               ),
@@ -177,15 +263,21 @@ class _TownChatPageState extends State<TownChatPage> {
 
             // Input Bar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFDCE5E1))),
+                border: Border(top: BorderSide(color: Color(0xFFE2EBE8))),
               ),
               child: Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.pin_drop_rounded, color: Color(0xFF007F63), size: 22),
+                    tooltip: 'Share Landmark / Location',
+                    onPressed: _shareLocation,
+                  ),
                   Expanded(
                     child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF2F6F5),
                         borderRadius: BorderRadius.circular(24),
@@ -193,12 +285,16 @@ class _TownChatPageState extends State<TownChatPage> {
                       ),
                       child: TextField(
                         controller: _textCtrl,
+                        minLines: 1,
+                        maxLines: 4,
                         decoration: const InputDecoration(
-                          hintText: 'Type message or @username to tag...',
+                          hintText: 'Message Harur neighbours...',
                           hintStyle: TextStyle(color: Color(0xFF697570), fontSize: 13),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
                         ),
+                        onSubmitted: (_) => _sendMessage(),
                       ),
                     ),
                   ),
@@ -209,8 +305,8 @@ class _TownChatPageState extends State<TownChatPage> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                      onPressed: _sendMessage,
+                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                      onPressed: () => _sendMessage(),
                     ),
                   ),
                 ],
@@ -218,6 +314,127 @@ class _TownChatPageState extends State<TownChatPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildChatBubble(Map<String, dynamic> msg, bool isMe, bool isOfficial) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isMe) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: isOfficial ? const Color(0xFF007F63) : const Color(0xFFE0EAE6),
+              child: Text(
+                msg['sender_name'] != null && msg['sender_name'].toString().isNotEmpty
+                    ? msg['sender_name'][0].toUpperCase()
+                    : 'R',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: isOfficial ? Colors.white : const Color(0xFF007F63),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isMe
+                    ? const Color(0xFF0E261F)
+                    : (isOfficial ? const Color(0xFFE9F6F1) : Colors.white),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isMe ? 20 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 20),
+                ),
+                border: Border.all(
+                  color: isMe
+                      ? const Color(0xFF00D09C).withValues(alpha: 0.3)
+                      : (isOfficial ? const Color(0xFF81C784) : const Color(0xFFE2EBE8)),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  if (!isMe) ...[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          msg['sender_name'] ?? 'Resident',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF15211F),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: isOfficial ? const Color(0xFF007F63) : const Color(0xFFE2EBE8),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            msg['sender_role'] ?? 'RESIDENT',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w900,
+                              color: isOfficial ? Colors.white : const Color(0xFF52615B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  Text(
+                    msg['text'] ?? '',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.35,
+                      color: isMe ? Colors.white : const Color(0xFF15211F),
+                      fontWeight: isMe ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Just now',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isMe ? const Color(0xFF8E9F98) : const Color(0xFF9EAEA8),
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 4),
+                        const Icon(Icons.done_all_rounded, size: 14, color: Color(0xFF00D09C)),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isMe) const SizedBox(width: 8),
+        ],
       ),
     );
   }
