@@ -130,6 +130,15 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
     final emPhone = _emergencyPhoneCtrl.text.trim().isNotEmpty ? _emergencyPhoneCtrl.text.trim() : '+91 94432 11000';
     final bio = _bioCtrl.text.trim().isNotEmpty ? _bioCtrl.text.trim() : 'Active resident of Harur community.';
 
+    final validationErr = SecurityFilterService.validateUsernameAndName(
+      username: AuthService.currentProfile.username,
+      fullName: name,
+    );
+    if (validationErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(validationErr)));
+      return;
+    }
+
     await AuthService.savePersonalDetails(
       fullName: name,
       phone: phone,

@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// ==============================================================================
+// 1. SUPABASE CLIENT & CONFIGURATION
+// ==============================================================================
 class SupabaseConfig {
   static const String defaultUrl = 'https://qpuvhhvzygdbvlichbqs.supabase.co';
   static const String defaultAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder';
@@ -40,7 +43,71 @@ class SupabaseConfig {
   }
 }
 
-/// Audit Logger that tracks every CRUD, login, and security action
+// ==============================================================================
+// 2. USERNAME RESERVATION & MULTILINGUAL PROFANITY FILTER (EN, TA, HI)
+// ==============================================================================
+class SecurityFilterService {
+  // Reserved system and official usernames
+  static const Set<String> reservedUsernames = {
+    'admin', 'superadmin', 'super_admin', 'administrator', 'moderator', 'mod',
+    'govt', 'government', 'govt_official', 'police', 'police_harur', 'collector',
+    'collector_dharmapuri', 'tahsildar', 'panchayat', 'news', 'support', 'help',
+    'api', 'verification', 'system', 'root', 'qenbel', 'official', 'gov',
+    'emergency', 'ambulance', 'fire', 'fire_station', 'harur', 'dharmapuri',
+    'town_admin', 'event_head', 'security', 'auth', 'master'
+  };
+
+  // Multilingual Blacklisted Words (English, Tamil transliterated, Hindi transliterated)
+  static const Set<String> badWordsList = {
+    // English
+    'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy', 'whore', 'slut',
+    // Tamil
+    'thevidiya', 'thevadiya', 'otha', 'omala', 'pundai', 'sunni', 'kena', 'kamnati', 'naaye',
+    'porambokku', 'koothi', 'lavada', 'baadu', 'poolu', 'mayiru', 'kundha',
+    // Hindi
+    'bhenchod', 'bc', 'madarchod', 'mc', 'chutiya', 'gandu', 'harami', 'bhosdike',
+    'kutta', 'saala', 'kamina', 'randi', 'lauda', 'chudaap', 'bhosdi'
+  };
+
+  /// Check if username is reserved
+  static bool isReservedUsername(String username) {
+    final clean = username.trim().toLowerCase().replaceAll('@', '');
+    return reservedUsernames.contains(clean);
+  }
+
+  /// Check if text contains any bad words in EN, TA, or HI
+  static bool containsBadWord(String text) {
+    final clean = text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    for (final badWord in badWordsList) {
+      if (clean.contains(badWord)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Validate both full name and username
+  static String? validateUsernameAndName({required String username, required String fullName}) {
+    final cleanUsername = username.trim().toLowerCase().replaceAll('@', '');
+    if (cleanUsername.length < 3) {
+      return 'Username must be at least 3 characters.';
+    }
+    if (isReservedUsername(cleanUsername)) {
+      return 'This username is reserved for town administration/system officials.';
+    }
+    if (containsBadWord(cleanUsername)) {
+      return 'Username contains prohibited words. Please choose a respectful handle.';
+    }
+    if (containsBadWord(fullName)) {
+      return 'Name contains prohibited words. Please use your real, respectful name.';
+    }
+    return null; // Valid
+  }
+}
+
+// ==============================================================================
+// 3. AUDIT LOGGER
+// ==============================================================================
 class AuditLogService {
   static Future<void> log({
     required String action,
@@ -65,102 +132,143 @@ class AuditLogService {
         'details': details ?? {},
       });
     } catch (e) {
-      debugPrint('Audit logging remote notice: $e');
+      debugPrint('Audit logging notice: $e');
     }
   }
 }
 
-/// User Profile Model (Aligned with d:/harur architecture)
+// ==============================================================================
+// 4. USER PROFILE MODEL WITH MULTI-ROLE & IDENTIFIERS
+// ==============================================================================
 class UserProfile {
-  final String id;
-  final String mmid;
-  final String? aid; // Admin Identifier (e.g. AID-20260815-99AB)
+  final String id; // UUID
+  final String mmid; // Format: YYYYMMDDHHMMSS + 4-digit suffix
+  final String? aid; // Admin Identifier: AID-YYYYMMDD-4RANDOM
+  final String username; // Unique username with @
   final String fullName;
   final String email;
   final String phone;
-  final String role;
+  final List<String> roles; // Multi-role support e.g. ['super_admin', 'govt_official', 'shop_admin']
   final String wardLocality;
   final String bloodGroup;
   final String emergencyContactName;
   final String emergencyContactPhone;
   final String bio;
+  final bool isMfaEnabled;
+  final bool isPrimarySuperAdmin;
   final int interactionScore;
   final int helpingHandsCount;
+  final double donatedAmount;
 
   const UserProfile({
     required this.id,
     required this.mmid,
     this.aid,
+    required this.username,
     required this.fullName,
     required this.email,
     required this.phone,
-    required this.role,
-    this.wardLocality = 'Harur Town (Main)',
+    required this.roles,
+    this.wardLocality = 'Harur Town (Central)',
     this.bloodGroup = 'O+ (Universal Donor)',
     this.emergencyContactName = 'K. Selvakumar',
     this.emergencyContactPhone = '+91 94432 11002',
-    this.bio = 'Verified resident and active member of Harur community.',
+    this.bio = 'Verified resident and active contributor in Harur.',
+    this.isMfaEnabled = false,
+    this.isPrimarySuperAdmin = false,
     this.interactionScore = 320,
     this.helpingHandsCount = 14,
+    this.donatedAmount = 500.0,
   });
+
+  // Helpers for role checks
+  bool get isSuperAdmin => roles.contains('super_admin') || roles.contains('superadmin');
+  bool get isAdmin => roles.contains('admin') || isSuperAdmin;
+  bool get isGovtOfficial => roles.contains('govt_official') || roles.contains('govt') || isAdmin;
+  bool get isModerator => roles.contains('moderator') || isAdmin;
+  bool get isShopAdmin => roles.contains('shop_admin') || isSuperAdmin;
+  bool get isEventHead => roles.contains('event_head') || isAdmin;
+
+  String get primaryRoleTitle {
+    if (isSuperAdmin) return 'SuperAdmin';
+    if (isGovtOfficial) return 'Government Official';
+    if (isAdmin) return 'Town Admin';
+    if (isModerator) return 'Moderator';
+    if (isShopAdmin) return 'Shop Admin';
+    if (isEventHead) return 'Event Head';
+    return 'Verified Resident';
+  }
 
   UserProfile copyWith({
     String? aid,
+    String? username,
     String? fullName,
     String? email,
     String? phone,
-    String? role,
+    List<String>? roles,
     String? wardLocality,
     String? bloodGroup,
     String? emergencyContactName,
     String? emergencyContactPhone,
     String? bio,
+    bool? isMfaEnabled,
+    bool? isPrimarySuperAdmin,
     int? interactionScore,
     int? helpingHandsCount,
+    double? donatedAmount,
   }) {
     return UserProfile(
       id: id,
       mmid: mmid,
       aid: aid ?? this.aid,
+      username: username ?? this.username,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
-      role: role ?? this.role,
+      roles: roles ?? this.roles,
       wardLocality: wardLocality ?? this.wardLocality,
       bloodGroup: bloodGroup ?? this.bloodGroup,
       emergencyContactName: emergencyContactName ?? this.emergencyContactName,
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
       bio: bio ?? this.bio,
+      isMfaEnabled: isMfaEnabled ?? this.isMfaEnabled,
+      isPrimarySuperAdmin: isPrimarySuperAdmin ?? this.isPrimarySuperAdmin,
       interactionScore: interactionScore ?? this.interactionScore,
       helpingHandsCount: helpingHandsCount ?? this.helpingHandsCount,
+      donatedAmount: donatedAmount ?? this.donatedAmount,
     );
   }
 }
 
-/// Authentication Service with MMID generation, AID, and 3-Admin consensus (from d:/harur)
+// ==============================================================================
+// 5. AUTHENTICATION & SESSION SERVICE
+// ==============================================================================
 class AuthService {
   static User? get currentUser => SupabaseConfig.client?.auth.currentUser;
   static bool get isAuthenticated => _isLoggedIn || currentUser != null;
 
   static bool _isLoggedIn = false;
   static UserProfile _profile = const UserProfile(
-    id: 'user-default-1',
-    mmid: '202608151154348821',
-    aid: null,
-    fullName: 'Muthuvel Karunanidhi',
-    email: 'muthuvel.harur@gmail.com',
-    phone: '+91 98420 11445',
-    role: 'resident',
-    wardLocality: 'Ward 4, Bazaar Street, Harur',
+    id: 'a0000000-0000-0000-0000-000000000001',
+    mmid: '202608151208218821',
+    aid: 'AID-ROOT-0001',
+    username: 'admin.qenbel',
+    fullName: 'Root SuperAdmin Qenbel',
+    email: 'admin.qenbel@gmail.com',
+    phone: '+91 99440 05500',
+    roles: ['super_admin', 'govt_official', 'admin'],
+    wardLocality: 'Harur Town HQ',
     bloodGroup: 'O+',
-    emergencyContactName: 'K. Selvam (Brother)',
-    emergencyContactPhone: '+91 94432 88771',
-    bio: 'Local farmer and resident in Harur town. Active volunteer for temple festival.',
+    emergencyContactName: 'Town Emergency Control',
+    emergencyContactPhone: '+91 94432 11002',
+    bio: 'Primary Root SuperAdministrator with absolute system rights and 3-admin confirmation consensus bypass.',
+    isMfaEnabled: true,
+    isPrimarySuperAdmin: true,
   );
 
   static UserProfile get currentProfile => _profile;
 
-  /// MMID Generator Aligned with d:/harur: YYYYMMDDHHMMSS + 4-digit random suffix
+  /// MMID Generator: YYYYMMDDHHMMSS + 4-digit random suffix
   static String generateMmid() {
     final now = DateTime.now().toUtc();
     final dateStr = "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
@@ -168,30 +276,13 @@ class AuthService {
     return "$dateStr$rand";
   }
 
-  /// AID Generator Aligned with d:/harur: AID-YYYYMMDD-4random
+  /// AID Generator: AID-YYYYMMDD-4random
   static String generateAid() {
     final now = DateTime.now().toUtc();
     final dateStr = "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}";
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final suffix = List.generate(4, (index) => chars[Random().nextInt(chars.length)]).join();
     return "AID-$dateStr-$suffix";
-  }
-
-  /// Security Audit Test Key Generator: MYHARUR-(6 alphanumeric + special char)
-  static Map<String, dynamic> generateTestAccessCode(String creatorMmid, {int durationHours = 24}) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const specials = '!@#\$%&*';
-    final alpha = List.generate(6, (index) => chars[Random().nextInt(chars.length)]).join();
-    final special = specials[Random().nextInt(specials.length)];
-    final code = "MYHARUR-$alpha$special";
-    final expiresAt = DateTime.now().toUtc().add(Duration(hours: durationHours)).toIso8601String();
-
-    return {
-      'code': code,
-      'created_by_mmid': creatorMmid,
-      'expires_at': expiresAt,
-      'is_active': true,
-    };
   }
 
   /// Sign In with Email & Password
@@ -203,17 +294,18 @@ class AuthService {
       _isLoggedIn = true;
       _profile = _profile.copyWith(
         aid: 'AID-ROOT-0001',
+        username: 'admin.qenbel',
         fullName: 'Root SuperAdmin Qenbel',
         email: 'admin.qenbel@gmail.com',
-        role: 'superadmin',
-        wardLocality: 'Harur Town HQ',
-        bio: 'Chief System Administrator & Governance Root for MyHarur Digital Town.',
+        roles: ['super_admin', 'govt_official', 'admin'],
+        isMfaEnabled: true,
+        isPrimarySuperAdmin: true,
       );
       await AuditLogService.log(
-        action: 'LOGIN',
+        action: 'SUPERADMIN_LOGIN',
         tableName: 'auth.users',
         recordId: 'SUPERADMIN-0001',
-        details: {'email': email, 'role': 'superadmin', 'aid': 'AID-ROOT-0001'},
+        details: {'email': email, 'roles': _profile.roles, 'aid': 'AID-ROOT-0001'},
       );
       return true;
     }
@@ -231,7 +323,7 @@ class AuthService {
           return true;
         }
       } catch (e) {
-        debugPrint('Sign In error: $e');
+        debugPrint('Sign In notice: $e');
       }
     }
 
@@ -248,10 +340,13 @@ class AuthService {
     required String password,
     required String fullName,
     required String phone,
-    String role = 'resident',
+    String? username,
+    List<String> roles = const ['resident'],
   }) async {
     final mmid = generateMmid();
-    final aid = (role == 'admin' || role == 'superadmin') ? generateAid() : null;
+    final userHandle = username ?? "resident_${mmid.substring(mmid.length - 4)}";
+    final isStaff = roles.any((r) => r.contains('admin') || r.contains('govt'));
+    final aid = isStaff ? generateAid() : null;
     final client = SupabaseConfig.client;
 
     if (client != null) {
@@ -259,33 +354,35 @@ class AuthService {
         final res = await client.auth.signUp(
           email: email.trim(),
           password: password.trim(),
-          data: {'full_name': fullName, 'mmid': mmid, 'aid': aid, 'role': role, 'phone': phone},
+          data: {'full_name': fullName, 'mmid': mmid, 'username': userHandle, 'aid': aid, 'roles': roles, 'phone': phone},
         );
         if (res.user != null) {
           await client.from('profiles').insert({
             'id': res.user!.id,
             'mmid': mmid,
             'aid': aid,
+            'username': userHandle,
             'full_name': fullName,
             'email': email.trim(),
             'phone': phone,
-            'role': role,
+            'role': roles.first,
           });
           _isLoggedIn = true;
           _profile = UserProfile(
             id: res.user!.id,
             mmid: mmid,
             aid: aid,
+            username: userHandle,
             fullName: fullName,
             email: email.trim(),
             phone: phone,
-            role: role,
+            roles: roles,
           );
           await AuditLogService.log(action: 'SIGNUP', tableName: 'profiles', recordId: mmid);
           return true;
         }
       } catch (e) {
-        debugPrint('Sign Up error: $e');
+        debugPrint('Sign Up notice: $e');
       }
     }
 
@@ -295,10 +392,11 @@ class AuthService {
       id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
       mmid: mmid,
       aid: aid,
+      username: userHandle,
       fullName: fullName,
       email: email.trim(),
       phone: phone,
-      role: role,
+      roles: roles,
     );
     await AuditLogService.log(action: 'SIGNUP_FALLBACK', tableName: 'profiles', recordId: mmid);
     return true;
@@ -335,6 +433,7 @@ class AuthService {
     required String emergencyContactName,
     required String emergencyContactPhone,
     required String bio,
+    String? username,
   }) async {
     _profile = _profile.copyWith(
       fullName: fullName,
@@ -344,6 +443,7 @@ class AuthService {
       emergencyContactName: emergencyContactName,
       emergencyContactPhone: emergencyContactPhone,
       bio: bio,
+      username: username,
     );
 
     final client = SupabaseConfig.client;
@@ -359,6 +459,7 @@ class AuthService {
           'emergency_contact_name': emergencyContactName,
           'emergency_contact_phone': emergencyContactPhone,
           'bio': bio,
+          'username': username ?? _profile.username,
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', user.id);
       } catch (e) {
@@ -390,7 +491,7 @@ class AuthService {
   /// Verify SuperAdmin Passkey / PIN
   static bool verifySuperAdminPasskey(String pin) {
     const validSuperAdminPins = ['0517', '202688', '779900'];
-    final valid = validSuperAdminPins.contains(pin.trim()) || _profile.role == 'superadmin';
+    final valid = validSuperAdminPins.contains(pin.trim()) || _profile.isSuperAdmin;
     if (valid) {
       AuditLogService.log(action: 'SUPERADMIN_PASSKEY_VERIFIED', tableName: 'governance');
     }
@@ -410,26 +511,124 @@ class AuthService {
       if (client == null) return;
       final data = await client.from('profiles').select().eq('id', userId).maybeSingle();
       if (data != null) {
+        final roleStr = (data['role'] as String?) ?? 'resident';
         _profile = UserProfile(
           id: userId,
           mmid: data['mmid'] ?? generateMmid(),
           aid: data['aid'],
+          username: data['username'] ?? 'resident_${userId.substring(0, 4)}',
           fullName: data['full_name'] ?? 'Harur Resident',
           email: data['email'] ?? '',
           phone: data['phone'] ?? '',
-          role: data['role'] ?? 'resident',
+          roles: [roleStr],
           wardLocality: data['ward_locality'] ?? 'Harur Town',
           bloodGroup: data['blood_group'] ?? 'O+',
           emergencyContactName: data['emergency_contact_name'] ?? '',
           emergencyContactPhone: data['emergency_contact_phone'] ?? '',
           bio: data['bio'] ?? '',
+          isPrimarySuperAdmin: data['email'] == 'admin.qenbel@gmail.com',
+          isMfaEnabled: roleStr.contains('super_admin') || roleStr.contains('superadmin'),
         );
       }
     } catch (_) {}
   }
 }
 
-/// Emergency SOS Manager & Hotline Directory (from d:/harur)
+// ==============================================================================
+// 6. GEMINI AI CHATBOT & 3-STRIKE ESCALATION SERVICE
+// ==============================================================================
+class GeminiAISupportService {
+  static const String geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
+
+  static const Map<String, String> localKnowledgeBase = {
+    "emergency": "For emergency SOS assistance, tap the 'SOS Help' button in the app or call Harur Police Control at 04346-222100 or Medical Ambulance at 108.",
+    "police": "Harur Police Station control room number is 04346-222100. Dharmapuri District Control Room is 100.",
+    "ambulance": "For medical emergencies, 108 Ambulance service is stationed at Harur Government Hospital.",
+    "news": "News is auto-scraped for Harur, Dharmapuri, and surrounding villages every 2 hours. User submissions are reviewed by town admins.",
+    "shop": "Shop Admins can create up to 2 shops. For additional shop allocations, contact SuperAdmin via ticket escalation.",
+    "event": "Events submitted by users are reviewed by Admins. Upon approval, the creator is assigned as Event Head.",
+    "go": "Government Orders (G.O.) are published directly by verified Government Officials with official seal and tracking number.",
+  };
+
+  /// Query Gemini AI with fallback to local knowledge registry
+  static Future<Map<String, dynamic>> askAssistant(String userQuery, int currentStrikes) async {
+    final clean = userQuery.toLowerCase();
+
+    // 1. Check local fast knowledge base
+    for (final entry in localKnowledgeBase.entries) {
+      if (clean.contains(entry.key)) {
+        return {
+          "handled_by": "LOCAL_BOT",
+          "response": entry.value,
+          "is_escalated": false,
+          "strike_count": currentStrikes,
+        };
+      }
+    }
+
+    // 2. Call Gemini API if configured
+    if (geminiApiKey.isNotEmpty) {
+      try {
+        final uri = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$geminiApiKey',
+        );
+        final res = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            "contents": [
+              {
+                "parts": [
+                  {
+                    "text": "You are the friendly MyHarur Town Assistant for Harur & Dharmapuri district, Tamil Nadu. Answer briefly and helpfully in English or Tamil: $userQuery"
+                  }
+                ]
+              }
+            ]
+          }),
+        ).timeout(const Duration(seconds: 5));
+
+        if (res.statusCode == 200) {
+          final data = jsonDecode(res.body);
+          final answer = data['candidates']?[0]?['content']?['parts']?[0]?['text'];
+          if (answer != null && (answer as String).trim().isNotEmpty) {
+            return {
+              "handled_by": "GEMINI_AI",
+              "response": answer.trim(),
+              "is_escalated": false,
+              "strike_count": currentStrikes,
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. If query unresolved, increment strike count
+    final newStrikes = currentStrikes + 1;
+    if (newStrikes >= 3) {
+      return {
+        "handled_by": "HUMAN_ESCALATION",
+        "response": "✓ Your request has been escalated directly to the Harur Town Admin & SuperAdmin queue. An official will respond shortly.",
+        "is_escalated": true,
+        "strike_count": newStrikes,
+      };
+    }
+
+    return {
+      "handled_by": "BOT",
+      "response": "I couldn't find an exact match in the Harur civic registry. If you need live human help, please type 'escalate' or ask again.",
+      "is_escalated": false,
+      "strike_count": newStrikes,
+    };
+  }
+}
+
+// ==============================================================================
+// 7. EMERGENCY SOS & RADIUS EXPANSION SERVICE
+// ==============================================================================
 class EmergencySOSManager {
   static const Map<String, String> emergencyHotlines = {
     "harur_police": "04346-222100",
@@ -439,18 +638,16 @@ class EmergencySOSManager {
     "women_helpline": "181",
   };
 
-  /// Haversine Distance in Kilometers between 2 GPS coordinates
+  /// Haversine Distance in Kilometers
   static double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
     const double r = 6371.0; // Earth radius in km
-    final double dLat = _degToRad(lat2 - lat1);
-    final double dLon = _degToRad(lon2 - lon1);
+    final double dLat = (lat2 - lat1) * (pi / 180.0);
+    final double dLon = (lon2 - lon1) * (pi / 180.0);
     final double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degToRad(lat1)) * cos(_degToRad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+        cos(lat1 * (pi / 180.0)) * cos(lat2 * (pi / 180.0)) * sin(dLon / 2) * sin(dLon / 2);
     final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return r * c;
   }
-
-  static double _degToRad(double deg) => deg * (pi / 180.0);
 
   /// Dynamic Notification Radius Expansion (1 km -> 5 km -> 10 km)
   static int getNotificationRadius(double elapsedMinutes) {
@@ -460,7 +657,76 @@ class EmergencySOSManager {
   }
 }
 
-/// Leaderboards & Community Interaction Badges (from d:/harur)
+// ==============================================================================
+// 8. GOVERNMENT ORDERS (G.O.) & GRIEVANCE SERVICE
+// ==============================================================================
+class GovtService {
+  static Future<List<Map<String, dynamic>>> fetchGovernmentOrders() async {
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      try {
+        final res = await client.from('government_orders').select().order('published_at', ascending: false);
+        if (res.isNotEmpty) {
+          return List<Map<String, dynamic>>.from(res);
+        }
+      } catch (_) {}
+    }
+
+    return [
+      {
+        'id': 'go-1',
+        'go_number': 'G.O. Ms. No. 142/2026',
+        'department': 'Revenue & Disaster Management',
+        'title': 'Harur Taluk Summer Drinking Water Pipe Network Augmentation',
+        'summary': 'Sanctioning ₹14.2 Crore for deep-bore piping across Wards 3, 4, and Theerthamalai hamlets.',
+        'published_by': 'District Collector, Dharmapuri',
+        'published_at': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
+      },
+      {
+        'id': 'go-2',
+        'go_number': 'G.O. Ms. No. 98/2026',
+        'department': 'Agriculture & Farmer Welfare',
+        'title': 'KVK Harur Micro-Drip Irrigation Subsidy Guidelines for 2026-27',
+        'summary': '100% subsidy scheme for small & marginal farmers in Harur and Morappur blocks.',
+        'published_by': 'Joint Director of Agriculture',
+        'published_at': DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
+      },
+    ];
+  }
+
+  static Future<bool> publishGovernmentOrder({
+    required String goNumber,
+    required String department,
+    required String title,
+    required String summary,
+    String? documentUrl,
+  }) async {
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      try {
+        await client.from('government_orders').insert({
+          'go_number': goNumber,
+          'department': department,
+          'title': title,
+          'summary': summary,
+          'document_url': documentUrl,
+          'published_by': AuthService.currentProfile.fullName,
+        });
+      } catch (_) {}
+    }
+
+    await AuditLogService.log(
+      action: 'PUBLISH_GOVERNMENT_ORDER',
+      tableName: 'government_orders',
+      details: {'go_number': goNumber, 'department': department},
+    );
+    return true;
+  }
+}
+
+// ==============================================================================
+// 9. LEADERBOARDS, DONATIONS & RANKINGS
+// ==============================================================================
 class LeaderboardService {
   static String getInteractionTitle(int score) {
     if (score >= 1000) return "#1 Local Legend";
@@ -475,63 +741,63 @@ class LeaderboardService {
     if (responsesCount >= 5) return "Good Samaritan";
     return "Neighbor";
   }
+
+  static Future<List<Map<String, dynamic>>> fetchDonationRankings() async {
+    return [
+      {'rank': 1, 'name': 'Venkatesh K.', 'amount': '₹5,000', 'tier': 'Platinum Patron', 'badge': '👑'},
+      {'rank': 2, 'name': 'Sri Lakshmi Agro', 'amount': '₹3,500', 'tier': 'Gold Patron', 'badge': '⭐'},
+      {'rank': 3, 'name': 'Muthuvel K.', 'amount': '₹1,500', 'tier': 'Silver Patron', 'badge': '🌱'},
+      {'rank': 4, 'name': 'Prakash R.', 'amount': '₹1,000', 'tier': 'Bronze Patron', 'badge': '🤝'},
+    ];
+  }
 }
 
-/// Shop Administration Manager (from d:/harur: Maximum 2 shops per owner unless SuperAdmin override)
+// ==============================================================================
+// 10. SHOP ADMINISTRATION & 2-SHOP LIMIT RULE
+// ==============================================================================
 class ShopAdminManager {
   static const int maxShopsPerUser = 2;
 
   static bool canCreateShop(int existingShopsCount, String userRole) {
-    if (userRole == 'superadmin' || userRole == 'super_admin') {
-      return true; // SuperAdmin bypass
+    if (userRole.contains('super_admin') || userRole.contains('superadmin')) {
+      return true; // SuperAdmin override
     }
     return existingShopsCount < maxShopsPerUser;
   }
 }
 
-/// Support Chatbot & 3-Strike Escalation Engine (from d:/harur)
-class SupportBotService {
-  static const Map<String, String> automatedAnswers = {
-    "emergency": "For emergency SOS assistance, tap the 'SOS Help' button in the app or call Harur Police Control at 04346-222100 or Medical Ambulance at 108.",
-    "news": "News is auto-scraped for Harur and Dharmapuri every 2 hours. User news submissions are reviewed by town admins before publishing.",
-    "shop": "Shop Admins can create up to 2 shops. For additional shop allocations, contact SuperAdmin via ticket escalation.",
-    "event": "Events submitted by users are reviewed by Admins. Upon approval, the creator is assigned as Event Head.",
-    "test_key": "Security audit test keys follow the format MYHARUR-(6 alphanumeric + special char) and auto-expire with automated row purging.",
-  };
+// ==============================================================================
+// 11. GOVERNANCE & 3-ADMIN CONSENSUS
+// ==============================================================================
+class GovernanceService {
+  static const int maxSuperAdmins = 3;
 
-  static Map<String, dynamic> handleQuery(String queryText, int userStrikeCount) {
-    final clean = queryText.toLowerCase();
+  static bool canTerminateImmediately(UserProfile profile) {
+    return profile.isSuperAdmin;
+  }
 
-    for (final entry in automatedAnswers.entries) {
-      if (clean.contains(entry.key)) {
-        return {
-          "handled_by": "BOT",
-          "response": entry.value,
-          "is_escalated": false,
-        };
-      }
-    }
+  static bool evaluateConsensus(int confirmationsCount, UserProfile profile) {
+    if (canTerminateImmediately(profile)) return true;
+    return confirmationsCount >= 3;
+  }
 
-    final newStrike = userStrikeCount + 1;
-    if (newStrike >= 3) {
-      return {
-        "handled_by": "HUMAN_ESCALATION",
-        "response": "✓ You have been connected to a live Harur Town Admin / SuperAdmin queue. An official will respond shortly.",
-        "is_escalated": true,
-        "new_strike_count": newStrike,
-      };
-    }
-
-    return {
-      "handled_by": "BOT",
-      "response": "I couldn't find an exact answer in the local registry. Please ask again or type 'escalate' to reach a live Admin.",
-      "is_escalated": false,
-      "new_strike_count": newStrike,
-    };
+  static Future<Map<String, dynamic>?> superAdminTerminate({
+    required String targetUserId,
+    required String reason,
+  }) async {
+    await AuditLogService.log(
+      action: 'SUPERADMIN_TERMINATE_USER',
+      tableName: 'profiles',
+      recordId: targetUserId,
+      details: {'reason': reason, 'bypassedConsensus': true},
+    );
+    return {'status': 'bypassed_and_terminated'};
   }
 }
 
-/// Service handling local news items and submissions
+// ==============================================================================
+// 12. NEWS SERVICE WITH AUTOMATED LIVE METEOROLOGICAL FETCHING
+// ==============================================================================
 class NewsService {
   static Future<List<Map<String, dynamic>>> fetchNews({int limit = 20}) async {
     final client = SupabaseConfig.client;
@@ -547,7 +813,7 @@ class NewsService {
           return List<Map<String, dynamic>>.from(response);
         }
       } catch (e) {
-        debugPrint('News DB query error: $e');
+        debugPrint('News DB query notice: $e');
       }
     }
 
@@ -590,6 +856,8 @@ class NewsService {
     String? category,
   }) async {
     final client = SupabaseConfig.client;
+    final isStaff = AuthService.currentProfile.isAdmin;
+
     if (client != null) {
       try {
         await client.from('news_items').insert({
@@ -598,7 +866,7 @@ class NewsService {
           'source_url': sourceUrl,
           'locality': locality ?? 'Harur',
           'category': category ?? 'Civic',
-          'status': 'pending',
+          'status': isStaff ? 'published' : 'pending',
         });
       } catch (_) {}
     }
@@ -606,13 +874,15 @@ class NewsService {
     await AuditLogService.log(
       action: 'SUBMIT_NEWS',
       tableName: 'news_items',
-      details: {'title': title, 'category': category},
+      details: {'title': title, 'category': category, 'autoPublished': isStaff},
     );
     return true;
   }
 }
 
-/// Service for Marketplace listings
+// ==============================================================================
+// 13. MARKETPLACE SERVICE
+// ==============================================================================
 class MarketplaceService {
   static Future<List<Map<String, dynamic>>> fetchListings({String? category}) async {
     final client = SupabaseConfig.client;
@@ -627,7 +897,7 @@ class MarketplaceService {
           return List<Map<String, dynamic>>.from(response);
         }
       } catch (e) {
-        debugPrint('Marketplace DB query error: $e');
+        debugPrint('Marketplace DB query notice: $e');
       }
     }
 
@@ -661,16 +931,6 @@ class MarketplaceService {
         'seller': 'Karthik S.',
         'phone': '9789012345',
         'time': '1d ago',
-      },
-      {
-        'title': 'Teakwood Dining Table with 4 Chairs',
-        'price': '₹12,000',
-        'condition': 'Like New',
-        'category': 'Furniture',
-        'location': 'Theerthamalai',
-        'seller': 'Anand M.',
-        'phone': '9944055667',
-        'time': '2d ago',
       },
     ];
   }
@@ -708,7 +968,9 @@ class MarketplaceService {
   }
 }
 
-/// Service for Local Shops (with 2 shops rule enforcement)
+// ==============================================================================
+// 14. SHOPS & STOREFRONTS SERVICE
+// ==============================================================================
 class ShopsService {
   static Future<List<Map<String, dynamic>>> fetchShops({String? category}) async {
     final client = SupabaseConfig.client;
@@ -723,7 +985,7 @@ class ShopsService {
           return List<Map<String, dynamic>>.from(response);
         }
       } catch (e) {
-        debugPrint('Shops DB query error: $e');
+        debugPrint('Shops DB query notice: $e');
       }
     }
 
@@ -736,6 +998,7 @@ class ShopsService {
         'phone': '9842011445',
         'rating': '4.9 (128 reviews)',
         'productsCount': 34,
+        'votes_count': 214,
         'isVerified': true,
       },
       {
@@ -746,6 +1009,7 @@ class ShopsService {
         'phone': '9443277889',
         'rating': '4.8 (94 reviews)',
         'productsCount': 52,
+        'votes_count': 188,
         'isVerified': true,
       },
       {
@@ -756,6 +1020,7 @@ class ShopsService {
         'phone': '9789066778',
         'rating': '4.7 (76 reviews)',
         'productsCount': 28,
+        'votes_count': 142,
         'isVerified': true,
       },
     ];
@@ -794,7 +1059,9 @@ class ShopsService {
   }
 }
 
-/// Service for Jobs Board
+// ==============================================================================
+// 15. JOBS SERVICE
+// ==============================================================================
 class JobsService {
   static Future<List<Map<String, dynamic>>> fetchJobs({String? category}) async {
     final client = SupabaseConfig.client;
@@ -809,7 +1076,7 @@ class JobsService {
           return List<Map<String, dynamic>>.from(response);
         }
       } catch (e) {
-        debugPrint('Jobs DB query error: $e');
+        debugPrint('Jobs DB query notice: $e');
       }
     }
 
@@ -831,15 +1098,6 @@ class JobsService {
         'location': 'Theerthamalai',
         'phone': '9443211224',
         'posted': '3h ago',
-      },
-      {
-        'title': 'Heavy Vehicle Driver (Eicher / Tipper)',
-        'company': 'Dharmapuri Mineral Transports',
-        'type': 'Driver / Logistics',
-        'salary': '₹24,000 / mo + Trip Bata',
-        'location': 'Morappur Road',
-        'phone': '9789044556',
-        'posted': '2d ago',
       },
     ];
   }
@@ -877,7 +1135,9 @@ class JobsService {
   }
 }
 
-/// Service for Community Events
+// ==============================================================================
+// 16. EVENTS & TOURNAMENTS SERVICE (WITH AUTO EVENT HEAD ASSIGNMENT)
+// ==============================================================================
 class EventsService {
   static Future<List<Map<String, dynamic>>> fetchEvents({String? category}) async {
     final client = SupabaseConfig.client;
@@ -892,7 +1152,7 @@ class EventsService {
           return List<Map<String, dynamic>>.from(response);
         }
       } catch (e) {
-        debugPrint('Events DB query error: $e');
+        debugPrint('Events DB query notice: $e');
       }
     }
 
@@ -945,7 +1205,7 @@ class EventsService {
           'external_registration_url': formUrl,
           'start_time': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
           'end_time': DateTime.now().add(const Duration(days: 9)).toIso8601String(),
-          'status': 'pending',
+          'status': AuthService.currentProfile.isAdmin ? 'approved' : 'pending',
         });
       } catch (_) {}
     }
@@ -953,13 +1213,15 @@ class EventsService {
     await AuditLogService.log(
       action: 'CREATE_EVENT',
       tableName: 'events',
-      details: {'title': title, 'venue': venue},
+      details: {'title': title, 'venue': venue, 'isPaid': isPaid},
     );
     return true;
   }
 }
 
-/// Service for Real-Time Town Chat
+// ==============================================================================
+// 17. CHAT SERVICE WITH @USERNAME MENTIONS & TEMPORARY ROOMS
+// ==============================================================================
 class ChatService {
   static Future<List<Map<String, dynamic>>> fetchMessages(String roomName) async {
     final client = SupabaseConfig.client;
@@ -981,6 +1243,7 @@ class ChatService {
       {
         'id': 'msg-1',
         'sender_name': 'Muthuvel K.',
+        'sender_username': '@muthuvel',
         'sender_mmid': '20260814-4821',
         'sender_role': 'Resident',
         'text': 'Good morning everyone! Is the water supply scheduled for Ward 4 today?',
@@ -991,9 +1254,10 @@ class ChatService {
       {
         'id': 'msg-2',
         'sender_name': 'Panchayat Health Inspector',
+        'sender_username': '@panchayat_officer',
         'sender_mmid': 'AID-HR-0012',
         'sender_role': 'Government Official',
-        'text': '@Muthuvel Yes, overhead tank pumping began at 10:30 AM across Wards 4 and 5.',
+        'text': '@muthuvel Yes, overhead tank pumping began at 10:30 AM across Wards 4 and 5.',
         'created_at': DateTime.now().subtract(const Duration(minutes: 18)).toIso8601String(),
         'is_official': true,
         'is_me': false,
@@ -1001,6 +1265,7 @@ class ChatService {
       {
         'id': 'msg-3',
         'sender_name': 'Selvam Agro Store',
+        'sender_username': '@selvam_agro',
         'sender_mmid': '20260814-1109',
         'sender_role': 'Shop Admin',
         'text': 'Fresh bio-fertilizer & seed packets arrived at Bazaar shop. 15% discount for farmers today! 🌱',
@@ -1024,11 +1289,12 @@ class ChatService {
         await client.from('chat_messages').insert({
           'room_name': roomName,
           'sender_name': profile.fullName,
+          'sender_username': "@${profile.username.replaceAll('@', '')}",
           'sender_mmid': profile.mmid,
-          'sender_role': profile.role.toUpperCase(),
+          'sender_role': profile.primaryRoleTitle.toUpperCase(),
           'text': text,
           'attachment_url': attachmentUrl,
-          'is_official': profile.role == 'admin' || profile.role == 'superadmin',
+          'is_official': profile.isAdmin || profile.isGovtOfficial,
         });
       } catch (_) {}
     }
@@ -1042,7 +1308,9 @@ class ChatService {
   }
 }
 
-/// Service for Emergency Alerts
+// ==============================================================================
+// 18. EMERGENCY ALERTS SERVICE
+// ==============================================================================
 class EmergencyService {
   static Future<String?> broadcastEmergency({
     required String emergencyType,
@@ -1080,7 +1348,9 @@ class EmergencyService {
   }
 }
 
-/// Service for Weather with Automated Live Meteorological API Fetching
+// ==============================================================================
+// 19. AUTOMATED METEOROLOGICAL WEATHER SERVICE
+// ==============================================================================
 class WeatherService {
   static Future<Map<String, dynamic>> getLatestSnapshot(String locationName) async {
     final isDharmapuri = locationName.toLowerCase().contains('dharmapuri');
@@ -1142,7 +1412,6 @@ class WeatherService {
       debugPrint('Live weather fetch notice: $e');
     }
 
-    // Fallback if network offline
     return {
       'temperature_c': isDharmapuri ? 33.1 : 32.4,
       'feels_like_c': isDharmapuri ? 35.8 : 35.1,
@@ -1152,30 +1421,5 @@ class WeatherService {
       'source_name': isDharmapuri ? 'Dharmapuri Station' : 'Harur AWS Station',
       'observed_at': DateTime.now().toIso8601String(),
     };
-  }
-}
-
-/// Governance Service & 3-Admin Consensus Manager (from d:/harur)
-class GovernanceService {
-  static bool canTerminateImmediately(String role) {
-    return role == 'superadmin' || role == 'super_admin';
-  }
-
-  static bool evaluateConsensus(int confirmationsCount, String role) {
-    if (canTerminateImmediately(role)) return true;
-    return confirmationsCount >= 3;
-  }
-
-  static Future<Map<String, dynamic>?> superAdminTerminate({
-    required String targetUserId,
-    required String reason,
-  }) async {
-    await AuditLogService.log(
-      action: 'SUPERADMIN_TERMINATE_USER',
-      tableName: 'profiles',
-      recordId: targetUserId,
-      details: {'reason': reason, 'bypassedConsensus': true},
-    );
-    return {'status': 'bypassed_and_terminated'};
   }
 }

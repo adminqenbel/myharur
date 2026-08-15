@@ -90,6 +90,13 @@ class _AuthPageState extends State<AuthPage> {
     if (isSignUp) {
       final name = _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'Harur Resident';
       final phone = _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : '+91 98420 11000';
+
+      final err = SecurityFilterService.validateUsernameAndName(username: email.split('@').first, fullName: name);
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        return;
+      }
+
       await AuthService.signUpWithEmailPassword(
         email: email,
         password: password,
@@ -112,7 +119,7 @@ class _AuthPageState extends State<AuthPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFF007F63),
-            content: Text(ok ? '✓ Logged in as ${AuthService.currentProfile.fullName} (${AuthService.currentProfile.role.toUpperCase()})' : 'Login failed. Please check credentials.'),
+            content: Text(ok ? '✓ Logged in as ${AuthService.currentProfile.fullName} (${AuthService.currentProfile.primaryRoleTitle})' : 'Login failed. Please check credentials.'),
           ),
         );
       }
@@ -120,8 +127,15 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Future<void> _savePersonalDetails() async {
+    final name = _nameCtrl.text.trim();
+    final err = SecurityFilterService.validateUsernameAndName(username: AuthService.currentProfile.username, fullName: name);
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      return;
+    }
+
     await AuthService.savePersonalDetails(
-      fullName: _nameCtrl.text.trim(),
+      fullName: name,
       phone: _phoneCtrl.text.trim(),
       wardLocality: _wardCtrl.text.trim(),
       bloodGroup: selectedBloodGroup,
@@ -254,15 +268,32 @@ class _AuthPageState extends State<AuthPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                profile.role.toUpperCase(),
+                                profile.primaryRoleTitle.toUpperCase(),
                                 style: const TextStyle(color: Color(0xFF070B0A), fontSize: 10, fontWeight: FontWeight.w900),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'MMID: ${profile.mmid}',
-                              style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 11, fontWeight: FontWeight.w700),
+                              "@${profile.username.replaceAll('@', '')}",
+                              style: const TextStyle(color: Color(0xFF00D09C), fontSize: 12, fontWeight: FontWeight.w800),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              'MMID: ${profile.mmid}',
+                              style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 10, fontWeight: FontWeight.w700),
+                            ),
+                            if (profile.aid != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(color: const Color(0xFF267AF4), borderRadius: BorderRadius.circular(4)),
+                                child: Text(profile.aid!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                              ),
+                            ],
                           ],
                         ),
                       ],

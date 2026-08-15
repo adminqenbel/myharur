@@ -80,7 +80,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   return ChoiceChip(
                     label: Text(categories[i]),
                     selected: active,
-                    onSelected: (_) => setState(() => selectedCategory = i),
+                    onSelected: (_) {
+                      setState(() => selectedCategory = i);
+                      _loadListings();
+                    },
                     selectedColor: const Color(0xFF007F63),
                     backgroundColor: const Color(0xFFF2F6F5),
                     labelStyle: TextStyle(
@@ -98,106 +101,42 @@ class _MarketplacePageState extends State<MarketplacePage> {
             ),
             const SizedBox(height: 12),
 
-            // Item Grid
+            // Product Cards Grid
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.72,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                ),
-                itemCount: filtered.length,
-                itemBuilder: (context, i) {
-                  final item = filtered[i];
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(22),
-                    onTap: () => _showItemDetailModal(context, item),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0xFFDCE5E1)),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x080F2922), blurRadius: 12, offset: Offset(0, 4))
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Thumbnail header
-                          Container(
-                            height: 110,
-                            decoration: BoxDecoration(
-                              color: (item['color'] as Color).withValues(alpha: .1),
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(21)),
-                            ),
-                            child: Center(
-                              child: SvgPicture.asset(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF007F63)))
+                  : (filtered.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
                                 'assets/icons/bag.svg',
-                                width: 38,
-                                height: 38,
-                                colorFilter: ColorFilter.mode(item['color'] as Color, BlendMode.srcIn),
+                                width: 48,
+                                colorFilter: const ColorFilter.mode(Color(0xFF697570), BlendMode.srcIn),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              const Text('No items in this category yet.', style: TextStyle(color: Color(0xFF697570), fontWeight: FontWeight.w700)),
+                            ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF2F6F5),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    item['condition'],
-                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF697570)),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  item['title'],
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, height: 1.2),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  item['price'],
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFF007F63),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF697570)),
-                                    const SizedBox(width: 2),
-                                    Expanded(
-                                      child: Text(
-                                        item['location'],
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 11, color: Color(0xFF697570)),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                          ),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, i) {
+                            final item = filtered[i];
+                            return _MarketplaceItemCard(
+                              item: item,
+                              onTap: () => _showItemDetailModal(context, item),
+                            );
+                          },
+                        )),
             ),
           ],
         ),
@@ -239,12 +178,12 @@ class _MarketplacePageState extends State<MarketplacePage> {
             ),
             const SizedBox(height: 20),
             Text(
-              item['price'],
+              item['price'] != null ? item['price'].toString() : '₹0',
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF007F63)),
             ),
             const SizedBox(height: 6),
             Text(
-              item['title'],
+              item['title'] ?? 'Marketplace Item',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, height: 1.2),
             ),
             const SizedBox(height: 16),
@@ -266,8 +205,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item['seller'], style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                        Text('Listed in ${item['location']} · ${item['time']}', style: const TextStyle(fontSize: 12, color: Color(0xFF697570))),
+                        Text(item['seller'] ?? 'Verified Resident', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                        Text('Listed in ${item['location'] ?? 'Harur'} · ${item['time'] ?? 'Recently'}', style: const TextStyle(fontSize: 12, color: Color(0xFF697570))),
                       ],
                     ),
                   ),
@@ -290,7 +229,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     onPressed: () {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Calling ${item['seller']} (${item['phone']})...')),
+                        SnackBar(content: Text('Calling seller (${item['phone'] ?? '9842011000'})...')),
                       );
                     },
                   ),
@@ -311,6 +250,88 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 ),
               ],
             )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MarketplaceItemCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final VoidCallback onTap;
+
+  const _MarketplaceItemCard({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FBFA),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE2EBE8)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8F2E9),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.shopping_bag_rounded,
+                    size: 40,
+                    color: const Color(0xFF007F63).withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['price'] != null ? item['price'].toString() : '₹0',
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF007F63)),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item['title'] ?? 'Item',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, height: 1.2),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE9F6F1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item['condition'] ?? 'Used',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF007F63)),
+                        ),
+                      ),
+                      Text(
+                        item['location'] ?? 'Harur',
+                        style: const TextStyle(fontSize: 10, color: Color(0xFF697570)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -418,6 +439,14 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
                   final title = _titleCtrl.text.trim();
                   final price = double.tryParse(_priceCtrl.text.trim()) ?? 0.0;
                   final desc = _descCtrl.text.trim();
+
+                  if (SecurityFilterService.containsBadWord(title) || SecurityFilterService.containsBadWord(desc)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Listing contains inappropriate language. Please use respectful wording.')),
+                    );
+                    return;
+                  }
+
                   if (title.isNotEmpty && price > 0) {
                     await MarketplaceService.createListing(
                       title: title,
@@ -431,7 +460,10 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Item published to Harur Marketplace!')),
+                      const SnackBar(
+                        backgroundColor: Color(0xFF007F63),
+                        content: Text('✓ Item published to Harur Marketplace!'),
+                      ),
                     );
                   }
                 },

@@ -1220,7 +1220,7 @@ class AccountPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            profile.role.toUpperCase(),
+                            profile.primaryRoleTitle.toUpperCase(),
                             style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
                           ),
                         ),

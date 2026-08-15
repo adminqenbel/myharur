@@ -13,31 +13,31 @@ class _TownChatPageState extends State<TownChatPage> {
   final List<Map<String, dynamic>> rooms = [
     {
       'id': 'public_town',
-      'name': 'Public Town Chat',
+      'name': '# Public Town Chat',
       'icon': Icons.forum_rounded,
       'onlineCount': 148,
       'color': const Color(0xFF007F63),
     },
     {
       'id': 'gov_official',
-      'name': 'Govt & Collector Notices',
+      'name': '# Govt & Collector Notices',
       'icon': Icons.campaign_rounded,
       'onlineCount': 42,
       'color': const Color(0xFF267AF4),
     },
     {
+      'id': 'cricket_tournament',
+      'name': '# Cricket Tournament (Temp Room)',
+      'icon': Icons.sports_cricket_rounded,
+      'onlineCount': 28,
+      'color': const Color(0xFFE44545),
+    },
+    {
       'id': 'farmer_agri',
-      'name': 'Farmer & KVK Advisory',
+      'name': '# Farmer & KVK Advisory',
       'icon': Icons.agriculture_rounded,
       'onlineCount': 86,
       'color': const Color(0xFFF59E0B),
-    },
-    {
-      'id': 'sports_events',
-      'name': 'Sports & Festivals',
-      'icon': Icons.sports_cricket_rounded,
-      'onlineCount': 64,
-      'color': const Color(0xFFE44545),
     },
   ];
 
@@ -96,12 +96,13 @@ class _TownChatPageState extends State<TownChatPage> {
     final newMsg = {
       'id': 'msg-${DateTime.now().millisecondsSinceEpoch}',
       'sender_name': myProfile.fullName,
+      'sender_username': "@${myProfile.username.replaceAll('@', '')}",
       'sender_mmid': myProfile.mmid,
-      'sender_role': myProfile.role.toUpperCase(),
+      'sender_role': myProfile.primaryRoleTitle.toUpperCase(),
       'text': text,
       'attachment_url': attachment,
       'created_at': DateTime.now().toIso8601String(),
-      'is_official': myProfile.role == 'admin' || myProfile.role == 'superadmin',
+      'is_official': myProfile.isAdmin || myProfile.isGovtOfficial,
       'is_me': true,
     };
 
@@ -118,12 +119,123 @@ class _TownChatPageState extends State<TownChatPage> {
     );
   }
 
-  void _shareLocation() {
-    _sendMessage(
-      customText: '📍 Shared Location: Harur Town Bus Stand Junction (12.0624° N, 78.4983° E)',
+  void _createTemporaryRoom() {
+    final roomNameCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.add_circle_outline_rounded, color: Color(0xFF007F63)),
+            SizedBox(width: 8),
+            Text('Create Temporary Room', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Admins & Event Heads can create temporary rooms for event participants. SuperAdmins are automatically added for oversight.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF697570)),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: roomNameCtrl,
+              decoration: InputDecoration(
+                labelText: 'Room Name (e.g. # Temple Ther Committee)',
+                filled: true,
+                fillColor: const Color(0xFFF2F6F5),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF007F63),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final name = roomNameCtrl.text.trim();
+              if (name.isNotEmpty) {
+                setState(() {
+                  rooms.add({
+                    'id': "temp_${DateTime.now().millisecondsSinceEpoch}",
+                    'name': name.startsWith('#') ? name : "# $name",
+                    'icon': Icons.group_work_rounded,
+                    'onlineCount': 12,
+                    'color': const Color(0xFF267AF4),
+                  });
+                  selectedRoomIndex = rooms.length - 1;
+                });
+                _loadMessages();
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('✓ Created temporary room: $name')),
+                );
+              }
+            },
+            child: const Text('Create Room', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Location shared in town chat.')),
+  }
+
+  void _moderateMessage(Map<String, dynamic> msg) {
+    final profile = AuthService.currentProfile;
+    if (!profile.isAdmin && !profile.isModerator) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.security_rounded, color: Color(0xFFE44545)),
+                  const SizedBox(width: 8),
+                  Text("Moderate @${msg['sender_username'] ?? msg['sender_name']}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.delete_forever_rounded, color: Color(0xFFE44545)),
+                title: const Text('Delete Inappropriate Message', style: TextStyle(fontWeight: FontWeight.w800)),
+                onTap: () {
+                  setState(() => messages.remove(msg));
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('✓ Inappropriate message deleted.')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.timer_outlined, color: Color(0xFFF59E0B)),
+                title: const Text('Timeout User (24 Hours)', style: TextStyle(fontWeight: FontWeight.w800)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("✓ Timed out ${msg['sender_name']} for 24 hours.")),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -167,7 +279,7 @@ class _TownChatPageState extends State<TownChatPage> {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        '${currentRoom['onlineCount']} online • MMID Verified',
+                        '${currentRoom['onlineCount']} online · @username supported',
                         style: const TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -181,6 +293,14 @@ class _TownChatPageState extends State<TownChatPage> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 18),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (myProfile.isAdmin || myProfile.isEventHead)
+            IconButton(
+              tooltip: 'Create Temporary Room',
+              icon: const Icon(Icons.add_comment_rounded, color: Color(0xFF007F63)),
+              onPressed: _createTemporaryRoom,
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -232,9 +352,12 @@ class _TownChatPageState extends State<TownChatPage> {
                       itemBuilder: (context, i) {
                         final msg = messages[i];
                         final isMe = msg['is_me'] == true || msg['sender_mmid'] == myProfile.mmid;
-                        final isOfficial = msg['is_official'] == true || msg['sender_role'] == 'GOVERNMENT OFFICIAL' || msg['sender_role'] == 'SUPERADMIN';
+                        final isOfficial = msg['is_official'] == true || (msg['sender_role'] as String?)?.contains('OFFICIAL') == true;
 
-                        return _buildChatBubble(msg, isMe, isOfficial);
+                        return InkWell(
+                          onLongPress: () => _moderateMessage(msg),
+                          child: _buildChatBubble(msg, isMe, isOfficial),
+                        );
                       },
                     ),
             ),
@@ -271,9 +394,12 @@ class _TownChatPageState extends State<TownChatPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.pin_drop_rounded, color: Color(0xFF007F63), size: 22),
-                    tooltip: 'Share Landmark / Location',
-                    onPressed: _shareLocation,
+                    icon: const Icon(Icons.alternate_email_rounded, color: Color(0xFF007F63), size: 22),
+                    tooltip: 'Tag Resident (@username)',
+                    onPressed: () {
+                      _textCtrl.text = "${_textCtrl.text}@";
+                      _textCtrl.selection = TextSelection.fromPosition(TextPosition(offset: _textCtrl.text.length));
+                    },
                   ),
                   Expanded(
                     child: Container(
@@ -288,7 +414,7 @@ class _TownChatPageState extends State<TownChatPage> {
                         minLines: 1,
                         maxLines: 4,
                         decoration: const InputDecoration(
-                          hintText: 'Message Harur neighbours...',
+                          hintText: 'Message neighbours (type @ to mention)...',
                           hintStyle: TextStyle(color: Color(0xFF697570), fontSize: 13),
                           border: InputBorder.none,
                           isDense: true,
@@ -383,6 +509,13 @@ class _TownChatPageState extends State<TownChatPage> {
                             color: Color(0xFF15211F),
                           ),
                         ),
+                        if (msg['sender_username'] != null) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            msg['sender_username'] as String,
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF007F63), fontWeight: FontWeight.w700),
+                          ),
+                        ],
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
