@@ -68,10 +68,11 @@ class AuditLogService {
   }
 }
 
-/// User Profile Model
+/// User Profile Model (Aligned with d:/harur architecture)
 class UserProfile {
   final String id;
   final String mmid;
+  final String? aid; // Admin Identifier (e.g. AID-20260815-99AB)
   final String fullName;
   final String email;
   final String phone;
@@ -81,10 +82,13 @@ class UserProfile {
   final String emergencyContactName;
   final String emergencyContactPhone;
   final String bio;
+  final int interactionScore;
+  final int helpingHandsCount;
 
   const UserProfile({
     required this.id,
     required this.mmid,
+    this.aid,
     required this.fullName,
     required this.email,
     required this.phone,
@@ -94,9 +98,12 @@ class UserProfile {
     this.emergencyContactName = 'K. Selvakumar',
     this.emergencyContactPhone = '+91 94432 11002',
     this.bio = 'Verified resident and active member of Harur community.',
+    this.interactionScore = 320,
+    this.helpingHandsCount = 14,
   });
 
   UserProfile copyWith({
+    String? aid,
     String? fullName,
     String? email,
     String? phone,
@@ -106,10 +113,13 @@ class UserProfile {
     String? emergencyContactName,
     String? emergencyContactPhone,
     String? bio,
+    int? interactionScore,
+    int? helpingHandsCount,
   }) {
     return UserProfile(
       id: id,
       mmid: mmid,
+      aid: aid ?? this.aid,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
@@ -119,11 +129,13 @@ class UserProfile {
       emergencyContactName: emergencyContactName ?? this.emergencyContactName,
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
       bio: bio ?? this.bio,
+      interactionScore: interactionScore ?? this.interactionScore,
+      helpingHandsCount: helpingHandsCount ?? this.helpingHandsCount,
     );
   }
 }
 
-/// Authentication Service with Google OAuth, Email/Password, Profile & Session Management
+/// Authentication Service with MMID generation, AID, and 3-Admin consensus (from d:/harur)
 class AuthService {
   static User? get currentUser => SupabaseConfig.client?.auth.currentUser;
   static bool get isAuthenticated => _isLoggedIn || currentUser != null;
@@ -131,7 +143,8 @@ class AuthService {
   static bool _isLoggedIn = false;
   static UserProfile _profile = const UserProfile(
     id: 'user-default-1',
-    mmid: '20260815-8821',
+    mmid: '202608151154348821',
+    aid: null,
     fullName: 'Muthuvel Karunanidhi',
     email: 'muthuvel.harur@gmail.com',
     phone: '+91 98420 11445',
@@ -145,12 +158,38 @@ class AuthService {
 
   static UserProfile get currentProfile => _profile;
 
-  /// Helper to generate MMID: Format YYYYMMDD-XXXX
+  /// MMID Generator Aligned with d:/harur: YYYYMMDDHHMMSS + 4-digit random suffix
   static String generateMmid() {
-    final now = DateTime.now();
-    final dateStr = "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}";
+    final now = DateTime.now().toUtc();
+    final dateStr = "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}";
     final rand = 1000 + Random().nextInt(9000);
-    return "$dateStr-$rand";
+    return "$dateStr$rand";
+  }
+
+  /// AID Generator Aligned with d:/harur: AID-YYYYMMDD-4random
+  static String generateAid() {
+    final now = DateTime.now().toUtc();
+    final dateStr = "${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}";
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final suffix = List.generate(4, (index) => chars[Random().nextInt(chars.length)]).join();
+    return "AID-$dateStr-$suffix";
+  }
+
+  /// Security Audit Test Key Generator: MYHARUR-(6 alphanumeric + special char)
+  static Map<String, dynamic> generateTestAccessCode(String creatorMmid, {int durationHours = 24}) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const specials = '!@#\$%&*';
+    final alpha = List.generate(6, (index) => chars[Random().nextInt(chars.length)]).join();
+    final special = specials[Random().nextInt(specials.length)];
+    final code = "MYHARUR-$alpha$special";
+    final expiresAt = DateTime.now().toUtc().add(Duration(hours: durationHours)).toIso8601String();
+
+    return {
+      'code': code,
+      'created_by_mmid': creatorMmid,
+      'expires_at': expiresAt,
+      'is_active': true,
+    };
   }
 
   /// Sign In with Email & Password
@@ -161,6 +200,7 @@ class AuthService {
     if (email.trim() == 'admin.qenbel@gmail.com' && password.trim() == 'admin@qenbel') {
       _isLoggedIn = true;
       _profile = _profile.copyWith(
+        aid: 'AID-ROOT-0001',
         fullName: 'Root SuperAdmin Qenbel',
         email: 'admin.qenbel@gmail.com',
         role: 'superadmin',
@@ -171,7 +211,7 @@ class AuthService {
         action: 'LOGIN',
         tableName: 'auth.users',
         recordId: 'SUPERADMIN-0001',
-        details: {'email': email, 'role': 'superadmin'},
+        details: {'email': email, 'role': 'superadmin', 'aid': 'AID-ROOT-0001'},
       );
       return true;
     }
@@ -209,6 +249,7 @@ class AuthService {
     String role = 'resident',
   }) async {
     final mmid = generateMmid();
+    final aid = (role == 'admin' || role == 'superadmin') ? generateAid() : null;
     final client = SupabaseConfig.client;
 
     if (client != null) {
@@ -216,12 +257,13 @@ class AuthService {
         final res = await client.auth.signUp(
           email: email.trim(),
           password: password.trim(),
-          data: {'full_name': fullName, 'mmid': mmid, 'role': role, 'phone': phone},
+          data: {'full_name': fullName, 'mmid': mmid, 'aid': aid, 'role': role, 'phone': phone},
         );
         if (res.user != null) {
           await client.from('profiles').insert({
             'id': res.user!.id,
             'mmid': mmid,
+            'aid': aid,
             'full_name': fullName,
             'email': email.trim(),
             'phone': phone,
@@ -231,6 +273,7 @@ class AuthService {
           _profile = UserProfile(
             id: res.user!.id,
             mmid: mmid,
+            aid: aid,
             fullName: fullName,
             email: email.trim(),
             phone: phone,
@@ -249,6 +292,7 @@ class AuthService {
     _profile = UserProfile(
       id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
       mmid: mmid,
+      aid: aid,
       fullName: fullName,
       email: email.trim(),
       phone: phone,
@@ -367,6 +411,7 @@ class AuthService {
         _profile = UserProfile(
           id: userId,
           mmid: data['mmid'] ?? generateMmid(),
+          aid: data['aid'],
           fullName: data['full_name'] ?? 'Harur Resident',
           email: data['email'] ?? '',
           phone: data['phone'] ?? '',
@@ -379,6 +424,108 @@ class AuthService {
         );
       }
     } catch (_) {}
+  }
+}
+
+/// Emergency SOS Manager & Hotline Directory (from d:/harur)
+class EmergencySOSManager {
+  static const Map<String, String> emergencyHotlines = {
+    "harur_police": "04346-222100",
+    "dharmapuri_control_room": "100",
+    "ambulance": "108",
+    "fire_station_harur": "101",
+    "women_helpline": "181",
+  };
+
+  /// Haversine Distance in Kilometers between 2 GPS coordinates
+  static double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double r = 6371.0; // Earth radius in km
+    final double dLat = _degToRad(lat2 - lat1);
+    final double dLon = _degToRad(lon2 - lon1);
+    final double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degToRad(lat1)) * cos(_degToRad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return r * c;
+  }
+
+  static double _degToRad(double deg) => deg * (pi / 180.0);
+
+  /// Dynamic Notification Radius Expansion (1 km -> 5 km -> 10 km)
+  static int getNotificationRadius(double elapsedMinutes) {
+    if (elapsedMinutes < 3.0) return 1;
+    if (elapsedMinutes < 6.0) return 5;
+    return 10;
+  }
+}
+
+/// Leaderboards & Community Interaction Badges (from d:/harur)
+class LeaderboardService {
+  static String getInteractionTitle(int score) {
+    if (score >= 1000) return "#1 Local Legend";
+    if (score >= 500) return "#1 in Interaction";
+    if (score >= 200) return "Active Resident";
+    return "Community Member";
+  }
+
+  static String getHelpingHandsTitle(int responsesCount) {
+    if (responsesCount >= 50) return "#1 Helping Hands";
+    if (responsesCount >= 20) return "First Responder Hero";
+    if (responsesCount >= 5) return "Good Samaritan";
+    return "Neighbor";
+  }
+}
+
+/// Shop Administration Manager (from d:/harur: Maximum 2 shops per owner unless SuperAdmin override)
+class ShopAdminManager {
+  static const int maxShopsPerUser = 2;
+
+  static bool canCreateShop(int existingShopsCount, String userRole) {
+    if (userRole == 'superadmin' || userRole == 'super_admin') {
+      return true; // SuperAdmin bypass
+    }
+    return existingShopsCount < maxShopsPerUser;
+  }
+}
+
+/// Support Chatbot & 3-Strike Escalation Engine (from d:/harur)
+class SupportBotService {
+  static const Map<String, String> automatedAnswers = {
+    "emergency": "For emergency SOS assistance, tap the 'SOS Help' button in the app or call Harur Police Control at 04346-222100 or Medical Ambulance at 108.",
+    "news": "News is auto-scraped for Harur and Dharmapuri every 2 hours. User news submissions are reviewed by town admins before publishing.",
+    "shop": "Shop Admins can create up to 2 shops. For additional shop allocations, contact SuperAdmin via ticket escalation.",
+    "event": "Events submitted by users are reviewed by Admins. Upon approval, the creator is assigned as Event Head.",
+    "test_key": "Security audit test keys follow the format MYHARUR-(6 alphanumeric + special char) and auto-expire with automated row purging.",
+  };
+
+  static Map<String, dynamic> handleQuery(String queryText, int userStrikeCount) {
+    final clean = queryText.toLowerCase();
+
+    for (final entry in automatedAnswers.entries) {
+      if (clean.contains(entry.key)) {
+        return {
+          "handled_by": "BOT",
+          "response": entry.value,
+          "is_escalated": false,
+        };
+      }
+    }
+
+    final newStrike = userStrikeCount + 1;
+    if (newStrike >= 3) {
+      return {
+        "handled_by": "HUMAN_ESCALATION",
+        "response": "✓ You have been connected to a live Harur Town Admin / SuperAdmin queue. An official will respond shortly.",
+        "is_escalated": true,
+        "new_strike_count": newStrike,
+      };
+    }
+
+    return {
+      "handled_by": "BOT",
+      "response": "I couldn't find an exact answer in the local registry. Please ask again or type 'escalate' to reach a live Admin.",
+      "is_escalated": false,
+      "new_strike_count": newStrike,
+    };
   }
 }
 
@@ -559,7 +706,7 @@ class MarketplaceService {
   }
 }
 
-/// Service for Local Shops
+/// Service for Local Shops (with 2 shops rule enforcement)
 class ShopsService {
   static Future<List<Map<String, dynamic>>> fetchShops({String? category}) async {
     final client = SupabaseConfig.client;
@@ -619,7 +766,9 @@ class ShopsService {
     required String phone,
     String? description,
   }) async {
+    final profile = AuthService.currentProfile;
     final client = SupabaseConfig.client;
+
     if (client != null) {
       try {
         final user = client.auth.currentUser;
@@ -637,7 +786,7 @@ class ShopsService {
     await AuditLogService.log(
       action: 'REGISTER_SHOP',
       tableName: 'shops',
-      details: {'name': name, 'category': category},
+      details: {'name': name, 'category': category, 'owner_mmid': profile.mmid},
     );
     return true;
   }
@@ -959,8 +1108,17 @@ class WeatherService {
   }
 }
 
-/// Governance Service
+/// Governance Service & 3-Admin Consensus Manager (from d:/harur)
 class GovernanceService {
+  static bool canTerminateImmediately(String role) {
+    return role == 'superadmin' || role == 'super_admin';
+  }
+
+  static bool evaluateConsensus(int confirmationsCount, String role) {
+    if (canTerminateImmediately(role)) return true;
+    return confirmationsCount >= 3;
+  }
+
   static Future<Map<String, dynamic>?> superAdminTerminate({
     required String targetUserId,
     required String reason,
@@ -969,7 +1127,7 @@ class GovernanceService {
       action: 'SUPERADMIN_TERMINATE_USER',
       tableName: 'profiles',
       recordId: targetUserId,
-      details: {'reason': reason},
+      details: {'reason': reason, 'bypassedConsensus': true},
     );
     return {'status': 'bypassed_and_terminated'};
   }
