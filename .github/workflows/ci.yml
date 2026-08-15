@@ -97,14 +97,18 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.version }}-${{ github.run_number }}
           name: "MyHarur ${{ steps.version.outputs.version }} (build ${{ github.run_number }})"
+          make_latest: true
+          generate_release_notes: true
           body: |
-            Automated release from commit ${{ github.sha }}.
+            Automated production build from commit `${{ github.sha }}`.
 
-            ### Download
-            - Direct APK attached below.
-            - Target OS: Android 6.0+
+            ### 📱 Download Android App
+            - **Universal APK:** [myharur.apk](https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk)
+            - **Alternative Build:** [app-release.apk](https://github.com/adminqenbel/myharur/releases/latest/download/app-release.apk)
+            - **Supported Android Versions:** Android 6.0 (Marshmallow) and higher
           files: |
             ./myharur.apk
             build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

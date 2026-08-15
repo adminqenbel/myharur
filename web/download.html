@@ -555,16 +555,24 @@
       <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 6px; color: #FFFFFF;">Download Initiated!</h2>
       <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">If download did not start automatically, click below:</p>
 
-      <a href="https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk" id="directDownloadLink" class="btn-primary" download="myharur.apk">
+      <a href="https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk" id="directDownloadLink" class="btn-primary" target="_blank" rel="noopener noreferrer" download="myharur.apk">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        DIRECT APK DOWNLOAD
+        DIRECT APK DOWNLOAD (PRIMARY)
       </a>
 
-      <button class="btn-secondary" id="resetBtn">Download Again</button>
+      <a href="https://github.com/adminqenbel/myharur/releases/latest/download/app-release.apk" class="btn-secondary" style="margin-top: 10px;" target="_blank" rel="noopener noreferrer">
+        Download Mirror (app-release.apk)
+      </a>
+
+      <a href="https://github.com/adminqenbel/myharur/releases" class="btn-secondary" style="margin-top: 10px;" target="_blank" rel="noopener noreferrer">
+        Browse All GitHub Releases & Versions ↗
+      </a>
+
+      <button class="btn-secondary" id="resetBtn" style="margin-top: 10px;">Download Again</button>
     </div>
 
     <!-- Step by step install guide -->
@@ -600,7 +608,7 @@
   </div>
 
   <script>
-    const DURATION = 2.8; // seconds for dynamic download animation
+    const DURATION = 1.6; // snappier animation
     const CIRCLE_CIRCUMFERENCE = 408;
 
     const downloadBtn = document.getElementById('downloadBtn');
@@ -634,12 +642,12 @@
     }
 
     function triggerFileDownload() {
-      const a = document.createElement('a');
-      a.href = APK_URL;
-      a.download = 'myharur.apk';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Immediate browser location assign + fallback window open
+      try {
+        window.location.href = APK_URL;
+      } catch (_) {
+        window.open(APK_URL, '_blank');
+      }
     }
 
     function startDownload() {
@@ -698,7 +706,7 @@
     resetBtn.addEventListener('click', reset);
 
     if (window.location.search.includes('auto=1')) {
-      setTimeout(startDownload, 600);
+      setTimeout(startDownload, 400);
     }
   </script>
 </body>

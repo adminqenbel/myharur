@@ -343,9 +343,15 @@ class _TownShellState extends State<TownShell> {
 }
 
 Future<void> launchAppUrl(String url) async {
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  try {
+    final uri = Uri.parse(url);
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+      webOnlyWindowName: '_blank',
+    );
+  } catch (e) {
+    debugPrint('Could not launch URL: $url error: $e');
   }
 }
 
@@ -395,7 +401,7 @@ void showDownloadApkSheet(BuildContext context) {
                   ),
                   SizedBox(height: 3),
                   Text(
-                    'v0.1.0 (Stable) • 24.2 MB • Official Build',
+                    'v0.2.0 • Universal Release • Verified Build',
                     style: TextStyle(color: Color(0xFF8E9F98), fontSize: 12),
                   ),
                 ],
@@ -471,6 +477,22 @@ void showDownloadApkSheet(BuildContext context) {
               onPressed: () {
                 Navigator.pop(ctx);
                 launchAppUrl('./download.html');
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF8E9F98),
+              ),
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('Browse All Releases on GitHub ↗', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              onPressed: () {
+                Navigator.pop(ctx);
+                launchAppUrl('https://github.com/adminqenbel/myharur/releases');
               },
             ),
           ),
