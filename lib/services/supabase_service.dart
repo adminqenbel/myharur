@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseConfig {
-  static const String defaultUrl = 'https://YOUR_PROJECT_REF.supabase.co';
+  static const String defaultUrl = 'https://qpuvhhvzygdbvlichbqs.supabase.co';
   static const String defaultAnonKey = 'YOUR_ANON_KEY';
 
   static String _activeUrl = defaultUrl;
