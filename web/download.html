@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Download MyHarur for Android — Digital Town App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #070B0A;
+      --surface: rgba(18, 28, 25, 0.7);
+      --surface-border: rgba(0, 208, 156, 0.22);
+      --primary: #00D09C;
+      --primary-dark: #007F63;
+      --primary-glow: rgba(0, 208, 156, 0.45);
+      --accent-cyan: #00E5FF;
+      --accent-amber: #F59E0B;
+      --text: #F2FBF8;
+      --text-muted: #8E9F98;
+      --text-dim: #54655E;
+      --card-bg: rgba(255, 255, 255, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Animated Mesh Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .glow-orb-1 {
+      position: absolute;
+      top: -15%;
+      left: -10%;
+      width: 70vw;
+      height: 70vw;
+      max-width: 600px;
+      max-height: 600px;
+      background: radial-gradient(circle, rgba(0, 127, 99, 0.4) 0%, rgba(0, 208, 156, 0.15) 40%, transparent 75%);
+      filter: blur(80px);
+      animation: floatOrb1 18s ease-in-out infinite alternate;
+    }
+
+    .glow-orb-2 {
+      position: absolute;
+      bottom: -20%;
+      right: -10%;
+      width: 80vw;
+      height: 80vw;
+      max-width: 700px;
+      max-height: 700px;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.25) 0%, rgba(0, 127, 99, 0.15) 45%, transparent 75%);
+      filter: blur(90px);
+      animation: floatOrb2 22s ease-in-out infinite alternate;
+    }
+
+    .grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+    }
+
+    @keyframes floatOrb1 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 40px) scale(1.1); }
+    }
+
+    @keyframes floatOrb2 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-50px, -60px) scale(1.15); }
+    }
+
+    /* Main Container */
+    .portal-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--surface-border);
+      border-radius: 32px;
+      padding: 36px 28px;
+      box-shadow: 
+        0 24px 64px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(0, 208, 156, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Brand Header */
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0, 208, 156, 0.12);
+      border: 1px solid rgba(0, 208, 156, 0.3);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    .brand-badge .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .app-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+      line-height: 1.15;
+    }
+
+    .app-title span {
+      background: linear-gradient(135deg, #00D09C 0%, #00E5FF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .app-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    /* Animated Holographic Download Capsule */
+    .capsule-wrapper {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-glow {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      opacity: 0.6;
+      animation: pulseGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.95); opacity: 0.4; }
+      100% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .svg-progress-ring {
+      position: absolute;
+      inset: 0;
+      transform: rotate(-90deg);
+    }
+
+    .progress-circle-bg {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 6;
+      fill: transparent;
+    }
+
+    .progress-circle-bar {
+      stroke: var(--primary);
+      stroke-width: 6;
+      stroke-linecap: round;
+      fill: transparent;
+      stroke-dasharray: 408;
+      stroke-dashoffset: 408;
+      transition: stroke-dashoffset 0.08s linear;
+      filter: drop-shadow(0 0 8px var(--primary));
+    }
+
+    .capsule-core {
+      width: 104px;
+      height: 104px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .capsule-icon {
+      width: 42px;
+      height: 42px;
+      color: var(--primary);
+      transition: all 0.3s ease;
+    }
+
+    /* State Panels */
+    .state-panel {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .state-panel.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Meta Cards */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 22px;
+    }
+
+    .meta-pill {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .meta-pill .label {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .meta-pill .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Live Progress Info */
+    .progress-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--primary);
+      text-shadow: 0 0 24px var(--primary-glow);
+      margin-bottom: 4px;
+    }
+
+    .progress-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%;
+      height: 56px;
+      background: linear-gradient(135deg, #00D09C 0%, #009E7B 100%);
+      color: #070B0A;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 28px rgba(0, 208, 156, 0.35);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 34px rgba(0, 208, 156, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-cancel {
+      background: none;
+      border: none;
+      color: #E44545;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+      background: rgba(228, 69, 69, 0.12);
+    }
+
+    /* Install Guide Section */
+    .guide-box {
+      width: 100%;
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+    }
+
+    .guide-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .guide-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .guide-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      background: rgba(0, 208, 156, 0.15);
+      color: var(--primary);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .step-text strong {
+      color: var(--text);
+    }
+
+    /* Direct link / hash footer */
+    .hash-footer {
+      margin-top: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Backdrop Glow -->
+  <div class="ambient-bg">
+    <div class="grid-pattern"></div>
+    <div class="glow-orb-1"></div>
+    <div class="glow-orb-2"></div>
+  </div>
+
+  <!-- Main Download Portal Glass Card -->
+  <div class="portal-container">
+    
+    <!-- Verified Brand Badge -->
+    <div class="brand-badge">
+      <div class="dot"></div>
+      QenBel Official Release
+    </div>
+
+    <h1 class="app-title">MyHarur <span>Android</span></h1>
+    <p class="app-subtitle">The Trusted Digital-Town Platform for Harur & Dharmapuri</p>
+
+    <!-- Holographic Animated Capsule -->
+    <div class="capsule-wrapper">
+      <div class="ring-glow"></div>
+      <svg class="svg-progress-ring" width="140" height="140" viewBox="0 0 140 140">
+        <circle class="progress-circle-bg" cx="70" cy="70" r="65" />
+        <circle class="progress-circle-bar" id="progressCircle" cx="70" cy="70" r="65" />
+      </svg>
+      <div class="capsule-core" id="capsuleCore">
+        <!-- Idle Icon -->
+        <svg class="capsule-icon" id="idleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <!-- Completed Icon -->
+        <svg class="capsule-icon" id="completeIcon" style="display: none; color: #00E5FF;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 1. Idle Panel -->
+    <div class="state-panel active" id="idlePanel">
+      <div class="meta-grid">
+        <div class="meta-pill">
+          <div class="label">Release</div>
+          <div class="value">v0.1.0 (Stable)</div>
+        </div>
+        <div class="meta-pill">
+          <div class="label">File Size</div>
+          <div class="value">~24.2 MB</div>
+        </div>
+        <div class="meta-pill">
+          <div class="label">Compatibility</div>
+          <div class="value">Android 6.0+</div>
+        </div>
+        <div class="meta-pill">
+          <div class="label">Security</div>
+          <div class="value" style="color: #00D09C;">✓ Verified</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="downloadBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        DOWNLOAD APK NOW
+      </button>
+
+      <a href="./index.html" class="btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        Open Web App Instead
+      </a>
+    </div>
+
+    <!-- 2. Downloading Panel -->
+    <div class="state-panel" id="downloadingPanel">
+      <div class="progress-num" id="percentText">0%</div>
+      <div class="progress-sub" id="speedText">Downloading myharur.apk (0.0 / 24.2 MB)</div>
+
+      <button class="btn-cancel" id="cancelBtn">CANCEL DOWNLOAD</button>
+    </div>
+
+    <!-- 3. Complete Panel -->
+    <div class="state-panel" id="completePanel">
+      <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 6px; color: #FFFFFF;">Download Initiated!</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">If download did not start automatically, click below:</p>
+
+      <a href="https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk" id="directDownloadLink" class="btn-primary" download="myharur.apk">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        DIRECT APK DOWNLOAD
+      </a>
+
+      <button class="btn-secondary" id="resetBtn">Download Again</button>
+    </div>
+
+    <!-- Step by step install guide -->
+    <div class="guide-box">
+      <div class="guide-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        3-Step Quick Install Guide
+      </div>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">Tap <strong>Download APK</strong> and wait for the file to save.</div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">Open file from notifications & allow <strong>"Install from this source"</strong> if prompted.</div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">Launch <strong>MyHarur</strong>, enter your MMID or explore as a guest.</div>
+        </div>
+      </div>
+
+      <div class="hash-footer">
+        Package: com.myharur.app • Architecture: universal (arm64-v8a / armeabi-v7a / x86_64)
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const DURATION = 2.8; // seconds for dynamic download animation
+    const CIRCLE_CIRCUMFERENCE = 408;
+
+    const downloadBtn = document.getElementById('downloadBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const idlePanel = document.getElementById('idlePanel');
+    const downloadingPanel = document.getElementById('downloadingPanel');
+    const completePanel = document.getElementById('completePanel');
+
+    const progressCircle = document.getElementById('progressCircle');
+    const percentText = document.getElementById('percentText');
+    const speedText = document.getElementById('speedText');
+    const idleIcon = document.getElementById('idleIcon');
+    const completeIcon = document.getElementById('completeIcon');
+    const capsuleCore = document.getElementById('capsuleCore');
+
+    let animReq = null;
+    let startTime = null;
+
+    const APK_URL = 'https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk';
+
+    function showPanel(panel) {
+      idlePanel.classList.remove('active');
+      downloadingPanel.classList.remove('active');
+      completePanel.classList.remove('active');
+
+      if (panel === 'idle') idlePanel.classList.add('active');
+      if (panel === 'downloading') downloadingPanel.classList.add('active');
+      if (panel === 'complete') completePanel.classList.add('active');
+    }
+
+    function triggerFileDownload() {
+      const a = document.createElement('a');
+      a.href = APK_URL;
+      a.download = 'myharur.apk';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function startDownload() {
+      showPanel('downloading');
+      idleIcon.style.display = 'block';
+      completeIcon.style.display = 'none';
+      capsuleCore.style.borderColor = 'rgba(0, 208, 156, 0.5)';
+      
+      startTime = performance.now();
+      animate(startTime);
+    }
+
+    function animate(now) {
+      const elapsed = (now - startTime) / 1000;
+      const progress = Math.min(elapsed / DURATION, 1.0);
+      const percent = Math.floor(progress * 100);
+
+      // Ease out cubic curve
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const offset = CIRCLE_CIRCUMFERENCE - (eased * CIRCLE_CIRCUMFERENCE);
+      progressCircle.style.strokeDashoffset = offset;
+
+      percentText.textContent = `${percent}%`;
+      const downloadedMB = (eased * 24.2).toFixed(1);
+      speedText.textContent = `Downloading myharur.apk (${downloadedMB} / 24.2 MB)`;
+
+      if (progress < 1.0) {
+        animReq = requestAnimationFrame(animate);
+      } else {
+        finishDownload();
+      }
+    }
+
+    function finishDownload() {
+      idleIcon.style.display = 'none';
+      completeIcon.style.display = 'block';
+      capsuleCore.style.borderColor = '#00E5FF';
+      capsuleCore.style.boxShadow = '0 0 30px rgba(0, 229, 255, 0.4)';
+      showPanel('complete');
+      triggerFileDownload();
+    }
+
+    function reset() {
+      if (animReq) cancelAnimationFrame(animReq);
+      progressCircle.style.strokeDashoffset = CIRCLE_CIRCUMFERENCE;
+      percentText.textContent = '0%';
+      idleIcon.style.display = 'block';
+      completeIcon.style.display = 'none';
+      capsuleCore.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+      capsuleCore.style.boxShadow = 'none';
+      showPanel('idle');
+    }
+
+    downloadBtn.addEventListener('click', startDownload);
+    cancelBtn.addEventListener('click', reset);
+    resetBtn.addEventListener('click', reset);
+
+    if (window.location.search.includes('auto=1')) {
+      setTimeout(startDownload, 600);
+    }
+  </script>
+</body>
+</html>

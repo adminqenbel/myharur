@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'features/phase_two_pages.dart';
 import 'features/marketplace_page.dart';
@@ -143,6 +144,228 @@ class _TownShellState extends State<TownShell> {
   }
 }
 
+Future<void> launchAppUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
+void showDownloadApkSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: const Color(0xFF0C1311),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D09C).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.3)),
+                ),
+                child: const Icon(Icons.android_rounded, color: Color(0xFF00D09C), size: 28),
+              ),
+              const SizedBox(width: 14),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Download MyHarur for Android',
+                    style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'v0.1.0 (Stable) • 24.2 MB • Official Build',
+                    style: TextStyle(color: Color(0xFF8E9F98), fontSize: 12),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: const Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF00D09C), size: 16),
+                    SizedBox(width: 8),
+                    Text('Direct high-speed APK download', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF00D09C), size: 16),
+                    SizedBox(width: 8),
+                    Text('Instant emergency SOS & town alerts', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF00D09C), size: 16),
+                    SizedBox(width: 8),
+                    Text('Zero trackers, verified local build', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00D09C),
+                foregroundColor: const Color(0xFF070B0A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              icon: const Icon(Icons.download_for_offline_rounded, size: 22),
+              label: const Text('Download APK File (Direct)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              onPressed: () {
+                Navigator.pop(ctx);
+                launchAppUrl('https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk');
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF00E5FF),
+                side: const BorderSide(color: Color(0xFF00E5FF), width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              icon: const Icon(Icons.open_in_browser_rounded, size: 20),
+              label: const Text('Open Interactive Download Portal', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+              onPressed: () {
+                Navigator.pop(ctx);
+                launchAppUrl('./download.html');
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class DownloadApkBanner extends StatelessWidget {
+  const DownloadApkBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => showDownloadApkSheet(context),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0F2620), Color(0xFF16362E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.35)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF007F63).withValues(alpha: 0.22),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00D09C).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.4)),
+              ),
+              child: const Icon(Icons.android_rounded, color: Color(0xFF00D09C), size: 26),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'MyHarur Android App',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00D09C),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('APK', style: TextStyle(color: Color(0xFF070B0A), fontSize: 10, fontWeight: FontWeight.w900)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Tap to download official APK with instant alerts.',
+                    style: TextStyle(color: Color(0xFF9EAEA8), fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00D09C),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text('Download', style: TextStyle(color: Color(0xFF070B0A), fontWeight: FontWeight.w900, fontSize: 12)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -167,7 +390,9 @@ class HomePage extends StatelessWidget {
                     style: Theme.of(context).textTheme.displaySmall),
                 const SizedBox(height: 18),
                 const LocationPill(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
+                const DownloadApkBanner(),
+                const SizedBox(height: 20),
                 const CategoryRail(),
                 const SizedBox(height: 28),
                 const MiniMapCard(),
@@ -221,10 +446,31 @@ class TownHeader extends StatelessWidget {
           ],
         ),
         const Spacer(),
+        InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => showDownloadApkSheet(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFF007F63).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF007F63).withValues(alpha: 0.3)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.android_rounded, size: 15, color: Color(0xFF007F63)),
+                SizedBox(width: 4),
+                Text('APK', style: TextStyle(color: Color(0xFF007F63), fontWeight: FontWeight.w900, fontSize: 11)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         if (showSearch)
           RoundIconButton(icon: 'search', onTap: () {})
         else
-          const SizedBox(width: 48),
+          const SizedBox(width: 40),
       ],
     );
   }
@@ -976,6 +1222,13 @@ class TownDrawer extends StatelessWidget {
                   Navigator.pop(context);
                   Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const EventsPage()));
+                }),
+            DrawerItem(
+                icon: 'phone',
+                label: '📱 Download Android APK',
+                onTap: () {
+                  Navigator.pop(context);
+                  showDownloadApkSheet(context);
                 }),
             DrawerItem(
                 icon: 'heart',

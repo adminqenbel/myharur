@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ShopsPage extends StatefulWidget {
   const ShopsPage({super.key});
@@ -200,7 +201,7 @@ class _ShopsPageState extends State<ShopsPage> {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 ),
                                 icon: const Icon(Icons.shopping_bag_outlined, size: 18),
-                                label: const Text('View Storefront', style: TextStyle(fontWeight: FontWeight.w800)),
+                                label: const Text('Storefront', style: TextStyle(fontWeight: FontWeight.w800)),
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Opening ${shop['name']} catalog...')),
@@ -208,13 +209,52 @@ class _ShopsPageState extends State<ShopsPage> {
                                 },
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            IconButton.outlined(
-                              icon: const Icon(Icons.call_rounded, color: Color(0xFF15211F)),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Calling ${shop['phone']}...')),
-                                );
+                            const SizedBox(width: 8),
+                            IconButton.filledTonal(
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFE8F5E9),
+                                foregroundColor: const Color(0xFF2E7D32),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                              tooltip: 'WhatsApp Shop',
+                              onPressed: () async {
+                                final uri = Uri.parse('https://wa.me/91${shop['phone']}?text=Hello+${Uri.encodeComponent(shop['name'])},+inquiring+from+MyHarur+app.');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton.filledTonal(
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFE3F2FD),
+                                foregroundColor: const Color(0xFF1976D2),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              icon: const Icon(Icons.directions_outlined, size: 18),
+                              tooltip: 'Directions in Harur',
+                              onPressed: () async {
+                                final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=Harur+${Uri.encodeComponent("${shop['name']} ${shop['address']}")}');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton.filledTonal(
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFF2F6F5),
+                                foregroundColor: const Color(0xFF15211F),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              icon: const Icon(Icons.call_rounded, size: 18),
+                              tooltip: 'Call Shop',
+                              onPressed: () async {
+                                final uri = Uri.parse('tel:${shop['phone']}');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri);
+                                }
                               },
                             ),
                           ],

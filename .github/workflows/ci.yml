@@ -1,18 +1,36 @@
-name: MyHarur CI & Web Preview
+name: MyHarur CI, APK Build & Web Deployment
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "deploy"
+  cancel-in-progress: false
 
 jobs:
-  analyze_and_test:
-    name: Flutter Analyze, Test & Web Build
+  build_test_and_release:
+    name: Test, Build APK & Deploy Web
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -23,11 +41,77 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Analyze Project
+      - name: Analyze Project Code
         run: flutter analyze
 
-      - name: Run Widget Tests
+      - name: Run Widget & Unit Tests
         run: flutter test
 
-      - name: Build Web Release Bundle
-        run: flutter build web --release
+      - name: Build Android APK (Release)
+        run: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk ./myharur.apk
+
+      - name: Build Flutter Web (Release)
+        run: |
+          flutter build web --release
+          cp web/download.html build/web/download.html || true
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myharur-android-apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            ./myharur.apk
+          retention-days: 90
+
+      - name: Upload Web Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myharur-web-bundle
+          path: build/web
+          retention-days: 30
+
+      - name: Create or Update GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0
+          name: "MyHarur v0.1.0 (Official Release)"
+          body: |
+            ## 🚀 MyHarur Digital Town — Official Release v0.1.0
+            
+            Welcome to the official release of **MyHarur**, the hyper-local digital town platform for Harur and Dharmapuri!
+            
+            ### 📱 Download Android App
+            - **Direct APK**: [Download myharur.apk](https://github.com/${{ github.repository }}/releases/download/v0.1.0/myharur.apk)
+            - **Size**: ~24.2 MB
+            - **Target OS**: Android 6.0+
+            
+            ### ✨ Features Included
+            - 🚨 **Emergency SOS Broadcaster**: Live GPS broadcast with 1km–50km escalation radius and direct emergency hotline dialer.
+            - 📰 **Verified Local News & Weather Hub**: Real-time civic stories, KVK agriculture advisories, and weather monitoring.
+            - 🛍️ **Local Marketplace & Shop Directory**: One-tap storefront, WhatsApp messaging, call dialer, and Google Maps navigation.
+            - 🌾 **Local Jobs & Daily Wage Board**: Farm, logistics, retail, and agro job opportunities.
+            - 🏛️ **3-Admin Consensus & Governance**: MMID identities, moderation queue, and democratic town administration.
+          files: |
+            ./myharur.apk
+            build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        id: deployment
+        uses: actions/deploy-pages@v4
