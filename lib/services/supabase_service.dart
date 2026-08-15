@@ -457,6 +457,22 @@ class AuthService {
     return "AID-$dateStr-$suffix";
   }
 
+  /// Guest Access Mode (reference: d:/harur)
+  static void loginAsGuest() {
+    _isLoggedIn = true;
+    _profile = const UserProfile(
+      id: 'usr-guest-0000',
+      mmid: 'GUEST-VISITOR',
+      username: 'guest_resident',
+      fullName: 'Town Guest Explorer',
+      email: 'guest@myharur.local',
+      phone: '+91 00000 00000',
+      roles: ['guest'],
+      wardLocality: 'Harur Town',
+      bio: 'Visiting resident exploring MyHarur digital town services.',
+    );
+  }
+
   /// Sign In with Email & Password
   static Future<bool> signInWithEmailPassword(String email, String password) async {
     final client = SupabaseConfig.client;

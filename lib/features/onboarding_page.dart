@@ -420,6 +420,25 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
               ),
             ),
           ),
+          const SizedBox(height: 6),
+          Center(
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF007F63), width: 1.2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: () {
+                AuthService.loginAsGuest();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const TownShell()),
+                );
+              },
+              icon: const Icon(Icons.person_outline_rounded, size: 18, color: Color(0xFF007F63)),
+              label: const Text('Explore Town as Guest →', style: TextStyle(color: Color(0xFF007F63), fontWeight: FontWeight.w800)),
+            ),
+          ),
+          const SizedBox(height: 8),
           Center(
             child: TextButton(
               onPressed: () {
@@ -428,7 +447,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                 isSignUp = false;
                 _handleStep1Auth();
               },
-              child: const Text('👑 Use Root SuperAdmin (admin.qenbel@gmail.com)', style: TextStyle(color: Color(0xFF267AF4), fontWeight: FontWeight.w800, fontSize: 12)),
+              child: const Text('👑 SuperAdmin Quick Fill (admin.qenbel@gmail.com)', style: TextStyle(color: Color(0xFF267AF4), fontWeight: FontWeight.w800, fontSize: 12)),
             ),
           ),
         ],
