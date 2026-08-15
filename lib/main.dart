@@ -16,7 +16,15 @@ import 'features/rankings_page.dart';
 import 'features/auth_page.dart';
 import 'features/admin_dashboard_page.dart';
 
-void main() => runApp(const MyHarurApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // This call was previously missing entirely — SupabaseConfig.client
+  // returned null for the whole app lifetime regardless of what
+  // credentials were configured anywhere else, which meant every DB/auth
+  // call silently failed from app launch.
+  await SupabaseConfig.initialize();
+  runApp(const MyHarurApp());
+}
 
 class MyHarurApp extends StatelessWidget {
   const MyHarurApp({super.key});
@@ -27,9 +35,52 @@ class MyHarurApp extends StatelessWidget {
       title: 'MyHarur',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: kIsWeb
-          ? const TownShell()
-          : (AuthService.isAuthenticated ? const TownShell() : const TownOnboardingFlowPage()),
+      home: SupabaseConfig.initError != null
+          ? _ConfigErrorScreen(message: SupabaseConfig.initError!)
+          // Confirmed intentional: web is a public browse-only preview and
+          // does not gate on login. Android/iOS require real auth via
+          // AuthService.isAuthenticated.
+          : (kIsWeb
+              ? const TownShell()
+              : (AuthService.isAuthenticated ? const TownShell() : const TownOnboardingFlowPage())),
+    );
+  }
+}
+
+/// Shown when Supabase failed to initialize (missing/invalid credentials at
+/// build time, or the Supabase project is unreachable). Replaces the old
+/// behavior of silently booting into a non-functional app shell.
+class _ConfigErrorScreen extends StatelessWidget {
+  final String message;
+  const _ConfigErrorScreen({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off_rounded, size: 48, color: Color(0xFFE44545)),
+              const SizedBox(height: 16),
+              const Text(
+                'MyHarur can\'t connect right now',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF15211F)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF697570)),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../main.dart';
 
@@ -34,6 +36,9 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
   double pinnedLat = 12.0624;
   double pinnedLon = 78.4983;
   bool isDetectingGps = false;
+
+  StreamSubscription<AuthState>? _authSub;
+  bool _googleSignInPending = false;
 
   final landmarks = [
     {
@@ -74,7 +79,26 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Real login confirmation for the onboarding wizard's Google sign-in
+    // step comes from Supabase's auth stream (fired once a session actually
+    // exists), not from the OAuth launch call's return value.
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      _authSub = client.auth.onAuthStateChange.listen((data) {
+        if (!mounted) return;
+        if (data.event == AuthChangeEvent.signedIn && _googleSignInPending) {
+          _googleSignInPending = false;
+          setState(() => currentStep = 1);
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    _authSub?.cancel();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _nameCtrl.dispose();
@@ -114,10 +138,25 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    final ok = await AuthService.signInWithGoogle();
-    if (mounted) {
-      if (ok) {
-        setState(() => currentStep = 1);
+    if (SupabaseConfig.client == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cannot sign in: ${SupabaseConfig.initError ?? "Supabase is not configured."}')),
+        );
+      }
+      return;
+    }
+    _googleSignInPending = true;
+    final launched = await AuthService.signInWithGoogle();
+    // Step only advances via onAuthStateChange in initState once a real
+    // session exists (see above). `launched` only tells us the OAuth flow
+    // opened, not that the user is signed in.
+    if (!launched) {
+      _googleSignInPending = false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google sign-in could not be started. Please try again.')),
+        );
       }
     }
   }

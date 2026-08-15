@@ -1,4 +1,12 @@
-name: MyHarur CI, APK Build & Web Deployment
+name: MyHarur CI & APK Release
+
+# NOTE: Web deployment is handled by Render (env: docker, see render.yaml),
+# NOT by this workflow. GitHub Pages deployment was removed — it was a
+# third, uncoordinated deploy target with no injected credentials, running
+# alongside Render and producing a separate broken build at a URL nobody
+# was tracking. Render (now) -> Hostinger VPS (later, same Docker image)
+# is the single canonical web deployment path. This workflow's job is
+# CI (analyze/test) + Android APK release artifacts only.
 
 on:
   push:
@@ -9,16 +17,14 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "deploy"
+  group: "ci-release"
   cancel-in-progress: false
 
 jobs:
   build_test_and_release:
-    name: Test, Build APK & Deploy Web
+    name: Test & Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -48,70 +54,57 @@ jobs:
         run: flutter test
 
       - name: Build Android APK (Release)
+        # SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY must be set as GitHub
+        # Actions repo secrets (Settings > Secrets and variables > Actions).
+        # Without these, the APK builds successfully but every Supabase
+        # call fails at runtime with no visible error — this was the
+        # actual root cause of prior "broken app" builds.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          flutter build apk --release
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY secret is not set. Add them in repo Settings > Secrets and variables > Actions before building a release APK."
+            exit 1
+          fi
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY"
           cp build/app/outputs/flutter-apk/app-release.apk ./myharur.apk
-
-      - name: Build Flutter Web (Release)
-        run: |
-          flutter build web --release
-          cp web/download.html build/web/download.html || true
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: myharur-android-apk
+          name: myharur-android-apk-${{ github.sha }}
           path: |
             build/app/outputs/flutter-apk/app-release.apk
             ./myharur.apk
           retention-days: 90
 
-      - name: Upload Web Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: myharur-web-bundle
-          path: build/web
-          retention-days: 30
+      - name: Read version from pubspec.yaml
+        if: github.ref == 'refs/heads/main'
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d '[:space:]')
+          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Create or Update GitHub Release
+      - name: Create GitHub Release
+        # Tagged per pubspec version + run number, so every build gets its
+        # own release and old APKs stay downloadable for rollback. Bump
+        # `version:` in pubspec.yaml before a release push.
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.0
-          name: "MyHarur v0.1.0 (Official Release)"
+          tag_name: ${{ steps.version.outputs.version }}-${{ github.run_number }}
+          name: "MyHarur ${{ steps.version.outputs.version }} (build ${{ github.run_number }})"
           body: |
-            ## 🚀 MyHarur Digital Town — Official Release v0.1.0
-            
-            Welcome to the official release of **MyHarur**, the hyper-local digital town platform for Harur and Dharmapuri!
-            
-            ### 📱 Download Android App
-            - **Direct APK**: [Download myharur.apk](https://github.com/${{ github.repository }}/releases/download/v0.1.0/myharur.apk)
-            - **Size**: ~24.2 MB
-            - **Target OS**: Android 6.0+
-            
-            ### ✨ Features Included
-            - 🚨 **Emergency SOS Broadcaster**: Live GPS broadcast with 1km–50km escalation radius and direct emergency hotline dialer.
-            - 📰 **Verified Local News & Weather Hub**: Real-time civic stories, KVK agriculture advisories, and weather monitoring.
-            - 🛍️ **Local Marketplace & Shop Directory**: One-tap storefront, WhatsApp messaging, call dialer, and Google Maps navigation.
-            - 🌾 **Local Jobs & Daily Wage Board**: Farm, logistics, retail, and agro job opportunities.
-            - 🏛️ **3-Admin Consensus & Governance**: MMID identities, moderation queue, and democratic town administration.
+            Automated release from commit ${{ github.sha }}.
+
+            ### Download
+            - Direct APK attached below.
+            - Target OS: Android 6.0+
           files: |
             ./myharur.apk
             build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages Artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: build/web
-
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        id: deployment
-        uses: actions/deploy-pages@v4

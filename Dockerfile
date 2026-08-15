@@ -8,7 +8,17 @@ COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
 COPY . .
-RUN flutter build web --release
+
+# Build-time credentials. Render passes these from its dashboard env vars
+# as Docker build args (configure "Docker Build Args" in the Render service
+# settings to forward SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY here).
+# Without these, the app builds successfully but every Supabase call fails
+# at runtime — this was the root cause of the app appearing broken.
+ARG SUPABASE_URL
+ARG SUPABASE_PUBLISHABLE_KEY
+RUN flutter build web --release \
+    --dart-define=SUPABASE_URL=${SUPABASE_URL} \
+    --dart-define=SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
 
 # Stage 2: Serve via Lightweight Nginx
 FROM nginx:alpine-slim AS production-stage

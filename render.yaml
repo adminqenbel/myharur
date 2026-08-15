@@ -1,13 +1,15 @@
 services:
   - type: web
     name: myharur-web
-    env: static
-    buildCommand: "git clone https://github.com/flutter/flutter.git --depth 1 -b stable flutter-sdk && export PATH=\"$PATH:`pwd`/flutter-sdk/bin\" && flutter channel stable && flutter upgrade && flutter build web --release"
-    staticPublishPath: build/web
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    env: docker
+    dockerfilePath: ./Dockerfile
+    # Same image works unmodified when moved to Hostinger VPS later —
+    # Render just runs `docker build` + `docker run` against it.
+    envVars:
+      - key: SUPABASE_URL
+        sync: false   # set in Render dashboard, not committed to git
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
     headers:
       - path: /*
         name: X-Frame-Options

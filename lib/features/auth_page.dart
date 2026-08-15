@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 
 class AuthPage extends StatefulWidget {
@@ -28,10 +30,32 @@ class _AuthPageState extends State<AuthPage> {
   String selectedBloodGroup = 'O+';
   final bloodGroups = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-'];
 
+  StreamSubscription<AuthState>? _authSub;
+  bool _googleSignInPending = false;
+
   @override
   void initState() {
     super.initState();
     _populateProfileData();
+    // Real login confirmation comes from Supabase's auth stream, fired
+    // after the OAuth redirect actually completes and a session exists —
+    // not from the return value of launching the OAuth flow.
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      _authSub = client.auth.onAuthStateChange.listen((data) {
+        if (!mounted) return;
+        if (data.event == AuthChangeEvent.signedIn && _googleSignInPending) {
+          _googleSignInPending = false;
+          setState(() {});
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF007F63),
+              content: Text('✓ Signed in with Google OAuth. Verified Resident profile active.'),
+            ),
+          );
+        }
+      });
+    }
   }
 
   void _populateProfileData() {
@@ -49,6 +73,7 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _nameCtrl.dispose();
@@ -62,18 +87,35 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    final success = await AuthService.signInWithGoogle();
-    if (mounted) {
-      if (success) {
-        setState(() {});
+    if (SupabaseConfig.client == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFE44545),
+            content: Text('Cannot sign in: ${SupabaseConfig.initError ?? "Supabase is not configured."}'),
+          ),
+        );
+      }
+      return;
+    }
+    _googleSignInPending = true;
+    final launched = await AuthService.signInWithGoogle();
+    // On web this navigates away entirely, so nothing after `launched` runs.
+    // On native, a false return means the flow never opened — tell the user
+    // instead of silently doing nothing.
+    if (!launched) {
+      _googleSignInPending = false;
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            backgroundColor: Color(0xFF007F63),
-            content: Text('✓ Signed in with Google OAuth. Verified Resident profile active.'),
+            backgroundColor: Color(0xFFE44545),
+            content: Text('Google sign-in could not be started. Please try again.'),
           ),
         );
       }
     }
+    // If launched == true, we wait for onAuthStateChange (see initState)
+    // to confirm an actual session before showing success.
   }
 
   Future<void> _handleAuthAction() async {

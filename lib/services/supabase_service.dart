@@ -8,29 +8,50 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // 1. SUPABASE CLIENT & CONFIGURATION
 // ==============================================================================
 class SupabaseConfig {
-  static const String defaultUrl = 'https://qpuvhhvzygdbvlichbqs.supabase.co';
-  static const String defaultAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder';
+  // NOTE: no hardcoded key defaults. If SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY
+  // are not injected via --dart-define at build time, initialization fails
+  // LOUDLY (see initError below) instead of silently falling back to a dead
+  // placeholder. A silently-failed init was the root cause of the app
+  // appearing "logged in" while every DB call actually failed.
+  static const String _envUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String _envPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
 
-  static String _activeUrl = defaultUrl;
+  static String _activeUrl = '';
   static bool _isInitialized = false;
+  static String? _initError;
 
   static String get activeUrl => _activeUrl;
   static bool get isConfigured => _isInitialized;
+  /// Non-null if Supabase failed to initialize. UI MUST check this and show
+  /// a real error screen instead of proceeding as if the app is functional.
+  static String? get initError => _initError;
 
-  static Future<void> initialize({String? url, String? anonKey}) async {
-    final targetUrl = url ?? const String.fromEnvironment('SUPABASE_URL', defaultValue: defaultUrl);
-    final targetKey = anonKey ?? const String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: defaultAnonKey);
+  static Future<void> initialize({String? url, String? publishableKey}) async {
+    final targetUrl = url ?? _envUrl;
+    final targetKey = publishableKey ?? _envPublishableKey;
+
+    if (targetUrl.isEmpty || targetKey.isEmpty) {
+      _initError = 'Missing Supabase credentials. SUPABASE_URL / '
+          'SUPABASE_PUBLISHABLE_KEY were not provided at build time '
+          '(--dart-define). The app cannot function without these.';
+      debugPrint('SUPABASE INIT FAILED: $_initError');
+      return;
+    }
 
     try {
       await Supabase.initialize(
         url: targetUrl,
-        // ignore: deprecated_member_use
-        anonKey: targetKey,
+        // publishableKey (sb_publishable_...) is the forward-compatible key;
+        // it takes precedence over the deprecated anonKey param in
+        // supabase_flutter >= 2.15.0. We are on 2.17.2.
+        publishableKey: targetKey,
       );
       _activeUrl = targetUrl;
       _isInitialized = true;
+      _initError = null;
     } catch (e) {
-      debugPrint('Supabase initialization notice: $e');
+      _initError = 'Supabase initialization failed: $e';
+      debugPrint(_initError);
     }
   }
 
@@ -46,6 +67,22 @@ class SupabaseConfig {
 // ==============================================================================
 // 2. USERNAME RESERVATION & MULTILINGUAL PROFANITY FILTER (EN, TA, HI)
 // ==============================================================================
+class SecurityValidationResult {
+  final bool isValid;
+  final String? errorMessage;
+  final bool isFlaggedForModeration;
+  final String? flagReason;
+
+  const SecurityValidationResult({
+    required this.isValid,
+    this.errorMessage,
+    this.isFlaggedForModeration = false,
+    this.flagReason,
+  });
+
+  static const valid = SecurityValidationResult(isValid: true);
+}
+
 class SecurityFilterService {
   // Reserved system and official usernames
   static const Set<String> reservedUsernames = {
@@ -57,51 +94,186 @@ class SecurityFilterService {
     'town_admin', 'event_head', 'security', 'auth', 'master'
   };
 
+  // Critical root stems that cannot be impersonated even with affixes
+  static const Set<String> reservedRoots = {
+    'admin', 'superadmin', 'police', 'collector', 'tahsildar',
+    'panchayat', 'govt', 'government', 'official', 'qenbel'
+  };
+
   // Multilingual Blacklisted Words (English, Tamil transliterated, Hindi transliterated)
   static const Set<String> badWordsList = {
     // English
     'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy', 'whore', 'slut',
-    // Tamil
+    // Tamil transliteration
     'thevidiya', 'thevadiya', 'otha', 'omala', 'pundai', 'sunni', 'kena', 'kamnati', 'naaye',
     'porambokku', 'koothi', 'lavada', 'baadu', 'poolu', 'mayiru', 'kundha',
-    // Hindi
+    // Hindi transliteration
     'bhenchod', 'bc', 'madarchod', 'mc', 'chutiya', 'gandu', 'harami', 'bhosdike',
     'kutta', 'saala', 'kamina', 'randi', 'lauda', 'chudaap', 'bhosdi'
   };
 
-  /// Check if username is reserved
-  static bool isReservedUsername(String username) {
-    final clean = username.trim().toLowerCase().replaceAll('@', '');
-    return reservedUsernames.contains(clean);
-  }
+  // Invisible, zero-width, formatting and control characters
+  static final RegExp _invisibleChars = RegExp(
+    r'[\u0000-\u001F\u007F-\u009F\u200B-\u200D\uFEFF\u00AD\u2060\u180E\u202A-\u202E]',
+  );
 
-  /// Check if text contains any bad words in EN, TA, or HI
-  static bool containsBadWord(String text) {
-    final clean = text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-    for (final badWord in badWordsList) {
-      if (clean.contains(badWord)) {
-        return true;
+  /// Comprehensive Unicode normalization + leetspeak substitution map
+  static String normalizeText(String input) {
+    if (input.isEmpty) return '';
+
+    // 1. Strip zero-width, bidirectional overrides, and invisible chars
+    var clean = input.replaceAll(_invisibleChars, '').trim().toLowerCase();
+
+    // 2. Leetspeak & homoglyph mapping
+    final StringBuffer sb = StringBuffer();
+    for (int i = 0; i < clean.length; i++) {
+      final char = clean[i];
+      switch (char) {
+        case '0':
+          sb.write('o');
+          break;
+        case '1':
+        case '!':
+        case '|':
+          sb.write('i');
+          break;
+        case '3':
+        case '€':
+          sb.write('e');
+          break;
+        case '4':
+        case '@':
+          sb.write('a');
+          break;
+        case '5':
+        case '\$':
+          sb.write('s');
+          break;
+        case '7':
+        case '+':
+          sb.write('t');
+          break;
+        case '8':
+          sb.write('b');
+          break;
+        case '9':
+          sb.write('g');
+          break;
+        default:
+          sb.write(char);
       }
     }
+    return sb.toString();
+  }
+
+  /// Strip all separator noise (_ . - spaces) for evasion-resistant checking
+  static String stripSeparators(String input) {
+    return input.replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  /// Check if username matches or attempts to evade reserved handles
+  static bool isReservedUsername(String username) {
+    final rawClean = username.trim().toLowerCase().replaceAll('@', '');
+    if (reservedUsernames.contains(rawClean)) return true;
+
+    final normalized = normalizeText(rawClean);
+    final stripped = stripSeparators(normalized);
+
+    // Exact match against normalized reserved set
+    if (reservedUsernames.contains(normalized) || reservedUsernames.contains(stripped)) {
+      return true;
+    }
+
+    // Check if stripped handle directly impersonates critical administrative stems
+    for (final root in reservedRoots) {
+      if (stripped == root || stripped == '${root}s' || stripped == 'official$root' || stripped == '${root}official') {
+        return true;
+      }
+      // e.g. p0l1ce_harur -> policeharur
+      if (stripped.startsWith(root) || stripped.endsWith(root)) {
+        if (stripped.length <= root.length + 6) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
-  /// Validate both full name and username
-  static String? validateUsernameAndName({required String username, required String fullName}) {
-    final cleanUsername = username.trim().toLowerCase().replaceAll('@', '');
-    if (cleanUsername.length < 3) {
-      return 'Username must be at least 3 characters.';
+  /// Check if text contains prohibited offensive terms across EN, TA, and HI
+  static bool containsBadWord(String text) {
+    if (text.isEmpty) return false;
+    final normalized = normalizeText(text);
+    final stripped = stripSeparators(normalized);
+
+    for (final badWord in badWordsList) {
+      if (stripped.contains(badWord)) {
+        return true;
+      }
     }
-    if (isReservedUsername(cleanUsername)) {
-      return 'This username is reserved for town administration/system officials.';
+
+    // Also check token-by-token for exact word matches
+    final tokens = normalized.split(RegExp(r'[\s_\-\.\,\;\:\/\\]+'));
+    for (final token in tokens) {
+      if (badWordsList.contains(token)) {
+        return true;
+      }
     }
-    if (containsBadWord(cleanUsername)) {
-      return 'Username contains prohibited words. Please choose a respectful handle.';
+
+    return false;
+  }
+
+  /// Detailed evaluation returning structured validation status and moderation flags
+  static SecurityValidationResult evaluateSafety({required String username, required String fullName}) {
+    final rawUsername = username.trim().toLowerCase().replaceAll('@', '');
+    if (rawUsername.length < 3) {
+      return const SecurityValidationResult(
+        isValid: false,
+        errorMessage: 'Username must be at least 3 characters.',
+      );
+    }
+    if (rawUsername.length > 30) {
+      return const SecurityValidationResult(
+        isValid: false,
+        errorMessage: 'Username cannot exceed 30 characters.',
+      );
+    }
+    if (isReservedUsername(rawUsername)) {
+      return const SecurityValidationResult(
+        isValid: false,
+        errorMessage: 'This username is reserved for town administration/system officials.',
+      );
+    }
+    if (containsBadWord(rawUsername)) {
+      return const SecurityValidationResult(
+        isValid: false,
+        errorMessage: 'Username contains prohibited words. Please choose a respectful handle.',
+      );
     }
     if (containsBadWord(fullName)) {
-      return 'Name contains prohibited words. Please use your real, respectful name.';
+      return const SecurityValidationResult(
+        isValid: false,
+        errorMessage: 'Name contains prohibited words. Please use your real, respectful name.',
+      );
     }
-    return null; // Valid
+
+    // Moderation heuristic flag for unusual symbols or non-standard characters
+    final hasSpecialPatterns = RegExp(r'[^a-zA-Z0-9_\s]').hasMatch(fullName);
+    if (hasSpecialPatterns) {
+      return const SecurityValidationResult(
+        isValid: true,
+        isFlaggedForModeration: true,
+        flagReason: 'Name contains special characters or formatting symbols; queued for routine verification.',
+      );
+    }
+
+    return SecurityValidationResult.valid;
+  }
+
+  /// Validate both full name and username (backward compatible string helper)
+  static String? validateUsernameAndName({required String username, required String fullName}) {
+    final res = evaluateSafety(username: username, fullName: fullName);
+    return res.isValid ? null : res.errorMessage;
   }
 }
 
@@ -402,26 +574,39 @@ class AuthService {
     return true;
   }
 
-  /// Google OAuth Sign In
+  /// Google OAuth Sign In.
+  /// Returns true only if the OAuth flow actually launched successfully.
+  /// This does NOT set _isLoggedIn on completion of this call — for the
+  /// redirect-based OAuth flow, the real session arrives asynchronously via
+  /// Supabase's onAuthStateChange stream after the browser/app redirect
+  /// completes. Callers must listen to that stream, not trust this return
+  /// value, to determine actual login state.
+  ///
+  /// Previously this method set _isLoggedIn = true unconditionally in a
+  /// fallback path even when Supabase was unconfigured or the OAuth call
+  /// threw — meaning users could see a "logged in" UI with no real session,
+  /// and every subsequent DB call would then fail or be denied by RLS with
+  /// no clear reason why. That fallback has been removed.
   static Future<bool> signInWithGoogle() async {
     final client = SupabaseConfig.client;
-    if (client != null) {
-      try {
-        await client.auth.signInWithOAuth(
-          OAuthProvider.google,
-          redirectTo: kIsWeb ? null : 'com.myharur.app://login-callback',
-        );
-        _isLoggedIn = true;
-        await AuditLogService.log(action: 'GOOGLE_OAUTH', tableName: 'auth.users');
-        return true;
-      } catch (e) {
-        debugPrint('Google OAuth Error: $e');
-      }
+    if (client == null) {
+      debugPrint('Google OAuth aborted: Supabase not configured (${SupabaseConfig.initError})');
+      return false;
     }
-
-    _isLoggedIn = true;
-    await AuditLogService.log(action: 'GOOGLE_OAUTH_SIMULATED', tableName: 'profiles');
-    return true;
+    try {
+      final launched = await client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: kIsWeb ? null : 'com.myharur.app://login-callback',
+      );
+      if (launched) {
+        await AuditLogService.log(action: 'GOOGLE_OAUTH_INITIATED', tableName: 'auth.users');
+      }
+      return launched;
+    } catch (e) {
+      debugPrint('Google OAuth Error: $e');
+      await AuditLogService.log(action: 'GOOGLE_OAUTH_FAILED', tableName: 'auth.users', details: {'error': e.toString()});
+      return false;
+    }
   }
 
   /// Save Personal Details Safely
@@ -557,7 +742,7 @@ class GeminiAISupportService {
   static Future<Map<String, dynamic>> askAssistant(String userQuery, int currentStrikes) async {
     final clean = userQuery.toLowerCase();
 
-    // 1. Check local fast knowledge base
+    // 1. Check local fast knowledge base first
     for (final entry in localKnowledgeBase.entries) {
       if (clean.contains(entry.key)) {
         return {
@@ -569,7 +754,32 @@ class GeminiAISupportService {
       }
     }
 
-    // 2. Call Gemini API if configured
+    // 2. Invoke server-side Supabase Edge Function 'gemini-proxy' (secure server key)
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      try {
+        final res = await client.functions.invoke(
+          'gemini-proxy',
+          body: {'userQuery': userQuery},
+        ).timeout(const Duration(seconds: 8));
+
+        if (res.status == 200 && res.data != null) {
+          final answer = res.data['answer'] as String?;
+          if (answer != null && answer.trim().isNotEmpty) {
+            return {
+              "handled_by": "GEMINI_AI_PROXY",
+              "response": answer.trim(),
+              "is_escalated": false,
+              "strike_count": currentStrikes,
+            };
+          }
+        }
+      } catch (e) {
+        debugPrint('Gemini Edge Function proxy notice: $e');
+      }
+    }
+
+    // 3. Fallback to direct client API if GEMINI_API_KEY was passed in local dev build
     if (geminiApiKey.isNotEmpty) {
       try {
         final uri = Uri.parse(
@@ -596,7 +806,7 @@ class GeminiAISupportService {
           final answer = data['candidates']?[0]?['content']?['parts']?[0]?['text'];
           if (answer != null && (answer as String).trim().isNotEmpty) {
             return {
-              "handled_by": "GEMINI_AI",
+              "handled_by": "GEMINI_AI_DIRECT",
               "response": answer.trim(),
               "is_escalated": false,
               "strike_count": currentStrikes,
@@ -606,7 +816,7 @@ class GeminiAISupportService {
       } catch (_) {}
     }
 
-    // 3. If query unresolved, increment strike count
+    // 4. If query unresolved, increment strike count towards human escalation
     final newStrikes = currentStrikes + 1;
     if (newStrikes >= 3) {
       return {
