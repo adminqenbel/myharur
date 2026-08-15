@@ -495,15 +495,11 @@ class AuthService {
           return true;
         }
       } catch (e) {
-        debugPrint('Sign In notice: $e');
+        debugPrint('Sign In error: $e');
       }
     }
 
-    // Fallback resident login
-    _isLoggedIn = true;
-    _profile = _profile.copyWith(email: email.trim());
-    await AuditLogService.log(action: 'LOGIN', tableName: 'profiles', recordId: _profile.mmid);
-    return true;
+    return false;
   }
 
   /// Sign Up with Email & Password + MMID creation
@@ -554,24 +550,11 @@ class AuthService {
           return true;
         }
       } catch (e) {
-        debugPrint('Sign Up notice: $e');
+        debugPrint('Sign Up error: $e');
       }
     }
 
-    // Fallback simulation
-    _isLoggedIn = true;
-    _profile = UserProfile(
-      id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
-      mmid: mmid,
-      aid: aid,
-      username: userHandle,
-      fullName: fullName,
-      email: email.trim(),
-      phone: phone,
-      roles: roles,
-    );
-    await AuditLogService.log(action: 'SIGNUP_FALLBACK', tableName: 'profiles', recordId: mmid);
-    return true;
+    return false;
   }
 
   /// Google OAuth Sign In.

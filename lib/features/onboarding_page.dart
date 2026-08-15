@@ -121,15 +121,25 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
       return;
     }
 
+    bool success = false;
     if (isSignUp) {
-      await AuthService.signUpWithEmailPassword(
+      success = await AuthService.signUpWithEmailPassword(
         email: email,
         password: pwd,
         fullName: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'Harur Resident',
         phone: _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : '+91 98420 11000',
       );
     } else {
-      await AuthService.signInWithEmailPassword(email, pwd);
+      success = await AuthService.signInWithEmailPassword(email, pwd);
+    }
+
+    if (!success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication failed. Please check your credentials or network connection.')),
+        );
+      }
+      return;
     }
 
     if (mounted) {

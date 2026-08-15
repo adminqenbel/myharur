@@ -139,7 +139,7 @@ class _AuthPageState extends State<AuthPage> {
         return;
       }
 
-      await AuthService.signUpWithEmailPassword(
+      final ok = await AuthService.signUpWithEmailPassword(
         email: email,
         password: password,
         fullName: name,
@@ -149,8 +149,8 @@ class _AuthPageState extends State<AuthPage> {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: const Color(0xFF007F63),
-            content: Text('✓ Account created! Your MMID: ${AuthService.currentProfile.mmid}'),
+            backgroundColor: ok ? const Color(0xFF007F63) : const Color(0xFFE44545),
+            content: Text(ok ? '✓ Account created! Your MMID: ${AuthService.currentProfile.mmid}' : 'Sign up failed. Please verify your details or connection.'),
           ),
         );
       }
@@ -160,7 +160,7 @@ class _AuthPageState extends State<AuthPage> {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: const Color(0xFF007F63),
+            backgroundColor: ok ? const Color(0xFF007F63) : const Color(0xFFE44545),
             content: Text(ok ? '✓ Logged in as ${AuthService.currentProfile.fullName} (${AuthService.currentProfile.primaryRoleTitle})' : 'Login failed. Please check credentials.'),
           ),
         );
