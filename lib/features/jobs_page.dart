@@ -58,10 +58,10 @@ class _JobsPageState extends State<JobsPage> {
         scrolledUnderElevation: 0,
         title: const Text(
           'Harur Jobs & Hiring',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -81,16 +81,16 @@ class _JobsPageState extends State<JobsPage> {
                     label: Text(categories[i]),
                     selected: active,
                     onSelected: (_) => setState(() => selectedCategory = i),
-                    selectedColor: const Color(0xFF007F63),
-                    backgroundColor: const Color(0xFFF2F6F5),
+                    selectedColor: const Color(0xFF007AFF),
+                    backgroundColor: const Color(0xFFF2F2F7),
                     labelStyle: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF15211F),
+                      color: active ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     side: BorderSide(
-                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                      color: active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                     ),
                   );
                 },
@@ -109,7 +109,7 @@ class _JobsPageState extends State<JobsPage> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFDCE5E1)),
+                      border: Border.all(color: const Color(0xFFE5E5EA)),
                       boxShadow: const [
                         BoxShadow(color: Color(0x080F2922), blurRadius: 14, offset: Offset(0, 5))
                       ],
@@ -135,32 +135,32 @@ class _JobsPageState extends State<JobsPage> {
                               ),
                             ),
                             const Spacer(),
-                            Text(job['posted'], style: const TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600)),
+                            Text(job['posted'], style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Text(
                           job['title'],
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF15211F)),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E)),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           job['company'],
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF697570), fontWeight: FontWeight.w700),
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF8E8E93), fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 12),
                         Row(
                           children: [
                             Text(
                               job['salary'],
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF007F63)),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF007AFF)),
                             ),
                             const Spacer(),
                             Row(
                               children: [
-                                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF697570)),
+                                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF8E8E93)),
                                 const SizedBox(width: 3),
-                                Text(job['location'], style: const TextStyle(fontSize: 12, color: Color(0xFF697570))),
+                                Text(job['location'], style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
                               ],
                             ),
                           ],
@@ -170,7 +170,7 @@ class _JobsPageState extends State<JobsPage> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF15211F),
+                              backgroundColor: const Color(0xFF1C1C1E),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
@@ -193,7 +193,7 @@ class _JobsPageState extends State<JobsPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF007F63),
+        backgroundColor: const Color(0xFF007AFF),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.add_rounded),
@@ -246,18 +246,18 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               child: Container(
                 width: 44,
                 height: 4,
-                decoration: BoxDecoration(color: const Color(0xFFDCE5E1), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: const Color(0xFFE5E5EA), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             const Text(
               'Post Local Job Vacancy',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
             ),
             const SizedBox(height: 4),
             const Text(
               'Reach workers, drivers, store staff, and field labor across Harur taluk.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF697570)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -265,7 +265,7 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               decoration: InputDecoration(
                 labelText: 'Job Role / Designation',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -275,7 +275,7 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               decoration: InputDecoration(
                 labelText: 'Shop / Farm / Business Name',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -285,7 +285,7 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               decoration: InputDecoration(
                 labelText: 'Wages / Salary (e.g. ₹600/day or ₹15,000/mo)',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -296,7 +296,7 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               decoration: InputDecoration(
                 labelText: 'Contact Phone Number',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -306,7 +306,7 @@ class _PostJobSheetState extends State<_PostJobSheet> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007F63),
+                  backgroundColor: const Color(0xFF007AFF),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -315,21 +315,42 @@ class _PostJobSheetState extends State<_PostJobSheet> {
                   final org = _orgCtrl.text.trim();
                   final phone = _phoneCtrl.text.trim();
                   final salary = _salaryCtrl.text.trim();
-                  if (title.isNotEmpty && phone.isNotEmpty) {
-                    await JobsService.postJob(
-                      title: title,
-                      company: org.isNotEmpty ? org : 'Harur Business',
-                      jobType: selectedType,
-                      description: 'Direct hiring in Harur region.',
-                      phone: phone,
-                      salary: salary,
+
+                  if (title.isEmpty || phone.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Color(0xFFE44545),
+                        content: Text('Please provide both a job title and contact number.'),
+                      ),
                     );
-                    widget.onCreated?.call();
+                    return;
                   }
+
+                  final profanityErr = SecurityFilterService.validateUsernameAndName(username: '', fullName: title);
+                  if (profanityErr != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(backgroundColor: const Color(0xFFE44545), content: Text(profanityErr)),
+                    );
+                    return;
+                  }
+
+                  await JobsService.postJob(
+                    title: title,
+                    company: org.isNotEmpty ? org : 'Harur Business',
+                    jobType: selectedType,
+                    description: 'Direct hiring in Harur region.',
+                    phone: phone,
+                    salary: salary,
+                  );
+                  widget.onCreated?.call();
+
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Job vacancy published to Harur community!')),
+                      const SnackBar(
+                        backgroundColor: Color(0xFF007AFF),
+                        content: Text('✓ Job vacancy published to Harur community!'),
+                      ),
                     );
                   }
                 },

@@ -16,7 +16,7 @@ class _TownChatPageState extends State<TownChatPage> {
       'name': '# Public Town Chat',
       'icon': Icons.forum_rounded,
       'onlineCount': 148,
-      'color': const Color(0xFF007F63),
+      'color': const Color(0xFF007AFF),
     },
     {
       'id': 'gov_official',
@@ -128,7 +128,7 @@ class _TownChatPageState extends State<TownChatPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Row(
           children: [
-            Icon(Icons.add_circle_outline_rounded, color: Color(0xFF007F63)),
+            Icon(Icons.add_circle_outline_rounded, color: Color(0xFF007AFF)),
             SizedBox(width: 8),
             Text('Create Temporary Room', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
           ],
@@ -139,7 +139,7 @@ class _TownChatPageState extends State<TownChatPage> {
           children: [
             const Text(
               'Admins & Event Heads can create temporary rooms for event participants. SuperAdmins are automatically added for oversight.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF697570)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -147,7 +147,7 @@ class _TownChatPageState extends State<TownChatPage> {
               decoration: InputDecoration(
                 labelText: 'Room Name (e.g. # Temple Ther Committee)',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               ),
             ),
@@ -157,7 +157,7 @@ class _TownChatPageState extends State<TownChatPage> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007F63),
+              backgroundColor: const Color(0xFF007AFF),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -268,19 +268,19 @@ class _TownChatPageState extends State<TownChatPage> {
                 children: [
                   Text(
                     currentRoom['name'] as String,
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF15211F)),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF1C1C1E)),
                   ),
                   Row(
                     children: [
                       Container(
                         width: 7,
                         height: 7,
-                        decoration: const BoxDecoration(color: Color(0xFF00D09C), shape: BoxShape.circle),
+                        decoration: const BoxDecoration(color: Color(0xFF007AFF), shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 5),
                       Text(
                         '${currentRoom['onlineCount']} online · @username supported',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -290,14 +290,14 @@ class _TownChatPageState extends State<TownChatPage> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 18),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           if (myProfile.isAdmin || myProfile.isEventHead)
             IconButton(
               tooltip: 'Create Temporary Room',
-              icon: const Icon(Icons.add_comment_rounded, color: Color(0xFF007F63)),
+              icon: const Icon(Icons.add_comment_rounded, color: Color(0xFF007AFF)),
               onPressed: _createTemporaryRoom,
             ),
         ],
@@ -323,28 +323,28 @@ class _TownChatPageState extends State<TownChatPage> {
                       setState(() => selectedRoomIndex = i);
                       _loadMessages();
                     },
-                    selectedColor: const Color(0xFF007F63),
-                    backgroundColor: const Color(0xFFF2F6F5),
+                    selectedColor: const Color(0xFF007AFF),
+                    backgroundColor: const Color(0xFFF2F2F7),
                     labelStyle: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF15211F),
+                      color: active ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 12,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     side: BorderSide(
-                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                      color: active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                     ),
                   );
                 },
               ),
             ),
 
-            const Divider(height: 1, color: Color(0xFFE2EBE8)),
+            const Divider(height: 1, color: Color(0xFFE5E5EA)),
 
             // Real-Time Chat Message Stream
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF007F63)))
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF007AFF)))
                   : ListView.builder(
                       controller: _scrollCtrl,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -374,11 +374,11 @@ class _TownChatPageState extends State<TownChatPage> {
                 itemBuilder: (context, i) {
                   return ActionChip(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    backgroundColor: const Color(0xFFF2F6F5),
-                    label: Text(quickReactions[i], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15211F))),
+                    backgroundColor: const Color(0xFFF2F2F7),
+                    label: Text(quickReactions[i], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1C1C1E))),
                     onPressed: () => _sendMessage(customText: quickReactions[i]),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    side: const BorderSide(color: Color(0xFFDCE5E1)),
+                    side: const BorderSide(color: Color(0xFFE5E5EA)),
                   );
                 },
               ),
@@ -389,12 +389,12 @@ class _TownChatPageState extends State<TownChatPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE2EBE8))),
+                border: Border(top: BorderSide(color: Color(0xFFE5E5EA))),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.alternate_email_rounded, color: Color(0xFF007F63), size: 22),
+                    icon: const Icon(Icons.alternate_email_rounded, color: Color(0xFF007AFF), size: 22),
                     tooltip: 'Tag Resident (@username)',
                     onPressed: () {
                       _textCtrl.text = "${_textCtrl.text}@";
@@ -405,9 +405,9 @@ class _TownChatPageState extends State<TownChatPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF2F6F5),
+                        color: const Color(0xFFF2F2F7),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFDCE5E1)),
+                        border: Border.all(color: const Color(0xFFE5E5EA)),
                       ),
                       child: TextField(
                         controller: _textCtrl,
@@ -415,7 +415,7 @@ class _TownChatPageState extends State<TownChatPage> {
                         maxLines: 4,
                         decoration: const InputDecoration(
                           hintText: 'Message neighbours (type @ to mention)...',
-                          hintStyle: TextStyle(color: Color(0xFF697570), fontSize: 13),
+                          hintStyle: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(vertical: 10),
@@ -427,7 +427,7 @@ class _TownChatPageState extends State<TownChatPage> {
                   const SizedBox(width: 8),
                   Container(
                     decoration: const BoxDecoration(
-                      color: Color(0xFF007F63),
+                      color: Color(0xFF007AFF),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
@@ -454,7 +454,7 @@ class _TownChatPageState extends State<TownChatPage> {
           if (!isMe) ...[
             CircleAvatar(
               radius: 16,
-              backgroundColor: isOfficial ? const Color(0xFF007F63) : const Color(0xFFE0EAE6),
+              backgroundColor: isOfficial ? const Color(0xFF007AFF) : const Color(0xFFE0EAE6),
               child: Text(
                 msg['sender_name'] != null && msg['sender_name'].toString().isNotEmpty
                     ? msg['sender_name'][0].toUpperCase()
@@ -462,7 +462,7 @@ class _TownChatPageState extends State<TownChatPage> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: isOfficial ? Colors.white : const Color(0xFF007F63),
+                  color: isOfficial ? Colors.white : const Color(0xFF007AFF),
                 ),
               ),
             ),
@@ -474,7 +474,7 @@ class _TownChatPageState extends State<TownChatPage> {
               decoration: BoxDecoration(
                 color: isMe
                     ? const Color(0xFF0E261F)
-                    : (isOfficial ? const Color(0xFFE9F6F1) : Colors.white),
+                    : (isOfficial ? const Color(0xFFEBF5FF) : Colors.white),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -483,8 +483,8 @@ class _TownChatPageState extends State<TownChatPage> {
                 ),
                 border: Border.all(
                   color: isMe
-                      ? const Color(0xFF00D09C).withValues(alpha: 0.3)
-                      : (isOfficial ? const Color(0xFF81C784) : const Color(0xFFE2EBE8)),
+                      ? const Color(0xFF007AFF).withValues(alpha: 0.3)
+                      : (isOfficial ? const Color(0xFF81C784) : const Color(0xFFE5E5EA)),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -506,21 +506,21 @@ class _TownChatPageState extends State<TownChatPage> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF15211F),
+                            color: Color(0xFF1C1C1E),
                           ),
                         ),
                         if (msg['sender_username'] != null) ...[
                           const SizedBox(width: 4),
                           Text(
                             msg['sender_username'] as String,
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF007F63), fontWeight: FontWeight.w700),
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF007AFF), fontWeight: FontWeight.w700),
                           ),
                         ],
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: isOfficial ? const Color(0xFF007F63) : const Color(0xFFE2EBE8),
+                            color: isOfficial ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -541,7 +541,7 @@ class _TownChatPageState extends State<TownChatPage> {
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.35,
-                      color: isMe ? Colors.white : const Color(0xFF15211F),
+                      color: isMe ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: isMe ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
@@ -553,12 +553,12 @@ class _TownChatPageState extends State<TownChatPage> {
                         'Just now',
                         style: TextStyle(
                           fontSize: 10,
-                          color: isMe ? const Color(0xFF8E9F98) : const Color(0xFF9EAEA8),
+                          color: isMe ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93),
                         ),
                       ),
                       if (isMe) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.done_all_rounded, size: 14, color: Color(0xFF00D09C)),
+                        const Icon(Icons.done_all_rounded, size: 14, color: Color(0xFF007AFF)),
                       ],
                     ],
                   ),

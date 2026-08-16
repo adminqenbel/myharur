@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/supabase_service.dart';
+import 'shop_detail_page.dart';
 
 class ShopsPage extends StatefulWidget {
   const ShopsPage({super.key});
@@ -60,10 +61,10 @@ class _ShopsPageState extends State<ShopsPage> {
         scrolledUnderElevation: 0,
         title: const Text(
           'Harur Local Shops',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -83,16 +84,16 @@ class _ShopsPageState extends State<ShopsPage> {
                     label: Text(categories[i]),
                     selected: active,
                     onSelected: (_) => setState(() => selectedCategory = i),
-                    selectedColor: const Color(0xFF007F63),
-                    backgroundColor: const Color(0xFFF2F6F5),
+                    selectedColor: const Color(0xFF007AFF),
+                    backgroundColor: const Color(0xFFF2F2F7),
                     labelStyle: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF15211F),
+                      color: active ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     side: BorderSide(
-                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                      color: active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                     ),
                   );
                 },
@@ -106,94 +107,95 @@ class _ShopsPageState extends State<ShopsPage> {
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, i) {
                   final shop = filtered[i];
-                  return Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFDCE5E1)),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x080F2922), blurRadius: 14, offset: Offset(0, 5))
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: (shop['color'] as Color).withValues(alpha: .12),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: SvgPicture.asset(
-                                'assets/icons/store.svg',
-                                width: 24,
-                                height: 24,
-                                colorFilter: ColorFilter.mode(shop['color'] as Color, BlendMode.srcIn),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          shop['name'],
-                                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF15211F)),
-                                        ),
-                                      ),
-                                      const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF007F63)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(shop['category'], style: const TextStyle(fontSize: 12, color: Color(0xFF697570), fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF697570)),
-                            const SizedBox(width: 4),
-                            Expanded(child: Text(shop['address'], style: const TextStyle(fontSize: 12, color: Color(0xFF697570)))),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
-                            const SizedBox(width: 4),
-                            Text(shop['rating'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF15211F))),
-                            const Spacer(),
-                            Text('${shop['productsCount']} Items in catalog', style: const TextStyle(fontSize: 12, color: Color(0xFF007F63), fontWeight: FontWeight.w800)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF007F63),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ShopDetailPage(shop: shop))),
+                    child: Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE5E5EA)),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x080F2922), blurRadius: 14, offset: Offset(0, 5))
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: (shop['color'] as Color).withValues(alpha: .12),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
-                                icon: const Icon(Icons.shopping_bag_outlined, size: 18),
-                                label: const Text('Storefront', style: TextStyle(fontWeight: FontWeight.w800)),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Opening ${shop['name']} catalog...')),
-                                  );
-                                },
+                                child: SvgPicture.asset(
+                                  'assets/icons/store.svg',
+                                  width: 24,
+                                  height: 24,
+                                  colorFilter: ColorFilter.mode(shop['color'] as Color, BlendMode.srcIn),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            shop['name'],
+                                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF1C1C1E)),
+                                          ),
+                                        ),
+                                        const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF007AFF)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(shop['category'], style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF8E8E93)),
+                              const SizedBox(width: 4),
+                              Expanded(child: Text(shop['address'], style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)))),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 4),
+                              Text(shop['rating'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E))),
+                              const Spacer(),
+                              Text('${shop['productsCount']} Items in catalog', style: const TextStyle(fontSize: 12, color: Color(0xFF007AFF), fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF007AFF),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  ),
+                                  icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+                                  label: const Text('Storefront', style: TextStyle(fontWeight: FontWeight.w800)),
+                                  onPressed: () {
+                                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ShopDetailPage(shop: shop)));
+                                  },
+                                ),
+                              ),
                             const SizedBox(width: 8),
                             IconButton.filledTonal(
                               style: IconButton.styleFrom(
@@ -229,8 +231,8 @@ class _ShopsPageState extends State<ShopsPage> {
                             const SizedBox(width: 8),
                             IconButton.filledTonal(
                               style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFFF2F6F5),
-                                foregroundColor: const Color(0xFF15211F),
+                                backgroundColor: const Color(0xFFF2F2F7),
+                                foregroundColor: const Color(0xFF1C1C1E),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               ),
                               icon: const Icon(Icons.call_rounded, size: 18),
@@ -246,7 +248,8 @@ class _ShopsPageState extends State<ShopsPage> {
                         ),
                       ],
                     ),
-                  );
+                  ),
+                );
                 },
               ),
             ),
@@ -254,7 +257,7 @@ class _ShopsPageState extends State<ShopsPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF007F63),
+        backgroundColor: const Color(0xFF007AFF),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.add_business_rounded),
@@ -306,7 +309,7 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE5E1),
+                  color: const Color(0xFFE5E5EA),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -314,12 +317,12 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
             const SizedBox(height: 16),
             const Text(
               'Register Local Shop Storefront',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
             ),
             const SizedBox(height: 4),
             const Text(
               'Shop Admins can maintain up to 2 shops with products, bulk rates, and offers. Additional stores require Super Admin grant.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF697570)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -327,7 +330,7 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
               decoration: InputDecoration(
                 labelText: 'Business / Shop Name',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -337,7 +340,7 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
               decoration: InputDecoration(
                 labelText: 'Shop Address in Harur',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -348,7 +351,7 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
               decoration: InputDecoration(
                 labelText: 'Business Contact Number',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -358,7 +361,7 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007F63),
+                  backgroundColor: const Color(0xFF007AFF),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -366,19 +369,40 @@ class _RegisterShopSheetState extends State<_RegisterShopSheet> {
                   final name = _nameCtrl.text.trim();
                   final address = _addressCtrl.text.trim();
                   final phone = _phoneCtrl.text.trim();
-                  if (name.isNotEmpty && phone.isNotEmpty) {
-                    await ShopsService.registerShop(
-                      name: name,
-                      category: selectedCategory,
-                      address: address.isNotEmpty ? address : 'Harur Town',
-                      phone: phone,
+
+                  if (name.isEmpty || phone.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Color(0xFFE44545),
+                        content: Text('Please provide both a business name and contact number.'),
+                      ),
                     );
-                    widget.onCreated?.call();
+                    return;
                   }
+
+                  final profanityErr = SecurityFilterService.validateUsernameAndName(username: '', fullName: name);
+                  if (profanityErr != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(backgroundColor: const Color(0xFFE44545), content: Text(profanityErr)),
+                    );
+                    return;
+                  }
+
+                  await ShopsService.registerShop(
+                    name: name,
+                    category: selectedCategory,
+                    address: address.isNotEmpty ? address : 'Harur Town',
+                    phone: phone,
+                  );
+                  widget.onCreated?.call();
+
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Shop registered! Promoted to Shop-Admin role.')),
+                      const SnackBar(
+                        backgroundColor: Color(0xFF007AFF),
+                        content: Text('✓ Shop registered! Promoted to Shop-Admin role.'),
+                      ),
                     );
                   }
                 },

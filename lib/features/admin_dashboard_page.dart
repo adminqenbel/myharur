@@ -53,7 +53,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       'title': 'Harur Town Badminton Open Championship',
       'author': 'Rajesh K. (Applicant for Event Head)',
       'status': 'Pending Verification',
-      'color': const Color(0xFF007F63),
+      'color': const Color(0xFF007AFF),
     },
   ];
 
@@ -146,7 +146,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFF007F63),
+          backgroundColor: Color(0xFF007AFF),
           content: Text('✓ SuperAdmin Session Verified. Mandatory MFA active.'),
         ),
       );
@@ -196,7 +196,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: const Color(0xFF007F63),
+        backgroundColor: const Color(0xFF007AFF),
         content: Text('✓ Created official user @$username with AID assigned!'),
       ),
     );
@@ -228,7 +228,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFF007F63),
+          backgroundColor: Color(0xFF007AFF),
           content: Text('✓ Government Order published and broadcast to Harur ledger!'),
         ),
       );
@@ -260,10 +260,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               decoration: BoxDecoration(
                 color: const Color(0xFF121C19),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFF00D09C).withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.3)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF00D09C).withValues(alpha: 0.15),
+                    color: const Color(0xFF007AFF).withValues(alpha: 0.15),
                     blurRadius: 30,
                     offset: const Offset(0, 10),
                   )
@@ -276,10 +276,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00D09C).withValues(alpha: 0.15),
+                      color: const Color(0xFF007AFF).withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.security_rounded, color: Color(0xFF00D09C), size: 34),
+                    child: const Icon(Icons.security_rounded, color: Color(0xFF007AFF), size: 34),
                   ),
                   const SizedBox(height: 18),
                   const Text(
@@ -290,7 +290,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   const Text(
                     'Chief Administrator Consensus Security Gate.\nMandatory MFA active for all SuperAdmins.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF8E9F98), fontSize: 12),
+                    style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
                   ),
                   const SizedBox(height: 24),
                   TextField(
@@ -314,7 +314,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: Color(0xFF00D09C)),
+                        borderSide: const BorderSide(color: Color(0xFF007AFF)),
                       ),
                     ),
                   ),
@@ -331,7 +331,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     height: 48,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00D09C),
+                        backgroundColor: const Color(0xFF007AFF),
                         foregroundColor: const Color(0xFF070B0A),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
@@ -359,7 +359,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         ),
         title: const Row(
           children: [
-            Icon(Icons.shield_rounded, color: Color(0xFF00D09C), size: 20),
+            Icon(Icons.shield_rounded, color: Color(0xFF007AFF), size: 20),
             SizedBox(width: 8),
             Text(
               'SuperAdmin Master Console',
@@ -370,7 +370,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         actions: [
           IconButton(
             tooltip: 'Lock Session',
-            icon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF00D09C)),
+            icon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF007AFF)),
             onPressed: () => setState(() => _isAuthenticated = false),
           ),
         ],
@@ -393,7 +393,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     label: Text(tabs[i]),
                     selected: active,
                     onSelected: (_) => setState(() => selectedTab = i),
-                    selectedColor: const Color(0xFF00D09C),
+                    selectedColor: const Color(0xFF007AFF),
                     backgroundColor: const Color(0xFF1E2D28),
                     labelStyle: TextStyle(
                       color: active ? const Color(0xFF070B0A) : Colors.white,
@@ -430,7 +430,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('CONTENT APPROVAL & EVENT HEAD ASSIGNMENT', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('CONTENT APPROVAL & EVENT HEAD ASSIGNMENT', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...pendingItems.map((item) {
           return Container(
@@ -458,14 +458,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 const SizedBox(height: 10),
                 Text(item['title'] as String, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
-                Text("Submitted by: ${item['author']}", style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 12)),
+                Text("Submitted by: ${item['author']}", style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
                 const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00D09C),
+                          backgroundColor: const Color(0xFF007AFF),
                           foregroundColor: const Color(0xFF070B0A),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -581,11 +581,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('REGISTERED TOWN OFFICIALS & AIDs', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 11, fontWeight: FontWeight.w800)),
+            const Text('REGISTERED TOWN OFFICIALS & AIDs', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: const Color(0xFF00D09C).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-              child: const Text('Max 3 SuperAdmins Limit Active', style: TextStyle(color: Color(0xFF00D09C), fontSize: 10, fontWeight: FontWeight.w900)),
+              decoration: BoxDecoration(color: const Color(0xFF007AFF).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+              child: const Text('Max 3 SuperAdmins Limit Active', style: TextStyle(color: Color(0xFF007AFF), fontSize: 10, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -599,7 +599,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             decoration: BoxDecoration(
               color: const Color(0xFF14221E),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isProtected ? const Color(0xFF00D09C).withValues(alpha: 0.4) : const Color(0xFF233630)),
+              border: Border.all(color: isProtected ? const Color(0xFF007AFF).withValues(alpha: 0.4) : const Color(0xFF233630)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -615,11 +615,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                               Text(admin['name'] as String, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
                               if (isProtected) ...[
                                 const SizedBox(width: 6),
-                                const Icon(Icons.verified_user_rounded, color: Color(0xFF00D09C), size: 16),
+                                const Icon(Icons.verified_user_rounded, color: Color(0xFF007AFF), size: 16),
                               ],
                             ],
                           ),
-                          Text("${admin['role']} · AID: ${admin['aid']}", style: const TextStyle(color: Color(0xFF00D09C), fontSize: 11, fontWeight: FontWeight.w800)),
+                          Text("${admin['role']} · AID: ${admin['aid']}", style: const TextStyle(color: Color(0xFF007AFF), fontSize: 11, fontWeight: FontWeight.w800)),
                         ],
                       ),
                     ),
@@ -628,21 +628,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF0E3025),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF00D09C)),
+                        border: Border.all(color: const Color(0xFF007AFF)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.lock_clock_rounded, color: Color(0xFF00D09C), size: 12),
+                          Icon(Icons.lock_clock_rounded, color: Color(0xFF007AFF), size: 12),
                           SizedBox(width: 4),
-                          Text('MFA REQUIRED', style: TextStyle(color: Color(0xFF00D09C), fontSize: 9, fontWeight: FontWeight.w900)),
+                          Text('MFA REQUIRED', style: TextStyle(color: Color(0xFF007AFF), fontSize: 9, fontWeight: FontWeight.w900)),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text("Username: ${admin['username']} · MMID: ${admin['mmid']}", style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 11)),
+                Text("Username: ${admin['username']} · MMID: ${admin['mmid']}", style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 11)),
                 if (!isProtected) ...[
                   const SizedBox(height: 12),
                   Row(
@@ -681,7 +681,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         children: [
           const Text('CREATE OFFICIAL STAFF / GOVT ACCOUNT', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          const Text('Protected with reserved username checks and Tamil/Hindi bad word filter.', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 11)),
+          const Text('Protected with reserved username checks and Tamil/Hindi bad word filter.', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11)),
           const SizedBox(height: 16),
 
           _buildConsoleInput('Full Official Name', _createNameCtrl, Icons.badge_rounded),
@@ -693,7 +693,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           _buildConsoleInput('Phone Number', _createPhoneCtrl, Icons.phone_rounded),
           const SizedBox(height: 14),
 
-          const Text('Role Allocation', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 12, fontWeight: FontWeight.w700)),
+          const Text('Role Allocation', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             initialValue: _createSelectedRole,
@@ -724,7 +724,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00D09C),
+                backgroundColor: const Color(0xFF007AFF),
                 foregroundColor: const Color(0xFF070B0A),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
@@ -751,7 +751,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         children: [
           const Text('PUBLISH OFFICIAL GOVERNMENT ORDER (G.O.)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          const Text('Publishes official gazette / order with instant town notification.', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 11)),
+          const Text('Publishes official gazette / order with instant town notification.', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11)),
           const SizedBox(height: 16),
 
           _buildConsoleInput('G.O. Number (e.g. G.O. Ms. No. 143/2026)', _goNumberCtrl, Icons.numbers_rounded),
@@ -786,7 +786,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('GEMINI AI ESCALATION QUEUE (3-STRIKE TICKETS)', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('GEMINI AI ESCALATION QUEUE (3-STRIKE TICKETS)', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...escalationTickets.map((ticket) {
           return Container(
@@ -803,21 +803,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Ticket #${ticket['ticketId']}", style: const TextStyle(color: Color(0xFF00D09C), fontWeight: FontWeight.w900)),
-                    Text(ticket['time'] as String, style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 11)),
+                    Text("Ticket #${ticket['ticketId']}", style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w900)),
+                    Text(ticket['time'] as String, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Text("Resident: ${ticket['user']}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
                 const SizedBox(height: 4),
-                Text("Query: ${ticket['query']}", style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 12)),
+                Text("Query: ${ticket['query']}", style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
                 const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00D09C),
+                          backgroundColor: const Color(0xFF007AFF),
                           foregroundColor: const Color(0xFF070B0A),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -844,7 +844,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 11, fontWeight: FontWeight.w700)),
+        Text(label, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w700)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
@@ -852,7 +852,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           maxLines: maxLines,
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: const Color(0xFF00D09C), size: 18),
+            prefixIcon: Icon(icon, color: const Color(0xFF007AFF), size: 18),
             filled: true,
             fillColor: const Color(0xFF0A1210),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),

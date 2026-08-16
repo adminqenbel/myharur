@@ -57,10 +57,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
         scrolledUnderElevation: 0,
         title: const Text(
           'Harur Marketplace',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -84,16 +84,16 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       setState(() => selectedCategory = i);
                       _loadListings();
                     },
-                    selectedColor: const Color(0xFF007F63),
-                    backgroundColor: const Color(0xFFF2F6F5),
+                    selectedColor: const Color(0xFF007AFF),
+                    backgroundColor: const Color(0xFFF2F2F7),
                     labelStyle: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF15211F),
+                      color: active ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     side: BorderSide(
-                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                      color: active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                     ),
                   );
                 },
@@ -104,7 +104,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
             // Product Cards Grid
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF007F63)))
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF007AFF)))
                   : (filtered.isEmpty
                       ? Center(
                           child: Column(
@@ -113,10 +113,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                               SvgPicture.asset(
                                 'assets/icons/bag.svg',
                                 width: 48,
-                                colorFilter: const ColorFilter.mode(Color(0xFF697570), BlendMode.srcIn),
+                                colorFilter: const ColorFilter.mode(Color(0xFF8E8E93), BlendMode.srcIn),
                               ),
                               const SizedBox(height: 12),
-                              const Text('No items in this category yet.', style: TextStyle(color: Color(0xFF697570), fontWeight: FontWeight.w700)),
+                              const Text('No items in this category yet.', style: TextStyle(color: Color(0xFF8E8E93), fontWeight: FontWeight.w700)),
                             ],
                           ),
                         )
@@ -142,7 +142,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF007F63),
+        backgroundColor: const Color(0xFF007AFF),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.add_rounded),
@@ -171,7 +171,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE5E1),
+                  color: const Color(0xFFE5E5EA),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -179,7 +179,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
             const SizedBox(height: 20),
             Text(
               item['price'] != null ? item['price'].toString() : '₹0',
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF007F63)),
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF007AFF)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -190,14 +190,14 @@ class _MarketplacePageState extends State<MarketplacePage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F6F5),
+                color: const Color(0xFFF2F2F7),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
                 children: [
                   const CircleAvatar(
                     radius: 20,
-                    backgroundColor: Color(0xFF007F63),
+                    backgroundColor: Color(0xFF007AFF),
                     child: Icon(Icons.person, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 12),
@@ -206,7 +206,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(item['seller'] ?? 'Verified Resident', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                        Text('Listed in ${item['location'] ?? 'Harur'} · ${item['time'] ?? 'Recently'}', style: const TextStyle(fontSize: 12, color: Color(0xFF697570))),
+                        Text('Listed in ${item['location'] ?? 'Harur'} · ${item['time'] ?? 'Recently'}', style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
                       ],
                     ),
                   ),
@@ -219,7 +219,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF007F63),
+                      backgroundColor: const Color(0xFF007AFF),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -238,8 +238,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF15211F),
-                      side: const BorderSide(color: Color(0xFFDCE5E1)),
+                      foregroundColor: const Color(0xFF1C1C1E),
+                      side: const BorderSide(color: Color(0xFFE5E5EA)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
@@ -272,7 +272,7 @@ class _MarketplaceItemCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFF9FBFA),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE2EBE8)),
+          border: Border.all(color: const Color(0xFFE5E5EA)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +287,7 @@ class _MarketplaceItemCard extends StatelessWidget {
                   child: Icon(
                     Icons.shopping_bag_rounded,
                     size: 40,
-                    color: const Color(0xFF007F63).withValues(alpha: 0.7),
+                    color: const Color(0xFF007AFF).withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -299,7 +299,7 @@ class _MarketplaceItemCard extends StatelessWidget {
                 children: [
                   Text(
                     item['price'] != null ? item['price'].toString() : '₹0',
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF007F63)),
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF007AFF)),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -315,17 +315,17 @@ class _MarketplaceItemCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE9F6F1),
+                          color: const Color(0xFFEBF5FF),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           item['condition'] ?? 'Used',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF007F63)),
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF007AFF)),
                         ),
                       ),
                       Text(
                         item['location'] ?? 'Harur',
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF697570)),
+                        style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93)),
                       ),
                     ],
                   ),
@@ -380,18 +380,18 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
               child: Container(
                 width: 44,
                 height: 4,
-                decoration: BoxDecoration(color: const Color(0xFFDCE5E1), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: const Color(0xFFE5E5EA), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             const Text(
               'List Item for Sale',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
             ),
             const SizedBox(height: 4),
             const Text(
               'Sell peer-to-peer to verified neighbours across Harur.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF697570)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -399,7 +399,7 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
               decoration: InputDecoration(
                 labelText: 'Item title',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -410,7 +410,7 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
               decoration: InputDecoration(
                 labelText: 'Price (₹)',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -421,7 +421,7 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
               decoration: InputDecoration(
                 labelText: 'Details & Condition notes',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -431,7 +431,7 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007F63),
+                  backgroundColor: const Color(0xFF007AFF),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -440,28 +440,40 @@ class _PostMarketplaceItemSheetState extends State<_PostMarketplaceItemSheet> {
                   final price = double.tryParse(_priceCtrl.text.trim()) ?? 0.0;
                   final desc = _descCtrl.text.trim();
 
-                  if (SecurityFilterService.containsBadWord(title) || SecurityFilterService.containsBadWord(desc)) {
+                  if (title.isEmpty || price <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Listing contains inappropriate language. Please use respectful wording.')),
+                      const SnackBar(
+                        backgroundColor: Color(0xFFE44545),
+                        content: Text('Please enter an item title and valid price greater than ₹0.'),
+                      ),
                     );
                     return;
                   }
 
-                  if (title.isNotEmpty && price > 0) {
-                    await MarketplaceService.createListing(
-                      title: title,
-                      description: desc,
-                      price: price,
-                      condition: selectedCondition,
-                      category: selectedCategory,
+                  if (SecurityFilterService.containsBadWord(title) || SecurityFilterService.containsBadWord(desc)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Color(0xFFE44545),
+                        content: Text('Listing contains inappropriate language. Please use respectful wording.'),
+                      ),
                     );
-                    widget.onCreated?.call();
+                    return;
                   }
+
+                  await MarketplaceService.createListing(
+                    title: title,
+                    description: desc,
+                    price: price,
+                    condition: selectedCondition,
+                    category: selectedCategory,
+                  );
+                  widget.onCreated?.call();
+
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        backgroundColor: Color(0xFF007F63),
+                        backgroundColor: Color(0xFF007AFF),
                         content: Text('✓ Item published to Harur Marketplace!'),
                       ),
                     );

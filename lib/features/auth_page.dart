@@ -15,6 +15,8 @@ class _AuthPageState extends State<AuthPage> {
   bool isSignUp = false;
   bool isOfficialMode = false;
   bool isEditingDetails = false;
+  bool _obscurePassword = true;
+  bool _isProcessing = false;
 
   // Controllers
   final _emailCtrl = TextEditingController();
@@ -37,19 +39,18 @@ class _AuthPageState extends State<AuthPage> {
   void initState() {
     super.initState();
     _populateProfileData();
-    // Real login confirmation comes from Supabase's auth stream, fired
-    // after the OAuth redirect actually completes and a session exists —
-    // not from the return value of launching the OAuth flow.
+
     final client = SupabaseConfig.client;
     if (client != null) {
       _authSub = client.auth.onAuthStateChange.listen((data) {
         if (!mounted) return;
         if (data.event == AuthChangeEvent.signedIn && _googleSignInPending) {
           _googleSignInPending = false;
+          _populateProfileData();
           setState(() {});
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: Color(0xFF007F63),
+              backgroundColor: Color(0xFF007AFF),
               content: Text('✓ Signed in with Google OAuth. Verified Resident profile active.'),
             ),
           );
@@ -86,56 +87,63 @@ class _AuthPageState extends State<AuthPage> {
     super.dispose();
   }
 
+  bool get _isEmailValid {
+    final email = _emailCtrl.text.trim();
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
+  }
+
   Future<void> _handleGoogleSignIn() async {
-    if (SupabaseConfig.client == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFFE44545),
-            content: Text('Cannot sign in: ${SupabaseConfig.initError ?? "Supabase is not configured."}'),
-          ),
-        );
-      }
-      return;
-    }
+    setState(() => _isProcessing = true);
     _googleSignInPending = true;
     final launched = await AuthService.signInWithGoogle();
-    // On web this navigates away entirely, so nothing after `launched` runs.
-    // On native, a false return means the flow never opened — tell the user
-    // instead of silently doing nothing.
+    setState(() => _isProcessing = false);
+
     if (!launched) {
       _googleSignInPending = false;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Color(0xFFE44545),
-            content: Text('Google sign-in could not be started. Please try again.'),
+            content: Text('Google Sign-In could not be started. Please try again.'),
           ),
         );
       }
+    } else {
+      _populateProfileData();
+      if (mounted) {
+        setState(() {});
+      }
     }
-    // If launched == true, we wait for onAuthStateChange (see initState)
-    // to confirm an actual session before showing success.
   }
 
   Future<void> _handleAuthAction() async {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+    if (!_isEmailValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email and password.')),
+        const SnackBar(backgroundColor: Color(0xFFE44545), content: Text('Please enter a valid email address.')),
       );
       return;
     }
 
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(backgroundColor: Color(0xFFE44545), content: Text('Password must be at least 6 characters long.')),
+      );
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+
     if (isSignUp) {
-      final name = _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'Harur Resident';
+      final name = _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : email.split('@').first;
       final phone = _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : '+91 98420 11000';
 
       final err = SecurityFilterService.validateUsernameAndName(username: email.split('@').first, fullName: name);
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: const Color(0xFFE44545), content: Text(err)));
         return;
       }
 
@@ -145,23 +153,29 @@ class _AuthPageState extends State<AuthPage> {
         fullName: name,
         phone: phone,
       );
+      setState(() => _isProcessing = false);
+
       if (mounted) {
+        _populateProfileData();
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: ok ? const Color(0xFF007F63) : const Color(0xFFE44545),
-            content: Text(ok ? '✓ Account created! Your MMID: ${AuthService.currentProfile.mmid}' : 'Sign up failed. Please verify your details or connection.'),
+            backgroundColor: ok ? const Color(0xFF007AFF) : const Color(0xFFE44545),
+            content: Text(ok ? '✓ Account created! Your MMID: ${AuthService.currentProfile.mmid}' : 'Sign up failed. Please verify your connection.'),
           ),
         );
       }
     } else {
       final ok = await AuthService.signInWithEmailPassword(email, password);
+      setState(() => _isProcessing = false);
+
       if (mounted) {
+        _populateProfileData();
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: ok ? const Color(0xFF007F63) : const Color(0xFFE44545),
-            content: Text(ok ? '✓ Logged in as ${AuthService.currentProfile.fullName} (${AuthService.currentProfile.primaryRoleTitle})' : 'Login failed. Please check credentials.'),
+            backgroundColor: ok ? const Color(0xFF007AFF) : const Color(0xFFE44545),
+            content: Text(ok ? '✓ Logged in as ${AuthService.currentProfile.fullName}' : 'Login failed. Please check your credentials.'),
           ),
         );
       }
@@ -172,10 +186,11 @@ class _AuthPageState extends State<AuthPage> {
     final name = _nameCtrl.text.trim();
     final err = SecurityFilterService.validateUsernameAndName(username: AuthService.currentProfile.username, fullName: name);
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: const Color(0xFFE44545), content: Text(err)));
       return;
     }
 
+    setState(() => _isProcessing = true);
     await AuthService.savePersonalDetails(
       fullName: name,
       phone: _phoneCtrl.text.trim(),
@@ -185,11 +200,15 @@ class _AuthPageState extends State<AuthPage> {
       emergencyContactPhone: _emergencyPhoneCtrl.text.trim(),
       bio: _bioCtrl.text.trim(),
     );
+    setState(() {
+      _isProcessing = false;
+      isEditingDetails = false;
+    });
+
     if (mounted) {
-      setState(() => isEditingDetails = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFF007F63),
+          backgroundColor: Color(0xFF007AFF),
           content: Text('✓ Personal details saved safely and synced to Harur Ledger!'),
         ),
       );
@@ -211,17 +230,17 @@ class _AuthPageState extends State<AuthPage> {
     final isLoggedIn = AuthService.isAuthenticated;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF2F2F7),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          isLoggedIn ? 'Resident Profile & Security' : 'MyHarur Account',
-          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+          isLoggedIn ? 'Resident Identity & Security' : 'MyHarur Account',
+          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -231,6 +250,7 @@ class _AuthPageState extends State<AuthPage> {
               icon: const Icon(Icons.logout_rounded, color: Color(0xFFE44545)),
               onPressed: () async {
                 await AuthService.signOut();
+                _populateProfileData();
                 setState(() {});
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -243,7 +263,7 @@ class _AuthPageState extends State<AuthPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: isLoggedIn ? _buildLoggedInView(profile) : _buildAuthForm(),
         ),
       ),
@@ -254,21 +274,22 @@ class _AuthPageState extends State<AuthPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top Profile Card with MMID & Role
+        // Holographic Smart ID Pass
         Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF15211F), Color(0xFF070B0A)],
+              colors: [Color(0xFF112520), Color(0xFF121214)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.35), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF007F63).withValues(alpha: 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: const Color(0xFF007AFF).withValues(alpha: 0.28),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -280,18 +301,18 @@ class _AuthPageState extends State<AuthPage> {
                     width: 58,
                     height: 58,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00D09C).withValues(alpha: 0.2),
+                      color: const Color(0xFF007AFF).withValues(alpha: 0.18),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF00D09C), width: 2),
+                      border: Border.all(color: const Color(0xFF007AFF), width: 2),
                     ),
                     child: Center(
                       child: Text(
                         profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'H',
-                        style: const TextStyle(color: Color(0xFF00D09C), fontSize: 24, fontWeight: FontWeight.w900),
+                        style: const TextStyle(color: Color(0xFF007AFF), fontSize: 24, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +327,7 @@ class _AuthPageState extends State<AuthPage> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF00D09C),
+                                color: const Color(0xFF007AFF),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -317,26 +338,14 @@ class _AuthPageState extends State<AuthPage> {
                             const SizedBox(width: 8),
                             Text(
                               "@${profile.username.replaceAll('@', '')}",
-                              style: const TextStyle(color: Color(0xFF00D09C), fontSize: 12, fontWeight: FontWeight.w800),
+                              style: const TextStyle(color: Color(0xFF007AFF), fontSize: 12, fontWeight: FontWeight.w800),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              'MMID: ${profile.mmid}',
-                              style: const TextStyle(color: Color(0xFF8E9F98), fontSize: 10, fontWeight: FontWeight.w700),
-                            ),
-                            if (profile.aid != null) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: BoxDecoration(color: const Color(0xFF267AF4), borderRadius: BorderRadius.circular(4)),
-                                child: Text(profile.aid!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
-                              ),
-                            ],
-                          ],
+                        Text(
+                          'MMID: ${profile.mmid}',
+                          style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 10, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -359,17 +368,17 @@ class _AuthPageState extends State<AuthPage> {
 
         const SizedBox(height: 24),
 
-        // Personal Details Section Header
+        // Personal Details Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'PERSONAL DETAILS & RECOVERY',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF697570), letterSpacing: 1.1),
+              'PERSONAL DETAILS & EMERGENCY DATA',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8E8E93), letterSpacing: 1.1),
             ),
             TextButton.icon(
-              icon: Icon(isEditingDetails ? Icons.close_rounded : Icons.edit_rounded, size: 16, color: const Color(0xFF007F63)),
-              label: Text(isEditingDetails ? 'Cancel' : 'Edit', style: const TextStyle(color: Color(0xFF007F63), fontWeight: FontWeight.w800)),
+              icon: Icon(isEditingDetails ? Icons.close_rounded : Icons.edit_rounded, size: 16, color: const Color(0xFF007AFF)),
+              label: Text(isEditingDetails ? 'Cancel' : 'Edit', style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800)),
               onPressed: () => setState(() => isEditingDetails = !isEditingDetails),
             ),
           ],
@@ -377,13 +386,12 @@ class _AuthPageState extends State<AuthPage> {
         const SizedBox(height: 8),
 
         if (isEditingDetails) ...[
-          // Editable Form
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FBFA),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFDCE5E1)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,16 +402,16 @@ class _AuthPageState extends State<AuthPage> {
                 const SizedBox(height: 14),
                 _buildFormInput('Ward / Area in Harur', _wardCtrl, Icons.pin_drop_rounded),
                 const SizedBox(height: 14),
-                const Text('Blood Group (For Emergency Aid)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF697570))),
+                const Text('Blood Group (Emergency Aid)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93))),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: selectedBloodGroup,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: const Color(0xFFF2F2F7),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                   ),
-                  items: bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(fontWeight: FontWeight.w700)))).toList(),
+                  items: bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(fontWeight: FontWeight.w800)))).toList(),
                   onChanged: (val) => setState(() => selectedBloodGroup = val ?? 'O+'),
                 ),
                 const SizedBox(height: 14),
@@ -418,39 +426,40 @@ class _AuthPageState extends State<AuthPage> {
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF007F63),
+                      backgroundColor: const Color(0xFF007AFF),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
-                    label: const Text('Save & Sync to Ledger', style: TextStyle(fontWeight: FontWeight.w800)),
-                    onPressed: _savePersonalDetails,
+                    label: _isProcessing
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Save & Sync to Ledger', style: TextStyle(fontWeight: FontWeight.w800)),
+                    onPressed: _isProcessing ? null : _savePersonalDetails,
                   ),
                 ),
               ],
             ),
           ),
         ] else ...[
-          // Readonly Details Card
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Column(
               children: [
                 _buildDetailRow(Icons.email_rounded, 'Email Address', profile.email),
-                const Divider(height: 22),
+                const Divider(height: 20),
                 _buildDetailRow(Icons.phone_rounded, 'Phone Number', profile.phone),
-                const Divider(height: 22),
+                const Divider(height: 20),
                 _buildDetailRow(Icons.home_rounded, 'Ward / Locality', profile.wardLocality),
-                const Divider(height: 22),
+                const Divider(height: 20),
                 _buildDetailRow(Icons.bloodtype_rounded, 'Blood Group', profile.bloodGroup),
-                const Divider(height: 22),
+                const Divider(height: 20),
                 _buildDetailRow(Icons.contact_emergency_rounded, 'Emergency Contact', '${profile.emergencyContactName} (${profile.emergencyContactPhone})'),
-                const Divider(height: 22),
+                const Divider(height: 20),
                 _buildDetailRow(Icons.info_outline_rounded, 'Bio / Occupation', profile.bio),
               ],
             ),
@@ -461,15 +470,16 @@ class _AuthPageState extends State<AuthPage> {
 
         // Password & Security Management
         const Text(
-          'PASSWORD & SECURITY',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF697570), letterSpacing: 1.1),
+          'PASSWORD & SECURITY KEYS',
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8E8E93), letterSpacing: 1.1),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFFF2F6F5),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE5E5EA)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,7 +492,7 @@ class _AuthPageState extends State<AuthPage> {
                 decoration: InputDecoration(
                   labelText: 'New Password',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFFF2F2F7),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                 ),
               ),
@@ -491,7 +501,7 @@ class _AuthPageState extends State<AuthPage> {
                 width: double.infinity,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF007F63)),
+                    side: const BorderSide(color: Color(0xFF007AFF)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () async {
@@ -500,19 +510,19 @@ class _AuthPageState extends State<AuthPage> {
                       _newPasswordCtrl.clear();
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Password updated successfully!')),
+                          const SnackBar(backgroundColor: Color(0xFF007AFF), content: Text('✓ Password updated successfully!')),
                         );
                       }
                     }
                   },
-                  child: const Text('Change Password', style: TextStyle(color: Color(0xFF007F63), fontWeight: FontWeight.w800)),
+                  child: const Text('Change Password', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800)),
                 ),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
       ],
     );
   }
@@ -526,7 +536,7 @@ class _AuthPageState extends State<AuthPage> {
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              color: const Color(0xFFE9F6F1),
+              color: const Color(0xFFEBF5FF),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Center(
@@ -538,54 +548,82 @@ class _AuthPageState extends State<AuthPage> {
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Center(
           child: Text(
-            isOfficialMode
-                ? 'SuperAdmin & Official Login'
-                : (isSignUp ? 'Create Resident Account' : 'Welcome to MyHarur'),
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+            isOfficialMode ? 'Official Governance Portal' : (isSignUp ? 'Create Resident Account' : 'Welcome to MyHarur'),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Center(
           child: Text(
-            isOfficialMode
-                ? 'Chief administration credentials with root consensus'
-                : 'Protected with Argon2id & immutable town ledger',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF697570)),
+            isOfficialMode ? 'Administrative access with passkey authorization' : 'Verified MMID resident passport with immutable ledger',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
 
-        // Quick Google OAuth Button (For Residents)
+        // Quick Google OAuth Button
         if (!isOfficialMode) ...[
           SizedBox(
             width: double.infinity,
             height: 52,
-            child: ElevatedButton.icon(
+            child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF15211F),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF1C1C1E),
+                elevation: 1.5,
+                shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFE5E5EA), width: 1.2),
+                ),
               ),
-              icon: const Icon(Icons.g_mobiledata_rounded, size: 30),
-              label: const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-              onPressed: _handleGoogleSignIn,
+              onPressed: _isProcessing ? null : _handleGoogleSignIn,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEBF5FF),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'G',
+                        style: TextStyle(
+                          color: Color(0xFF007AFF),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Continue with Google',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: -0.2),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           const Row(
             children: [
               Expanded(child: Divider()),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('or with email & MMID', style: TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600)),
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Text('or with email & password', style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
               ),
               Expanded(child: Divider()),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
         ],
 
         // Input Fields
@@ -595,8 +633,8 @@ class _AuthPageState extends State<AuthPage> {
             decoration: InputDecoration(
               labelText: 'Full Name',
               filled: true,
-              fillColor: const Color(0xFFF2F6F5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              fillColor: Colors.white,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
             ),
           ),
           const SizedBox(height: 12),
@@ -606,8 +644,8 @@ class _AuthPageState extends State<AuthPage> {
             decoration: InputDecoration(
               labelText: 'Phone Number',
               filled: true,
-              fillColor: const Color(0xFFF2F6F5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              fillColor: Colors.white,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
             ),
           ),
           const SizedBox(height: 12),
@@ -616,22 +654,27 @@ class _AuthPageState extends State<AuthPage> {
         TextField(
           controller: _emailCtrl,
           keyboardType: TextInputType.emailAddress,
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             labelText: 'Email address',
             filled: true,
-            fillColor: const Color(0xFFF2F6F5),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
           ),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _passwordCtrl,
-          obscureText: true,
+          obscureText: _obscurePassword,
           decoration: InputDecoration(
             labelText: 'Password',
+            suffixIcon: IconButton(
+              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
             filled: true,
-            fillColor: const Color(0xFFF2F6F5),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
           ),
         ),
         const SizedBox(height: 20),
@@ -642,19 +685,21 @@ class _AuthPageState extends State<AuthPage> {
           height: 50,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007F63),
+              backgroundColor: const Color(0xFF007AFF),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            onPressed: _handleAuthAction,
-            child: Text(
-              isSignUp ? 'Create Account & Generate MMID' : 'Sign In',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-            ),
+            onPressed: _isProcessing ? null : _handleAuthAction,
+            child: _isProcessing
+                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : Text(
+                    isSignUp ? 'Create Account & Generate MMID' : 'Sign In',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // Toggle Sign Up / Sign In
         if (!isOfficialMode) ...[
@@ -662,14 +707,14 @@ class _AuthPageState extends State<AuthPage> {
             child: TextButton(
               onPressed: () => setState(() => isSignUp = !isSignUp),
               child: Text(
-                isSignUp ? 'Already have an MMID? Sign In' : 'New resident? Create Account & MMID',
-                style: const TextStyle(color: Color(0xFF007F63), fontWeight: FontWeight.w800),
+                isSignUp ? 'Already have an MMID? Sign In' : 'New resident? Register Digital Pass & MMID',
+                style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800),
               ),
             ),
           ),
         ],
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
         // Official / SuperAdmin Preset Button
         Center(
@@ -684,7 +729,7 @@ class _AuthPageState extends State<AuthPage> {
             child: Text(
               isOfficialMode ? '← Back to Resident Sign In' : '👑 Root SuperAdmin (admin.qenbel@gmail.com) →',
               style: TextStyle(
-                color: isOfficialMode ? const Color(0xFF697570) : const Color(0xFF267AF4),
+                color: isOfficialMode ? const Color(0xFF8E8E93) : const Color(0xFF267AF4),
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
               ),
@@ -707,7 +752,7 @@ class _AuthPageState extends State<AuthPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF00D09C), size: 14),
+            Icon(icon, color: const Color(0xFF007AFF), size: 14),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -726,16 +771,16 @@ class _AuthPageState extends State<AuthPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF697570))),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93))),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
           maxLines: maxLines,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: const Color(0xFF007F63), size: 18),
+            prefixIcon: Icon(icon, color: const Color(0xFF007AFF), size: 18),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: const Color(0xFFF2F2F7),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
           ),
         ),
@@ -747,15 +792,15 @@ class _AuthPageState extends State<AuthPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFF007F63), size: 18),
+        Icon(icon, color: const Color(0xFF007AFF), size: 18),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w600)),
+              Text(title, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
-              Text(value.isNotEmpty ? value : 'Not set', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15211F))),
+              Text(value.isNotEmpty ? value : 'Not set', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E))),
             ],
           ),
         ),

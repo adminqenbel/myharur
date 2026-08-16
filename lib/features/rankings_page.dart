@@ -72,7 +72,7 @@ class _RankingsPageState extends State<RankingsPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        backgroundColor: Color(0xFF007F63),
+        backgroundColor: Color(0xFF007AFF),
         content: Text('✓ Vote recorded! Live shop ranking updated.'),
       ),
     );
@@ -111,16 +111,16 @@ class _RankingsPageState extends State<RankingsPage> {
         scrolledUnderElevation: 0,
         title: const Text(
           'Rankings & Recognition',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             tooltip: 'Support App',
-            icon: const Icon(Icons.volunteer_activism_rounded, color: Color(0xFF007F63)),
+            icon: const Icon(Icons.volunteer_activism_rounded, color: Color(0xFF007AFF)),
             onPressed: _openDonationModal,
           ),
         ],
@@ -141,22 +141,22 @@ class _RankingsPageState extends State<RankingsPage> {
                     label: Text(tabs[i]),
                     selected: active,
                     onSelected: (_) => setState(() => selectedTab = i),
-                    selectedColor: const Color(0xFF007F63),
-                    backgroundColor: const Color(0xFFF2F6F5),
+                    selectedColor: const Color(0xFF007AFF),
+                    backgroundColor: const Color(0xFFF2F2F7),
                     labelStyle: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF15211F),
+                      color: active ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 12,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     side: BorderSide(
-                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                      color: active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                     ),
                   );
                 },
               ),
             ),
-            const Divider(height: 1, color: Color(0xFFE2EBE8)),
+            const Divider(height: 1, color: Color(0xFFE5E5EA)),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -180,7 +180,7 @@ class _RankingsPageState extends State<RankingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('TOP TOWN VOICES & COMMUNITY INTERACTIONS', style: TextStyle(color: Color(0xFF697570), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('TOP TOWN VOICES & COMMUNITY INTERACTIONS', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...interactionUsers.map((person) {
           return Container(
@@ -189,7 +189,7 @@ class _RankingsPageState extends State<RankingsPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FBFA),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Row(
               children: [
@@ -199,23 +199,23 @@ class _RankingsPageState extends State<RankingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(person['name'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                      Text(person['name'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
                       const SizedBox(height: 2),
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: const Color(0xFFE9F6F1), borderRadius: BorderRadius.circular(6)),
-                            child: Text(person['title'] as String, style: const TextStyle(color: Color(0xFF007F63), fontSize: 10, fontWeight: FontWeight.w900)),
+                            decoration: BoxDecoration(color: const Color(0xFFEBF5FF), borderRadius: BorderRadius.circular(6)),
+                            child: Text(person['title'] as String, style: const TextStyle(color: Color(0xFF007AFF), fontSize: 10, fontWeight: FontWeight.w900)),
                           ),
                           const SizedBox(width: 6),
-                          Text(person['username'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF697570))),
+                          Text(person['username'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
                         ],
                       ),
                     ],
                   ),
                 ),
-                Text("${person['score']} pts", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF007F63))),
+                Text("${person['score']} pts", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF007AFF))),
               ],
             ),
           );
@@ -228,7 +228,7 @@ class _RankingsPageState extends State<RankingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('FIRST RESPONDERS & @HELP SOS HEROES', style: TextStyle(color: Color(0xFF697570), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('FIRST RESPONDERS & @HELP SOS HEROES', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...helpingHands.map((person) {
           return Container(
@@ -237,7 +237,7 @@ class _RankingsPageState extends State<RankingsPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FBFA),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Row(
               children: [
@@ -247,10 +247,10 @@ class _RankingsPageState extends State<RankingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(person['name'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                      Text(person['name'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
                       const SizedBox(height: 2),
-                      Text(person['title'] as String, style: const TextStyle(color: Color(0xFF007F63), fontSize: 11, fontWeight: FontWeight.w800)),
-                      Text(person['score'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF697570))),
+                      Text(person['title'] as String, style: const TextStyle(color: Color(0xFF007AFF), fontSize: 11, fontWeight: FontWeight.w800)),
+                      Text(person['score'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
                     ],
                   ),
                 ),
@@ -269,11 +269,11 @@ class _RankingsPageState extends State<RankingsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('COMMUNITY SHOP RANKINGS & VOTING', style: TextStyle(color: Color(0xFF697570), fontSize: 11, fontWeight: FontWeight.w800)),
+            const Text('COMMUNITY SHOP RANKINGS & VOTING', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: const Color(0xFFE9F6F1), borderRadius: BorderRadius.circular(8)),
-              child: const Text('All-Time Leaderboard', style: TextStyle(color: Color(0xFF007F63), fontSize: 10, fontWeight: FontWeight.w900)),
+              decoration: BoxDecoration(color: const Color(0xFFEBF5FF), borderRadius: BorderRadius.circular(8)),
+              child: const Text('All-Time Leaderboard', style: TextStyle(color: Color(0xFF007AFF), fontSize: 10, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -285,7 +285,7 @@ class _RankingsPageState extends State<RankingsPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FBFA),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Row(
               children: [
@@ -293,7 +293,7 @@ class _RankingsPageState extends State<RankingsPage> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: shop['rank'] == 1 ? const Color(0xFFF59E0B) : const Color(0xFF007F63),
+                    color: shop['rank'] == 1 ? const Color(0xFFF59E0B) : const Color(0xFF007AFF),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -308,15 +308,15 @@ class _RankingsPageState extends State<RankingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(shop['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                      Text(shop['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
                       const SizedBox(height: 2),
-                      Text("${shop['category']} · ${shop['votes']} community votes", style: const TextStyle(fontSize: 11, color: Color(0xFF697570))),
+                      Text("${shop['category']} · ${shop['votes']} community votes", style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
                     ],
                   ),
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF007F63),
+                    backgroundColor: const Color(0xFF007AFF),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -337,7 +337,7 @@ class _RankingsPageState extends State<RankingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('HARUR & DHARMAPURI BEST RATED EATERIES', style: TextStyle(color: Color(0xFF697570), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('HARUR & DHARMAPURI BEST RATED EATERIES', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...restaurants.map((rest) {
           return Container(
@@ -346,7 +346,7 @@ class _RankingsPageState extends State<RankingsPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FBFA),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Row(
               children: [
@@ -356,21 +356,21 @@ class _RankingsPageState extends State<RankingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(rest['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                      Text(rest['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
                       const SizedBox(height: 2),
-                      Text(rest['specialty'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF697570))),
+                      Text(rest['specialty'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFE9F6F1), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: const Color(0xFFEBF5FF), borderRadius: BorderRadius.circular(8)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded, size: 14, color: Color(0xFF007F63)),
+                      const Icon(Icons.star_rounded, size: 14, color: Color(0xFF007AFF)),
                       const SizedBox(width: 2),
-                      Text(rest['stars'] as String, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF007F63))),
+                      Text(rest['stars'] as String, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF007AFF))),
                     ],
                   ),
                 ),
@@ -386,7 +386,7 @@ class _RankingsPageState extends State<RankingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('RESIDENT APPROVAL & OFFICIAL PERFORMANCE', style: TextStyle(color: Color(0xFF697570), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('RESIDENT APPROVAL & OFFICIAL PERFORMANCE', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...adminApprovals.map((adm) {
           return Container(
@@ -395,23 +395,23 @@ class _RankingsPageState extends State<RankingsPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FBFA),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.verified_user_rounded, color: Color(0xFF007F63), size: 28),
+                const Icon(Icons.verified_user_rounded, color: Color(0xFF007AFF), size: 28),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(adm['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                      Text(adm['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
                       const SizedBox(height: 2),
-                      Text("${adm['role']} · ${adm['badge']}", style: const TextStyle(fontSize: 11, color: Color(0xFF007F63), fontWeight: FontWeight.w700)),
+                      Text("${adm['role']} · ${adm['badge']}", style: const TextStyle(fontSize: 11, color: Color(0xFF007AFF), fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
-                Text(adm['approval'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF007F63))),
+                Text(adm['approval'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF007AFF))),
               ],
             ),
           );
@@ -427,7 +427,7 @@ class _RankingsPageState extends State<RankingsPage> {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF15211F), Color(0xFF070B0A)]),
+            gradient: const LinearGradient(colors: [Color(0xFF1C1C1E), Color(0xFF070B0A)]),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -438,13 +438,13 @@ class _RankingsPageState extends State<RankingsPage> {
                   children: [
                     Text('Support MyHarur Server Fund', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
                     SizedBox(height: 4),
-                    Text('Keep Harur digital infrastructure free, fast & independent.', style: TextStyle(color: Color(0xFF8E9F98), fontSize: 11)),
+                    Text('Keep Harur digital infrastructure free, fast & independent.', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11)),
                   ],
                 ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00D09C),
+                  backgroundColor: const Color(0xFF007AFF),
                   foregroundColor: const Color(0xFF070B0A),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -455,7 +455,7 @@ class _RankingsPageState extends State<RankingsPage> {
           ),
         ),
         const SizedBox(height: 18),
-        const Text('PATRON LEADERBOARD', style: TextStyle(color: Color(0xFF697570), fontSize: 11, fontWeight: FontWeight.w800)),
+        const Text('PATRON LEADERBOARD', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 10),
         ...donors.map((donor) {
           return Container(
@@ -464,7 +464,7 @@ class _RankingsPageState extends State<RankingsPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF9FBFA),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2EBE8)),
+              border: Border.all(color: const Color(0xFFE5E5EA)),
             ),
             child: Row(
               children: [
@@ -474,13 +474,13 @@ class _RankingsPageState extends State<RankingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(donor['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                      Text(donor['name'] as String, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
                       const SizedBox(height: 2),
-                      Text(donor['tier'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF007F63), fontWeight: FontWeight.w700)),
+                      Text(donor['tier'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF007AFF), fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
-                Text(donor['amount'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+                Text(donor['amount'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
               ],
             ),
           );
@@ -517,16 +517,16 @@ class _DonationModalState extends State<_DonationModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Support Town Digital Infrastructure', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F))),
+          const Text('Support Town Digital Infrastructure', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
           const SizedBox(height: 4),
-          const Text('Direct contribution to Harur server uptime and emergency relay.', style: TextStyle(fontSize: 12, color: Color(0xFF697570))),
+          const Text('Direct contribution to Harur server uptime and emergency relay.', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
           const SizedBox(height: 18),
           TextField(
             controller: _nameCtrl,
             decoration: InputDecoration(
               labelText: 'Donor Name / Business Name',
               filled: true,
-              fillColor: const Color(0xFFF2F6F5),
+              fillColor: const Color(0xFFF2F2F7),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
             ),
           ),
@@ -538,7 +538,7 @@ class _DonationModalState extends State<_DonationModal> {
               labelText: 'Contribution Amount (₹)',
               prefixText: '₹ ',
               filled: true,
-              fillColor: const Color(0xFFF2F6F5),
+              fillColor: const Color(0xFFF2F2F7),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
             ),
           ),
@@ -548,7 +548,7 @@ class _DonationModalState extends State<_DonationModal> {
             height: 50,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF007F63),
+                backgroundColor: const Color(0xFF007AFF),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -562,7 +562,7 @@ class _DonationModalState extends State<_DonationModal> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    backgroundColor: const Color(0xFF007F63),
+                    backgroundColor: const Color(0xFF007AFF),
                     content: Text('✓ Thank you $name for supporting MyHarur ($tier)!'),
                   ),
                 );

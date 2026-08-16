@@ -10,7 +10,7 @@ class EventsPage extends StatefulWidget {
 
 class _EventsPageState extends State<EventsPage> {
   int selectedCategory = 0;
-  final categories = ['All', 'Tournaments', 'Festivals', 'Workshops', 'Polls'];
+  final categories = ['All', 'Tournaments', 'Festivals', 'Workshops', 'Volunteering'];
   List<Map<String, dynamic>> events = [];
   bool isLoading = true;
 
@@ -57,11 +57,11 @@ class _EventsPageState extends State<EventsPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: const Text(
-          'Events & Tournaments',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+          'Harur Events & Festivals',
+          style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF15211F), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -81,16 +81,16 @@ class _EventsPageState extends State<EventsPage> {
                     label: Text(categories[i]),
                     selected: active,
                     onSelected: (_) => setState(() => selectedCategory = i),
-                    selectedColor: const Color(0xFF007F63),
-                    backgroundColor: const Color(0xFFF2F6F5),
+                    selectedColor: const Color(0xFF007AFF),
+                    backgroundColor: const Color(0xFFF2F2F7),
                     labelStyle: TextStyle(
-                      color: active ? Colors.white : const Color(0xFF15211F),
+                      color: active ? Colors.white : const Color(0xFF1C1C1E),
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     side: BorderSide(
-                      color: active ? const Color(0xFF007F63) : const Color(0xFFDCE5E1),
+                      color: active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
                     ),
                   );
                 },
@@ -109,7 +109,7 @@ class _EventsPageState extends State<EventsPage> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFDCE5E1)),
+                      border: Border.all(color: const Color(0xFFE5E5EA)),
                       boxShadow: const [
                         BoxShadow(color: Color(0x080F2922), blurRadius: 14, offset: Offset(0, 5))
                       ],
@@ -152,38 +152,38 @@ class _EventsPageState extends State<EventsPage> {
                         const SizedBox(height: 12),
                         Text(
                           ev['title'],
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF15211F), height: 1.2),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E), height: 1.2),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF697570)),
+                            const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF8E8E93)),
                             const SizedBox(width: 6),
-                            Text('${ev['date']} · ${ev['time']}', style: const TextStyle(fontSize: 12, color: Color(0xFF697570), fontWeight: FontWeight.w600)),
+                            Text('${ev['date']} · ${ev['time']}', style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.location_pin, size: 14, color: Color(0xFF697570)),
+                            const Icon(Icons.location_pin, size: 14, color: Color(0xFF8E8E93)),
                             const SizedBox(width: 6),
-                            Expanded(child: Text(ev['venue'], style: const TextStyle(fontSize: 12, color: Color(0xFF697570)))),
+                            Expanded(child: Text(ev['venue'], style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)))),
                           ],
                         ),
                         const SizedBox(height: 14),
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF2F6F5),
+                            color: const Color(0xFFF2F2F7),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF007F63)),
+                              const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF007AFF)),
                               const SizedBox(width: 6),
-                              Text('Organizer: ${ev['head']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15211F))),
+                              Text('Organizer: ${ev['head']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1C1C1E))),
                               const Spacer(),
-                              Text('${ev['registered']}/${ev['maxSlots']} Registered', style: const TextStyle(fontSize: 11, color: Color(0xFF697570), fontWeight: FontWeight.w800)),
+                              Text('${ev['registered']}/${ev['maxSlots']} Registered', style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w800)),
                             ],
                           ),
                         ),
@@ -192,7 +192,7 @@ class _EventsPageState extends State<EventsPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF007F63),
+                              backgroundColor: const Color(0xFF007AFF),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
@@ -220,7 +220,7 @@ class _EventsPageState extends State<EventsPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF007F63),
+        backgroundColor: const Color(0xFF007AFF),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.add_rounded),
@@ -272,18 +272,18 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
               child: Container(
                 width: 44,
                 height: 4,
-                decoration: BoxDecoration(color: const Color(0xFFDCE5E1), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: const Color(0xFFE5E5EA), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
             const Text(
               'Create Community Event / Tournament',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15211F)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
             ),
             const SizedBox(height: 4),
             const Text(
               'Upon admin approval, you are automatically assigned as Event Head with dedicated temporary chat room management.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF697570)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -291,7 +291,7 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
               decoration: InputDecoration(
                 labelText: 'Event / Tournament Name',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -301,7 +301,7 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
               decoration: InputDecoration(
                 labelText: 'Venue / Ground in Harur',
                 filled: true,
-                fillColor: const Color(0xFFF2F6F5),
+                fillColor: const Color(0xFFF2F2F7),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -309,10 +309,10 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Paid Event / Entry Fee', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              subtitle: const Text('Requires external Google Form for payment tracking', style: TextStyle(fontSize: 11, color: Color(0xFF697570))),
+              subtitle: const Text('Requires external Google Form for payment tracking', style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
               value: isPaid,
-              activeThumbColor: const Color(0xFF007F63),
-              activeTrackColor: const Color(0xFF007F63).withValues(alpha: 0.5),
+              activeThumbColor: const Color(0xFF007AFF),
+              activeTrackColor: const Color(0xFF007AFF).withValues(alpha: 0.5),
               onChanged: (val) => setState(() => isPaid = val),
             ),
             if (isPaid) ...[
@@ -322,7 +322,7 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
                 decoration: InputDecoration(
                   labelText: 'Google Form Registration Link',
                   filled: true,
-                  fillColor: const Color(0xFFF2F6F5),
+                  fillColor: const Color(0xFFF2F2F7),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
@@ -333,28 +333,59 @@ class _CreateEventSheetState extends State<_CreateEventSheet> {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007F63),
+                  backgroundColor: const Color(0xFF007AFF),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () async {
                   final title = _titleCtrl.text.trim();
                   final venue = _venueCtrl.text.trim();
-                  if (title.isNotEmpty && venue.isNotEmpty) {
-                    await EventsService.createEvent(
-                      title: title,
-                      venue: venue,
-                      type: selectedType,
-                      description: 'Community event organized in Harur.',
-                      isPaid: isPaid,
-                      formUrl: isPaid ? _formCtrl.text.trim() : null,
+
+                  if (title.isEmpty || venue.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Color(0xFFE44545),
+                        content: Text('Please provide both an event name and venue.'),
+                      ),
                     );
-                    widget.onCreated?.call();
+                    return;
                   }
+
+                  if (isPaid && _formCtrl.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Color(0xFFE44545),
+                        content: Text('Please provide the Google Form registration URL for paid events.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final profanityErr = SecurityFilterService.validateUsernameAndName(username: '', fullName: title);
+                  if (profanityErr != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(backgroundColor: const Color(0xFFE44545), content: Text(profanityErr)),
+                    );
+                    return;
+                  }
+
+                  await EventsService.createEvent(
+                    title: title,
+                    venue: venue,
+                    type: selectedType,
+                    description: 'Community event organized in Harur.',
+                    isPaid: isPaid,
+                    formUrl: isPaid ? _formCtrl.text.trim() : null,
+                  );
+                  widget.onCreated?.call();
+
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Event submitted for Admin verification!')),
+                      const SnackBar(
+                        backgroundColor: Color(0xFF007AFF),
+                        content: Text('✓ Event submitted for Admin verification!'),
+                      ),
                     );
                   }
                 },
