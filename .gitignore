@@ -32,3 +32,6 @@ supabase/.temp/
 android/*.log
 .kotlin/
 android/.kotlin/
+
+# Large binary artifacts (released via GitHub Releases)
+*.apk
