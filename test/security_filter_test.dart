@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myharur/services/supabase_service.dart';
+import 'package:myharur/services/security_service.dart';
 
 void main() {
   group('SecurityFilterService Normalization & Reserved Usernames', () {
@@ -59,6 +60,106 @@ void main() {
         fullName: 'Ramanathan',
       );
       expect(err, contains('reserved'));
+    });
+  });
+
+  group('PasswordSecurityService & Entropy', () {
+    test('rejects weak or short passwords', () {
+      final res = PasswordSecurityService.evaluatePassword('123456');
+      expect(res.isValid, isFalse);
+      expect(res.strength, equals(PasswordStrengthLevel.weak));
+      expect(res.missingRequirements, isNotEmpty);
+    });
+
+    test('identifies strong Apple-grade entropy passwords', () {
+      final res = PasswordSecurityService.evaluatePassword('K@veri#T0wn99!Citiz3n');
+      expect(res.isValid, isTrue);
+      expect(res.score, greaterThanOrEqualTo(0.85));
+      expect(res.strengthLabel, anyOf(contains('Apple-Grade'), contains('Strong')));
+    });
+
+    test('penalizes predictable dictionary patterns', () {
+      final res = PasswordSecurityService.evaluatePassword('harur12345Password!');
+      expect(res.missingRequirements, contains('Avoid common words or predictable sequences'));
+    });
+  });
+
+  group('RateLimitSecurityService & Brute Force Defense', () {
+    test('locks account after repeated failed attempts', () {
+      const testEmail = 'attacker@badsite.com';
+      expect(RateLimitSecurityService.isLockedOut(testEmail), isFalse);
+
+      for (int i = 0; i < 5; i++) {
+        RateLimitSecurityService.recordFailedAttempt(testEmail);
+      }
+
+      expect(RateLimitSecurityService.isLockedOut(testEmail), isTrue);
+      expect(RateLimitSecurityService.remainingLockoutSeconds(testEmail), greaterThan(0));
+
+      // Reset
+      RateLimitSecurityService.recordSuccessfulLogin(testEmail);
+      expect(RateLimitSecurityService.isLockedOut(testEmail), isFalse);
+    });
+  });
+
+  group('IdentityCryptoService & Anti-Tamper Signatures', () {
+    test('generates deterministic SHA-256 signatures and verifies tamper detection', () {
+      final sig = IdentityCryptoService.generatePassportSignature(
+        mmid: '202608151208218821',
+        username: 'admin.qenbel',
+        fullName: 'Root SuperAdmin Qenbel',
+        bloodGroup: 'O+',
+        aid: 'AID-ROOT-0001',
+      );
+      expect(sig, isNotEmpty);
+      expect(sig.length, 16);
+
+      final isValid = IdentityCryptoService.verifyPassportSignature(
+        mmid: '202608151208218821',
+        username: 'admin.qenbel',
+        fullName: 'Root SuperAdmin Qenbel',
+        bloodGroup: 'O+',
+        aid: 'AID-ROOT-0001',
+        signature: sig,
+      );
+      expect(isValid, isTrue);
+
+      // Tampered data should fail
+      final isTamperedValid = IdentityCryptoService.verifyPassportSignature(
+        mmid: '202608151208218821',
+        username: 'admin.qenbel',
+        fullName: 'Imposter User', // Tampered!
+        bloodGroup: 'O+',
+        aid: 'AID-ROOT-0001',
+        signature: sig,
+      );
+      expect(isTamperedValid, isFalse);
+    });
+
+    test('generates and verifies 6-digit TOTP MFA codes', () {
+      const secret = 'HARUR_TEST_SECRET_KEY';
+      final otp = IdentityCryptoService.generateMfaOtp(secret);
+      expect(otp.length, 6);
+      expect(int.tryParse(otp), isNotNull);
+
+      final verified = IdentityCryptoService.verifyMfaOtp(secretSeed: secret, otpCode: otp);
+      expect(verified, isTrue);
+    });
+  });
+
+  group('InputSanitizerService', () {
+    test('strips HTML, SQL comments, and dangerous escape chars', () {
+      final clean = InputSanitizerService.sanitize("<script>alert('hack');</script> SELECT * FROM users --");
+      expect(clean, isNot(contains('<script>')));
+      expect(clean, isNot(contains("'")));
+      expect(clean, isNot(contains('--')));
+    });
+
+    test('validates email and phone formats', () {
+      expect(InputSanitizerService.isValidEmail('resident@harur.in'), isTrue);
+      expect(InputSanitizerService.isValidEmail('invalid-email'), isFalse);
+      expect(InputSanitizerService.isValidPhone('9842011000'), isTrue);
+      expect(InputSanitizerService.isValidPhone('123'), isFalse);
     });
   });
 }

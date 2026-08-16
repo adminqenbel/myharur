@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
+import '../services/security_service.dart';
 import '../main.dart';
 
 class TownOnboardingFlowPage extends StatefulWidget {
@@ -137,10 +138,6 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
     return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
   }
 
-  bool get _isPasswordValid {
-    return _passwordCtrl.text.trim().length >= 6;
-  }
-
   bool get _isNameValid {
     return _nameCtrl.text.trim().length >= 3;
   }
@@ -164,11 +161,13 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
       return;
     }
 
-    if (!_isPasswordValid) {
+    // Rate Limiting check
+    if (RateLimitSecurityService.isLockedOut(email)) {
+      final remaining = RateLimitSecurityService.remainingLockoutSeconds(email);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Color(0xFFE44545),
-          content: Text('Password must be at least 6 characters long.'),
+        SnackBar(
+          backgroundColor: const Color(0xFFE44545),
+          content: Text('⚠️ Security Lockout: Too many failed attempts. Retry in $remaining seconds.'),
         ),
       );
       return;
@@ -178,6 +177,18 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
     bool success = false;
 
     if (isSignUp) {
+      final eval = PasswordSecurityService.evaluatePassword(pwd);
+      if (!eval.isValid) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFE44545),
+            content: Text('Password requirements: ${eval.missingRequirements.join(", ")}'),
+          ),
+        );
+        return;
+      }
+
       final name = _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : email.split('@').first;
       final phone = _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : '+91 98420 11000';
 
@@ -205,7 +216,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Color(0xFFE44545),
-            content: Text('Authentication could not be completed. Please verify your details or connection.'),
+            content: Text('Authentication failed. Please verify credentials or connection.'),
           ),
         );
       }

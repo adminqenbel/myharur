@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'harur_real_data_service.dart';
+import 'security_service.dart';
 
 // ==============================================================================
 // 1. SUPABASE CLIENT & CONFIGURATION
@@ -328,10 +329,12 @@ class UserProfile {
   final String emergencyContactPhone;
   final String bio;
   final bool isMfaEnabled;
+  final String mfaSecret;
   final bool isPrimarySuperAdmin;
   final int interactionScore;
   final int helpingHandsCount;
   final double donatedAmount;
+  final String? signature;
 
   const UserProfile({
     required this.id,
@@ -348,10 +351,12 @@ class UserProfile {
     this.emergencyContactPhone = '+91 94432 11002',
     this.bio = 'Verified resident and active contributor in Harur.',
     this.isMfaEnabled = false,
+    this.mfaSecret = 'HARUR_SEC_ROOT_KEY_2026',
     this.isPrimarySuperAdmin = false,
     this.interactionScore = 320,
     this.helpingHandsCount = 14,
     this.donatedAmount = 500.0,
+    this.signature,
   });
 
   // Helpers for role checks
@@ -361,6 +366,15 @@ class UserProfile {
   bool get isModerator => roles.contains('moderator') || isAdmin;
   bool get isShopAdmin => roles.contains('shop_admin') || isSuperAdmin;
   bool get isEventHead => roles.contains('event_head') || isAdmin;
+
+  /// Cryptographic passport verification hash
+  String get verifiedSignature => signature ?? IdentityCryptoService.generatePassportSignature(
+    mmid: mmid,
+    username: username,
+    fullName: fullName,
+    bloodGroup: bloodGroup,
+    aid: aid,
+  );
 
   String get primaryRoleTitle {
     if (isSuperAdmin) return 'SuperAdmin';
@@ -385,10 +399,12 @@ class UserProfile {
     String? emergencyContactPhone,
     String? bio,
     bool? isMfaEnabled,
+    String? mfaSecret,
     bool? isPrimarySuperAdmin,
     int? interactionScore,
     int? helpingHandsCount,
     double? donatedAmount,
+    String? signature,
   }) {
     return UserProfile(
       id: id,
@@ -405,10 +421,12 @@ class UserProfile {
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
       bio: bio ?? this.bio,
       isMfaEnabled: isMfaEnabled ?? this.isMfaEnabled,
+      mfaSecret: mfaSecret ?? this.mfaSecret,
       isPrimarySuperAdmin: isPrimarySuperAdmin ?? this.isPrimarySuperAdmin,
       interactionScore: interactionScore ?? this.interactionScore,
       helpingHandsCount: helpingHandsCount ?? this.helpingHandsCount,
       donatedAmount: donatedAmount ?? this.donatedAmount,
+      signature: signature ?? this.signature,
     );
   }
 }
@@ -503,12 +521,22 @@ class AuthService {
     AuthNotifier.instance.notify();
   }
 
-  /// Sign In with Email & Password
+  /// Sign In with Email & Password with Brute-Force Rate Limiting
   static Future<bool> signInWithEmailPassword(String email, String password) async {
+    final cleanEmail = InputSanitizerService.sanitize(email.trim().toLowerCase());
+
+    // 1. Check Rate Limiter / Account Lockout
+    if (RateLimitSecurityService.isLockedOut(cleanEmail)) {
+      final remaining = RateLimitSecurityService.remainingLockoutSeconds(cleanEmail);
+      debugPrint('[SECURITY] Login attempt blocked. Account $cleanEmail is locked for $remaining seconds.');
+      return false;
+    }
+
     final client = SupabaseConfig.client;
 
     // Check Root Super Admin credentials
-    if (email.trim() == 'admin.qenbel@gmail.com' && password.trim() == 'admin@qenbel') {
+    if (cleanEmail == 'admin.qenbel@gmail.com' && password.trim() == 'admin@qenbel') {
+      RateLimitSecurityService.recordSuccessfulLogin(cleanEmail);
       _isLoggedIn = true;
       _profile = _profile.copyWith(
         aid: 'AID-ROOT-0001',
@@ -523,7 +551,7 @@ class AuthService {
         action: 'SUPERADMIN_LOGIN',
         tableName: 'auth.users',
         recordId: 'SUPERADMIN-0001',
-        details: {'email': email, 'roles': _profile.roles, 'aid': 'AID-ROOT-0001'},
+        details: {'email': cleanEmail, 'roles': _profile.roles, 'aid': 'AID-ROOT-0001'},
       );
       AuthNotifier.instance.notify();
       return true;
@@ -532,10 +560,11 @@ class AuthService {
     if (client != null) {
       try {
         final res = await client.auth.signInWithPassword(
-          email: email.trim(),
+          email: cleanEmail,
           password: password.trim(),
         );
         if (res.session != null) {
+          RateLimitSecurityService.recordSuccessfulLogin(cleanEmail);
           _isLoggedIn = true;
           await _fetchRemoteProfile(res.user!.id);
           await AuditLogService.log(action: 'LOGIN', tableName: 'auth.users', recordId: res.user!.id);
@@ -543,17 +572,19 @@ class AuthService {
           return true;
         }
       } catch (e) {
+        RateLimitSecurityService.recordFailedAttempt(cleanEmail);
         debugPrint('Sign In error: $e');
       }
     } else {
       // Local fallback mode when Supabase is not configured
+      RateLimitSecurityService.recordSuccessfulLogin(cleanEmail);
       _isLoggedIn = true;
       _profile = UserProfile(
         id: 'usr-local-${DateTime.now().millisecondsSinceEpoch}',
         mmid: generateMmid(),
-        username: email.split('@').first,
-        fullName: email.split('@').first,
-        email: email.trim(),
+        username: cleanEmail.split('@').first,
+        fullName: cleanEmail.split('@').first,
+        email: cleanEmail,
         phone: '+91 98420 11000',
         roles: const ['resident'],
         wardLocality: 'Harur Town (Central)',
@@ -565,7 +596,7 @@ class AuthService {
     return false;
   }
 
-  /// Sign Up with Email & Password + MMID creation
+  /// Sign Up with Email & Password + Strict Entropy Validation + MMID creation
   static Future<bool> signUpWithEmailPassword({
     required String email,
     required String password,
@@ -574,8 +605,21 @@ class AuthService {
     String? username,
     List<String> roles = const ['resident'],
   }) async {
+    final cleanEmail = InputSanitizerService.sanitize(email.trim().toLowerCase());
+    final cleanFullName = InputSanitizerService.sanitize(fullName.trim());
+    final cleanPhone = InputSanitizerService.sanitize(phone.trim());
+
+    // 1. Password Entropy & Security Check
+    final passwordEvaluation = PasswordSecurityService.evaluatePassword(password);
+    if (!passwordEvaluation.isValid) {
+      debugPrint('[SECURITY] Password does not meet security requirements: ${passwordEvaluation.missingRequirements}');
+      return false;
+    }
+
     final mmid = generateMmid();
-    final userHandle = username ?? "resident_${mmid.substring(mmid.length - 4)}";
+    final userHandle = username != null && username.isNotEmpty
+        ? InputSanitizerService.sanitize(username)
+        : "resident_${mmid.substring(mmid.length - 4)}";
     final isStaff = roles.any((r) => r.contains('admin') || r.contains('govt'));
     final aid = isStaff ? generateAid() : null;
     final client = SupabaseConfig.client;
@@ -583,9 +627,9 @@ class AuthService {
     if (client != null) {
       try {
         final res = await client.auth.signUp(
-          email: email.trim(),
+          email: cleanEmail,
           password: password.trim(),
-          data: {'full_name': fullName, 'mmid': mmid, 'username': userHandle, 'aid': aid, 'roles': roles, 'phone': phone},
+          data: {'full_name': cleanFullName, 'mmid': mmid, 'username': userHandle, 'aid': aid, 'roles': roles, 'phone': cleanPhone},
         );
         if (res.user != null) {
           await client.from('profiles').insert({
@@ -593,9 +637,9 @@ class AuthService {
             'mmid': mmid,
             'aid': aid,
             'username': userHandle,
-            'full_name': fullName,
-            'email': email.trim(),
-            'phone': phone,
+            'full_name': cleanFullName,
+            'email': cleanEmail,
+            'phone': cleanPhone,
             'role': roles.first,
           });
           _isLoggedIn = true;
@@ -604,9 +648,9 @@ class AuthService {
             mmid: mmid,
             aid: aid,
             username: userHandle,
-            fullName: fullName,
-            email: email.trim(),
-            phone: phone,
+            fullName: cleanFullName,
+            email: cleanEmail,
+            phone: cleanPhone,
             roles: roles,
           );
           await AuditLogService.log(action: 'SIGNUP', tableName: 'profiles', recordId: mmid);
@@ -624,9 +668,9 @@ class AuthService {
         mmid: mmid,
         aid: aid,
         username: userHandle,
-        fullName: fullName,
-        email: email.trim(),
-        phone: phone,
+        fullName: cleanFullName,
+        email: cleanEmail,
+        phone: cleanPhone,
         roles: roles,
       );
       AuthNotifier.instance.notify();
@@ -634,6 +678,29 @@ class AuthService {
     }
 
     return false;
+  }
+
+  /// Verify 6-digit Multi-Factor TOTP challenge
+  static bool verifyMfaChallenge(String code) {
+    final valid = IdentityCryptoService.verifyMfaOtp(
+      secretSeed: _profile.mfaSecret,
+      otpCode: code,
+    );
+    if (valid) {
+      AuditLogService.log(action: 'MFA_CHALLENGE_VERIFIED', tableName: 'auth.mfa', recordId: _profile.mmid);
+    }
+    return valid;
+  }
+
+  /// Toggle Multi-Factor Authentication
+  static Future<void> toggleMfa(bool enabled) async {
+    _profile = _profile.copyWith(isMfaEnabled: enabled);
+    await AuditLogService.log(
+      action: enabled ? 'MFA_ENABLED' : 'MFA_DISABLED',
+      tableName: 'auth.mfa',
+      recordId: _profile.mmid,
+    );
+    AuthNotifier.instance.notify();
   }
 
   /// Google OAuth Sign In
