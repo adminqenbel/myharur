@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/security_service.dart';
+import '../widgets/glass_components.dart';
 import '../main.dart';
 
 class TownOnboardingFlowPage extends StatefulWidget {
@@ -243,7 +244,6 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
         );
       }
     } else {
-      // In local fallback mode or fast redirect, advance to step 1
       _populateFromCurrentProfile();
       if (mounted) {
         setState(() => currentStep = 1);
@@ -339,7 +339,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            backgroundColor: Color(0xFF007AFF),
+            backgroundColor: Color(0xFF234149),
             content: Text('✓ Live GPS Location locked to Harur Town (12.0624° N, 78.4983° E)'),
           ),
         );
@@ -349,71 +349,72 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Stepper Header
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              color: Colors.white,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      SvgPicture.asset('assets/brand/myharur_icon.svg', width: 34, height: 34),
-                      const SizedBox(width: 10),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('myharur', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: Color(0xFF1C1C1E))),
-                          Text('DIGITAL TOWN PASSPORT', style: TextStyle(fontSize: 10, color: Color(0xFF007AFF), fontWeight: FontWeight.w900, letterSpacing: 0.8)),
-                        ],
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEBF5FF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.3)),
+    return AtmosphericBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top Stepper Header (Clean Glass Style)
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        SvgPicture.asset('assets/brand/myharur_icon.svg', width: 34, height: 34),
+                        const SizedBox(width: 10),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('myharur', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.6, color: Color(0xFF16272E))),
+                            Text('DIGITAL TOWN PASSPORT', style: TextStyle(fontSize: 9, color: Color(0xFF6A828B), fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+                          ],
                         ),
-                        child: Text(
-                          'Step ${currentStep + 1} of 3',
-                          style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w900, fontSize: 11),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE2EDF2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFD4E3EA)),
+                          ),
+                          child: Text(
+                            'Step ${currentStep + 1} of 3',
+                            style: const TextStyle(color: Color(0xFF234149), fontWeight: FontWeight.w900, fontSize: 11),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  // Progress Track
-                  Row(
-                    children: [
-                      _buildStepPill(0, 'Identity & Auth'),
-                      const SizedBox(width: 6),
-                      _buildStepPill(1, 'Digital Pass'),
-                      const SizedBox(width: 6),
-                      _buildStepPill(2, 'Town Locality'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Animated Body
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 280),
-                  child: currentStep == 0
-                      ? _buildStep1Auth()
-                      : (currentStep == 1 ? _buildStep2Details() : _buildStep3Map()),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    // Progress Track
+                    Row(
+                      children: [
+                        _buildStepPill(0, 'Identity & Auth'),
+                        const SizedBox(width: 6),
+                        _buildStepPill(1, 'Digital Pass'),
+                        const SizedBox(width: 6),
+                        _buildStepPill(2, 'Town Locality'),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+
+              // Animated Body
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 280),
+                    child: currentStep == 0
+                        ? _buildStep1Auth()
+                        : (currentStep == 1 ? _buildStep2Details() : _buildStep3Map()),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -430,7 +431,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
           Container(
             height: 4,
             decoration: BoxDecoration(
-              color: done || active ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
+              color: done || active ? const Color(0xFF234149) : const Color(0xFFD4E3EA),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -439,8 +440,8 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
             label,
             style: TextStyle(
               fontSize: 10,
-              fontWeight: active ? FontWeight.w900 : FontWeight.w600,
-              color: active ? const Color(0xFF007AFF) : const Color(0xFF8E8E93),
+              fontWeight: active ? FontWeight.w900 : FontWeight.w700,
+              color: active ? const Color(0xFF234149) : const Color(0xFF6A828B),
             ),
           ),
         ],
@@ -458,20 +459,10 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Hero Banner
-          Container(
+          BentoCard(
+            variant: BentoCardVariant.darkPetrol,
+            borderRadius: 24,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF007AFF), Color(0xFF121214)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.3)),
-              boxShadow: [
-                BoxShadow(color: const Color(0xFF007AFF).withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 8)),
-              ],
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -480,24 +471,24 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF007AFF),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('HARUR DIGITAL TOWN', style: TextStyle(color: Color(0xFF070B0A), fontSize: 10, fontWeight: FontWeight.w900)),
+                      child: const Text('HARUR DIGITAL TOWN', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
                     ),
                     const Spacer(),
-                    const Icon(Icons.verified_user_rounded, color: Color(0xFF007AFF), size: 18),
+                    const Icon(Icons.verified_user_rounded, color: Colors.white, size: 18),
                   ],
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'Welcome to Your Connected Town.',
-                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, height: 1.15),
+                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, height: 1.15, letterSpacing: -0.4),
                 ),
                 const SizedBox(height: 6),
                 const Text(
                   'Your verified gateway for Harur shops, jobs, mandi rates, bus routes & 24/7 SOS support.',
-                  style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12, height: 1.35),
+                  style: TextStyle(color: Color(0xFFB5D4DF), fontSize: 12, height: 1.35),
                 ),
               ],
             ),
@@ -512,12 +503,11 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF1C1C1E),
-                elevation: 1.5,
-                shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.12),
+                foregroundColor: const Color(0xFF16272E),
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFE5E5EA), width: 1.2),
+                  borderRadius: BorderRadius.circular(26),
+                  side: const BorderSide(color: Color(0xFFD4E3EA), width: 1.2),
                 ),
               ),
               onPressed: _isProcessing ? null : _handleGoogleSignIn,
@@ -528,17 +518,17 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                     width: 26,
                     height: 26,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF5FF),
+                      color: const Color(0xFFE2EDF2),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
+                      border: Border.all(color: const Color(0xFF234149).withValues(alpha: 0.15)),
                     ),
                     child: const Center(
                       child: Text(
                         'G',
                         style: TextStyle(
-                          color: Color(0xFF007AFF),
+                          color: Color(0xFF234149),
                           fontWeight: FontWeight.w900,
-                          fontSize: 15,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -546,7 +536,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                   const SizedBox(width: 12),
                   const Text(
                     'Continue with Google',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: -0.2),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF16272E), letterSpacing: -0.2),
                   ),
                 ],
               ),
@@ -556,126 +546,48 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
           const SizedBox(height: 16),
           const Row(
             children: [
-              Expanded(child: Divider(color: Color(0xFFE5E5EA))),
+              Expanded(child: Divider(color: Color(0xFFD4E3EA))),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Text('or with email & password', style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w700)),
+                child: Text('or with email & password', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B), fontWeight: FontWeight.w700)),
               ),
-              Expanded(child: Divider(color: Color(0xFFE5E5EA))),
+              Expanded(child: Divider(color: Color(0xFFD4E3EA))),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Email Input with validation indicator
-          TextField(
+          // Email Input
+          SquirclePillInput(
             controller: _emailCtrl,
+            hint: 'Email address',
+            icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Email address',
-              hintText: 'resident@harur.in',
-              prefixIcon: const Icon(Icons.email_outlined, size: 20, color: Color(0xFF007AFF)),
-              suffixIcon: _emailCtrl.text.isNotEmpty
-                  ? Icon(
-                      _isEmailValid ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                      color: _isEmailValid ? const Color(0xFF007AFF) : const Color(0xFFE44545),
-                      size: 20,
-                    )
-                  : null,
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: _emailCtrl.text.isEmpty || _isEmailValid ? const Color(0xFFE5E5EA) : const Color(0xFFE44545)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFF007AFF), width: 1.8),
-              ),
-            ),
           ),
 
           const SizedBox(height: 12),
 
-          // Password Input with live strength meter
-          TextField(
+          // Password Input
+          SquirclePillInput(
             controller: _passwordCtrl,
+            hint: 'Password (min 6 chars)',
+            icon: Icons.lock_outline_rounded,
             obscureText: _obscurePassword,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Password (min 6 chars)',
-              prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: Color(0xFF007AFF)),
-              suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFF007AFF), width: 1.8),
-              ),
+            suffix: IconButton(
+              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: const Color(0xFF6A828B)),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
 
-          if (_passwordCtrl.text.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: (_passwordCtrl.text.length / 10).clamp(0.2, 1.0),
-                      backgroundColor: const Color(0xFFE5E5EA),
-                      valueColor: AlwaysStoppedAnimation(
-                        _passwordCtrl.text.length < 6
-                            ? const Color(0xFFE44545)
-                            : (_passwordCtrl.text.length < 8 ? const Color(0xFFF59E0B) : const Color(0xFF007AFF)),
-                      ),
-                      minHeight: 3,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _passwordCtrl.text.length < 6 ? 'Too Short' : (_passwordCtrl.text.length < 8 ? 'Good' : 'Strong'),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: _passwordCtrl.text.length < 6 ? const Color(0xFFE44545) : const Color(0xFF007AFF),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Primary Step 1 Action Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF007AFF),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 3,
-              ),
-              onPressed: _isProcessing ? null : _handleStep1Auth,
-              child: _isProcessing
-                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                  : Text(
-                      isSignUp ? 'Create Pass & Continue →' : 'Sign In to MyHarur →',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                    ),
-            ),
+          PetrolButton(
+            label: isSignUp ? 'Create Pass & Continue →' : 'Sign In to MyHarur →',
+            isLoading: _isProcessing,
+            onTap: _handleStep1Auth,
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Toggle Sign In / Sign Up
           Center(
@@ -683,7 +595,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
               onPressed: () => setState(() => isSignUp = !isSignUp),
               child: Text(
                 isSignUp ? 'Already have an MMID? Sign In' : 'New resident? Register Digital Pass',
-                style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800),
+                style: const TextStyle(color: Color(0xFF234149), fontWeight: FontWeight.w800, fontSize: 13),
               ),
             ),
           ),
@@ -692,12 +604,12 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
           Center(
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1C1C1E),
-                side: const BorderSide(color: Color(0xFFE5E5EA)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                foregroundColor: const Color(0xFF16272E),
+                side: const BorderSide(color: Color(0xFFD4E3EA)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
-              icon: const Icon(Icons.explore_rounded, size: 16, color: Color(0xFF007AFF)),
+              icon: const Icon(Icons.explore_rounded, size: 16, color: Color(0xFF234149)),
               label: const Text('Explore Harur as Guest Visitor →', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
               onPressed: () {
                 AuthService.loginAsGuest();
@@ -725,26 +637,16 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Customise Your Resident Pass', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
+          const Text('Customise Your Resident Pass', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF16272E), letterSpacing: -0.4)),
           const SizedBox(height: 4),
-          const Text('Your digital pass updates live below as you enter your details.', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
+          const Text('Your digital pass updates live below as you enter your details.', style: TextStyle(fontSize: 12, color: Color(0xFF6A828B))),
           const SizedBox(height: 16),
 
-          // LIVE HOLOGRAPHIC MMID PASS PREVIEW
-          Container(
+          // LIVE MMID PASS PREVIEW (Deep Petrol Bento)
+          BentoCard(
+            variant: BentoCardVariant.darkPetrol,
+            borderRadius: 24,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1C1C1E), Color(0xFF061410)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.4), width: 1.5),
-              boxShadow: [
-                BoxShadow(color: const Color(0xFF007AFF).withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 10)),
-              ],
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -759,7 +661,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('myharur', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: -0.4)),
-                            Text('RESIDENT IDENTITY PASS', style: TextStyle(color: Color(0xFF007AFF), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+                            Text('RESIDENT IDENTITY PASS', style: TextStyle(color: Color(0xFFB5D4DF), fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
                           ],
                         ),
                       ],
@@ -767,16 +669,15 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF007AFF).withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF007AFF)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shield_rounded, color: Color(0xFF007AFF), size: 12),
+                          Icon(Icons.shield_rounded, color: Colors.white, size: 12),
                           SizedBox(width: 4),
-                          Text('VERIFIED', style: TextStyle(color: Color(0xFF007AFF), fontSize: 9, fontWeight: FontWeight.w900)),
+                          Text('VERIFIED', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
                         ],
                       ),
                     ),
@@ -790,7 +691,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                 const SizedBox(height: 2),
                 Text(
                   livePhone,
-                  style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: Color(0xFFB5D4DF), fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 14),
                 const Divider(color: Colors.white12, height: 1),
@@ -801,7 +702,7 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('LOCALITY / WARD', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 9, fontWeight: FontWeight.w800)),
+                        const Text('LOCALITY / WARD', style: TextStyle(color: Color(0xFF8BA6B0), fontSize: 9, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 2),
                         Text(liveWard, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
@@ -809,13 +710,12 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE44545).withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE44545)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.bloodtype_rounded, color: Color(0xFFE44545), size: 12),
+                          const Icon(Icons.bloodtype_rounded, color: Colors.white, size: 12),
                           const SizedBox(width: 4),
                           Text(selectedBloodGroup, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
                         ],
@@ -830,96 +730,64 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
           const SizedBox(height: 20),
 
           // Full Name Input
-          TextField(
+          SquirclePillInput(
             controller: _nameCtrl,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Full Name (Official)',
-              prefixIcon: const Icon(Icons.person_outline_rounded, size: 20, color: Color(0xFF007AFF)),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF007AFF), width: 1.8)),
-            ),
+            hint: 'Full Name (Official)',
+            icon: Icons.person_outline_rounded,
           ),
 
           const SizedBox(height: 12),
 
           // Phone Number Input
-          TextField(
+          SquirclePillInput(
             controller: _phoneCtrl,
+            hint: 'Mobile Phone Number (+91)',
+            icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Mobile Phone Number (+91)',
-              prefixIcon: const Icon(Icons.phone_outlined, size: 20, color: Color(0xFF007AFF)),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF007AFF), width: 1.8)),
-            ),
           ),
 
           const SizedBox(height: 12),
 
           // Ward / Locality
-          TextField(
+          SquirclePillInput(
             controller: _wardCtrl,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: 'Ward / Area in Harur',
-              prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: Color(0xFF007AFF)),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF007AFF), width: 1.8)),
-            ),
+            hint: 'Ward / Area in Harur',
+            icon: Icons.location_on_outlined,
           ),
 
           const SizedBox(height: 12),
 
           // Blood Group Dropdown
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E5EA)),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFD4E3EA)),
             ),
             child: Row(
               children: [
                 const Icon(Icons.bloodtype_outlined, size: 20, color: Color(0xFFE44545)),
                 const SizedBox(width: 10),
-                const Text('Blood Group (Emergency Aid):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93))),
+                const Text('Blood Group (Emergency):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF6A828B))),
                 const Spacer(),
                 DropdownButton<String>(
                   value: selectedBloodGroup,
                   underline: const SizedBox(),
-                  items: bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(fontWeight: FontWeight.w900)))).toList(),
+                  items: bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF16272E))))).toList(),
                   onChanged: (val) => setState(() => selectedBloodGroup = val ?? 'O+'),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Next Step Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF007AFF),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 3,
-              ),
-              onPressed: _isProcessing ? null : _handleStep2Details,
-              child: _isProcessing
-                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                  : const Text('Next: Locality & Landmarks →', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-            ),
+          PetrolButton(
+            label: 'Next: Locality & Landmarks →',
+            isLoading: _isProcessing,
+            onTap: _handleStep2Details,
           ),
         ],
       ),
@@ -935,50 +803,44 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Select Your Harur Landmark', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
+          const Text('Select Your Harur Landmark', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF16272E), letterSpacing: -0.4)),
           const SizedBox(height: 4),
-          const Text('Choose your primary neighborhood hub or use live GPS pinning.', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
+          const Text('Choose your primary neighborhood hub or use live GPS pinning.', style: TextStyle(fontSize: 12, color: Color(0xFF6A828B))),
           const SizedBox(height: 16),
 
           // GPS Pinning Action
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
+          BentoCard(
+            variant: BentoCardVariant.pastel,
+            borderRadius: 20,
+            padding: const EdgeInsets.all(16),
             onTap: _triggerGpsLocate,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEBF5FF),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: const Color(0xFF007AFF), borderRadius: BorderRadius.circular(12)),
-                    child: isDetectingGps
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Icon(Icons.my_location_rounded, color: Colors.white, size: 20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: const Color(0xFF234149), borderRadius: BorderRadius.circular(12)),
+                  child: isDetectingGps
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.my_location_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Lock to Harur Live Coordinates', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF16272E))),
+                      const SizedBox(height: 2),
+                      Text('Lat: $pinnedLat° N • Lon: $pinnedLon° E', style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B), fontWeight: FontWeight.w700)),
+                    ],
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Lock to Harur Live Coordinates', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF007AFF))),
-                        const SizedBox(height: 2),
-                        Text('Lat: $pinnedLat° N • Lon: $pinnedLon° E', style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.check_circle_rounded, color: Color(0xFF007AFF), size: 20),
-                ],
-              ),
+                ),
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF234149), size: 20),
+              ],
             ),
           ),
 
-          const SizedBox(height: 16),
-          const Text('POPULAR LANDMARKS & SECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8E8E93), letterSpacing: 0.8)),
+          const SizedBox(height: 18),
+          const Text('POPULAR LANDMARKS & SECTORS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6A828B), letterSpacing: 0.8)),
           const SizedBox(height: 10),
 
           // Landmark Cards
@@ -991,8 +853,10 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
               final landmark = landmarks[i];
               final isSelected = pinnedLocationName == landmark['name'];
 
-              return InkWell(
-                borderRadius: BorderRadius.circular(18),
+              return BentoCard(
+                variant: isSelected ? BentoCardVariant.pastel : BentoCardVariant.elevatedWhite,
+                borderRadius: 20,
+                padding: const EdgeInsets.all(14),
                 onTap: () {
                   setState(() {
                     pinnedLocationName = landmark['name'] as String;
@@ -1000,60 +864,46 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
                     pinnedLon = landmark['lon'] as double;
                   });
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA),
-                      width: isSelected ? 2 : 1,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF234149) : const Color(0xFFE2EDF2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        landmark['icon'] as IconData,
+                        color: isSelected ? Colors.white : const Color(0xFF234149),
+                        size: 20,
+                      ),
                     ),
-                    boxShadow: isSelected
-                        ? [BoxShadow(color: const Color(0xFF007AFF).withValues(alpha: 0.12), blurRadius: 10, offset: const Offset(0, 4))]
-                        : [],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFEBF5FF) : const Color(0xFFF2F2F7),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          landmark['icon'] as IconData,
-                          color: isSelected ? const Color(0xFF007AFF) : const Color(0xFF8E8E93),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              landmark['name'] as String,
-                              style: TextStyle(
-                                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                                fontSize: 13,
-                                color: const Color(0xFF1C1C1E),
-                              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            landmark['name'] as String,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              color: Color(0xFF16272E),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              landmark['desc'] as String,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            landmark['desc'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B)),
+                          ),
+                        ],
                       ),
-                      if (isSelected)
-                        const Icon(Icons.check_circle_rounded, color: Color(0xFF007AFF), size: 20),
-                    ],
-                  ),
+                    ),
+                    if (isSelected)
+                      const Icon(Icons.check_circle_rounded, color: Color(0xFF234149), size: 20),
+                  ],
                 ),
               );
             },
@@ -1062,22 +912,11 @@ class _TownOnboardingFlowPageState extends State<TownOnboardingFlowPage> {
           const SizedBox(height: 24),
 
           // Complete Onboarding Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF007AFF),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 4,
-              ),
-              icon: const Icon(Icons.launch_rounded, size: 20),
-              label: _isProcessing
-                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                  : const Text('Enter MyHarur Town Hub 🚀', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-              onPressed: _isProcessing ? null : _handleStep3Finish,
-            ),
+          PetrolButton(
+            label: 'Enter MyHarur Town Hub 🚀',
+            icon: Icons.launch_rounded,
+            isLoading: _isProcessing,
+            onTap: _handleStep3Finish,
           ),
 
           const SizedBox(height: 16),

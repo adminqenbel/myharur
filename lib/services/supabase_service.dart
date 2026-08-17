@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -43,14 +44,14 @@ class SupabaseConfig {
     try {
       await Supabase.initialize(
         url: targetUrl,
-        // publishableKey (sb_publishable_...) is the forward-compatible key;
-        // it takes precedence over the deprecated anonKey param in
-        // supabase_flutter >= 2.15.0. We are on 2.17.2.
-        publishableKey: targetKey,
+        anonKey: targetKey,
       );
       _activeUrl = targetUrl;
       _isInitialized = true;
       _initError = null;
+
+      // Automatically initiate background keep-alive to hold connection
+      KeepAliveService.startPeriodicKeepAlive();
     } catch (e) {
       _initError = 'Supabase initialization failed: $e';
       debugPrint(_initError);
@@ -703,7 +704,7 @@ class AuthService {
     AuthNotifier.instance.notify();
   }
 
-  /// Google OAuth Sign In
+  /// Google OAuth Sign In with External App Launch to bypass WebView blocks
   static Future<bool> signInWithGoogle() async {
     final client = SupabaseConfig.client;
     if (client == null) {
@@ -728,6 +729,7 @@ class AuthService {
       final launched = await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: kIsWeb ? null : 'com.myharur.app://login-callback',
+        authScreenLaunchMode: LaunchMode.externalApplication,
       );
       if (launched) {
         await AuditLogService.log(action: 'GOOGLE_OAUTH_INITIATED', tableName: 'auth.users');
@@ -1664,3 +1666,117 @@ class WeatherService {
     return HarurRealDataService.fetchLiveHarurWeather(locality: locationName);
   }
 }
+
+// ==============================================================================
+// 20. RENDER & SUPABASE ANTI-SPIN-OFF KEEP-ALIVE SERVICE
+// ==============================================================================
+class KeepAliveService {
+  static Timer? _timer;
+  static bool _isRunning = false;
+  static DateTime? _lastPingTime;
+  static String _lastStatus = 'Initialized';
+
+  static DateTime? get lastPingTime => _lastPingTime;
+  static String get lastStatus => _lastStatus;
+
+  /// Start periodic heartbeat (every 10 minutes) to prevent Render free-tier spin-down
+  static void startPeriodicKeepAlive({Duration interval = const Duration(minutes: 10)}) {
+    if (_isRunning) return;
+    _isRunning = true;
+    pingServices();
+    _timer = Timer.periodic(interval, (_) => pingServices());
+    debugPrint('[KeepAlive] Periodic keep-alive pulse active (every ${interval.inMinutes}m)');
+  }
+
+  static void stop() {
+    _timer?.cancel();
+    _timer = null;
+    _isRunning = false;
+  }
+
+  /// Ping Render Web Health endpoint and Supabase Edge Function
+  static Future<Map<String, dynamic>> pingServices() async {
+    _lastPingTime = DateTime.now();
+    final results = <String, dynamic>{'timestamp': _lastPingTime!.toIso8601String()};
+
+    // 1. Supabase Edge Function keep-alive ping
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      try {
+        final res = await client.functions.invoke('keep-alive');
+        results['supabase_edge'] = res.status == 200 ? 'online' : 'status_${res.status}';
+      } catch (e) {
+        results['supabase_edge'] = 'edge_error: $e';
+      }
+    } else {
+      results['supabase_edge'] = 'local_mock_mode';
+    }
+
+    // 2. Render Web service healthz ping
+    const renderWebUrl = String.fromEnvironment('RENDER_EXTERNAL_URL', defaultValue: 'https://myharur-web.onrender.com');
+    try {
+      final res = await http.get(Uri.parse('$renderWebUrl/healthz')).timeout(const Duration(seconds: 6));
+      results['render_web'] = res.statusCode == 200 ? 'online' : 'status_${res.statusCode}';
+    } catch (_) {
+      results['render_web'] = 'offline_or_local';
+    }
+
+    _lastStatus = results.toString();
+    debugPrint('[KeepAlive] Pulse result: $_lastStatus');
+    return results;
+  }
+}
+
+// ==============================================================================
+// 21. BACKEND & POSTGRESQL HEALTH VERIFICATION SERVICE
+// ==============================================================================
+class BackendHealthService {
+  /// Verifies database tables, auth readiness, and edge function endpoints
+  static Future<Map<String, dynamic>> verifyFullSystem() async {
+    final status = <String, dynamic>{
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+    final client = SupabaseConfig.client;
+
+    if (client == null) {
+      return {
+        'configured': false,
+        'error': SupabaseConfig.initError ?? 'Supabase client not initialized (build credentials missing)',
+        'database': 'disconnected (using verified offline fallback data)',
+        'google_oauth': 'ready for configuration in Supabase Dashboard',
+        'render_keep_alive': 'ready',
+      };
+    }
+
+    status['configured'] = true;
+    status['active_url'] = SupabaseConfig.activeUrl;
+
+    // 1. Check PostgreSQL Database (profiles table)
+    try {
+      final rows = await client.from('profiles').select('id').limit(1);
+      status['database'] = 'connected (PostgreSQL operational, returned ${rows.length} rows)';
+      status['profiles_table'] = 'accessible';
+    } catch (e) {
+      status['database'] = 'table_error: $e';
+    }
+
+    // 2. Check Audit Logs
+    try {
+      await client.from('audit_logs').select('id').limit(1);
+      status['audit_logs'] = 'accessible';
+    } catch (e) {
+      status['audit_logs'] = 'error: $e';
+    }
+
+    // 3. Check Edge Function Keep-Alive
+    try {
+      final ef = await client.functions.invoke('keep-alive');
+      status['edge_functions'] = ef.status == 200 ? 'operational' : 'status_${ef.status}';
+    } catch (e) {
+      status['edge_functions'] = 'unreachable: $e';
+    }
+
+    return status;
+  }
+}
+

@@ -20,7 +20,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Harur Digital Town'), findsOneWidget);
+    expect(find.text('myharur'), findsWidgets);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Explore'), findsOneWidget);
     expect(find.text('Alerts'), findsOneWidget);

@@ -33,5 +33,8 @@ android/*.log
 .kotlin/
 android/.kotlin/
 
-# Large binary artifacts (released via GitHub Releases)
+# Large binary artifacts
 *.apk
+!web/*.apk
+!web/downloads/*.apk
+!myharur.apk

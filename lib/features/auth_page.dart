@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/security_service.dart';
+import '../widgets/glass_components.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -51,7 +52,7 @@ class _AuthPageState extends State<AuthPage> {
           setState(() {});
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: Color(0xFF007AFF),
+              backgroundColor: Color(0xFF234149),
               content: Text('✓ Signed in with Google OAuth. Verified Resident profile active.'),
             ),
           );
@@ -105,7 +106,7 @@ class _AuthPageState extends State<AuthPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Color(0xFFE44545),
-            content: Text('Google Sign-In could not be started. Please try again.'),
+            content: Text('Google Sign-In could not be started. Opening browser...'),
           ),
         );
       }
@@ -179,8 +180,8 @@ class _AuthPageState extends State<AuthPage> {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: ok ? const Color(0xFF007AFF) : const Color(0xFFE44545),
-            content: Text(ok ? '✓ Cryptographic Pass generated! MMID: ${AuthService.currentProfile.mmid}' : 'Sign up failed. Please check password requirements.'),
+            backgroundColor: ok ? const Color(0xFF234149) : const Color(0xFFE44545),
+            content: Text(ok ? '✓ Cryptographic Pass generated! MMID: ${AuthService.currentProfile.mmid}' : 'Sign up failed. Please check credentials.'),
           ),
         );
       }
@@ -193,7 +194,7 @@ class _AuthPageState extends State<AuthPage> {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: ok ? const Color(0xFF007AFF) : const Color(0xFFE44545),
+            backgroundColor: ok ? const Color(0xFF234149) : const Color(0xFFE44545),
             content: Text(ok ? '✓ Logged in as ${AuthService.currentProfile.fullName}' : 'Login failed. Please verify email and password.'),
           ),
         );
@@ -227,7 +228,7 @@ class _AuthPageState extends State<AuthPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: Color(0xFF007AFF),
+          backgroundColor: Color(0xFF234149),
           content: Text('✓ Personal details saved safely and synced to Harur Ledger!'),
         ),
       );
@@ -248,42 +249,44 @@ class _AuthPageState extends State<AuthPage> {
     final profile = AuthService.currentProfile;
     final isLoggedIn = AuthService.isAuthenticated;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          isLoggedIn ? 'Resident Identity & Security' : 'MyHarur Account',
-          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
+    return AtmosphericBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(
+            isLoggedIn ? 'Resident Identity' : 'Harur Digital Pass',
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF16272E), letterSpacing: -0.4),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF16272E), size: 19),
+            onPressed: () => Navigator.pop(context),
+          ),
+          actions: [
+            if (isLoggedIn)
+              IconButton(
+                tooltip: 'Sign Out',
+                icon: const Icon(Icons.logout_rounded, color: Color(0xFFE44545), size: 20),
+                onPressed: () async {
+                  await AuthService.signOut();
+                  _populateProfileData();
+                  setState(() {});
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Signed out successfully.')),
+                    );
+                  }
+                },
+              ),
+          ],
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1C1C1E), size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          if (isLoggedIn)
-            IconButton(
-              tooltip: 'Sign Out',
-              icon: const Icon(Icons.logout_rounded, color: Color(0xFFE44545)),
-              onPressed: () async {
-                await AuthService.signOut();
-                _populateProfileData();
-                setState(() {});
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Signed out successfully.')),
-                  );
-                }
-              },
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: isLoggedIn ? _buildLoggedInView(profile) : _buildAuthForm(),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            child: isLoggedIn ? _buildLoggedInView(profile) : _buildAuthForm(),
+          ),
         ),
       ),
     );
@@ -293,41 +296,27 @@ class _AuthPageState extends State<AuthPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Holographic Smart ID Pass
-        Container(
+        // MMID Hero Card in Deep Petrol (Screen 2 MMID Card style)
+        BentoCard(
+          variant: BentoCardVariant.darkPetrol,
+          borderRadius: 26,
           padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF112520), Color(0xFF121214)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.35), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF007AFF).withValues(alpha: 0.28),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
           child: Column(
             children: [
               Row(
                 children: [
                   Container(
-                    width: 58,
-                    height: 58,
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF).withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF007AFF), width: 2),
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
                     ),
                     child: Center(
                       child: Text(
                         profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'H',
-                        style: const TextStyle(color: Color(0xFF007AFF), fontSize: 24, fontWeight: FontWeight.w900),
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
@@ -340,45 +329,45 @@ class _AuthPageState extends State<AuthPage> {
                           profile.fullName,
                           style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF007AFF),
-                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 profile.primaryRoleTitle.toUpperCase(),
-                                style: const TextStyle(color: Color(0xFF070B0A), fontSize: 10, fontWeight: FontWeight.w900),
+                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               "@${profile.username.replaceAll('@', '')}",
-                              style: const TextStyle(color: Color(0xFF007AFF), fontSize: 12, fontWeight: FontWeight.w800),
+                              style: const TextStyle(color: Color(0xFFB5D4DF), fontSize: 11, fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           'MMID: ${profile.mmid}',
-                          style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 10, fontWeight: FontWeight.w700),
+                          style: const TextStyle(color: Color(0xFF8BA6B0), fontSize: 10, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               const Divider(color: Colors.white12, height: 1),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildStatBadge(Icons.location_on_rounded, profile.wardLocality),
-                  _buildStatBadge(Icons.bloodtype_rounded, profile.bloodGroup),
+                  _buildStatBadge(Icons.bloodtype_rounded, 'Blood: ${profile.bloodGroup}'),
                 ],
               ),
             ],
@@ -392,12 +381,12 @@ class _AuthPageState extends State<AuthPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'PERSONAL DETAILS & EMERGENCY DATA',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8E8E93), letterSpacing: 1.1),
+              'RESIDENT PROFILE & EMERGENCY DATA',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6A828B), letterSpacing: 1.1),
             ),
             TextButton.icon(
-              icon: Icon(isEditingDetails ? Icons.close_rounded : Icons.edit_rounded, size: 16, color: const Color(0xFF007AFF)),
-              label: Text(isEditingDetails ? 'Cancel' : 'Edit', style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800)),
+              icon: Icon(isEditingDetails ? Icons.close_rounded : Icons.edit_rounded, size: 16, color: const Color(0xFF234149)),
+              label: Text(isEditingDetails ? 'Cancel' : 'Edit', style: const TextStyle(color: Color(0xFF234149), fontWeight: FontWeight.w800, fontSize: 12)),
               onPressed: () => setState(() => isEditingDetails = !isEditingDetails),
             ),
           ],
@@ -405,13 +394,10 @@ class _AuthPageState extends State<AuthPage> {
         const SizedBox(height: 8),
 
         if (isEditingDetails) ...[
-          Container(
+          BentoCard(
+            variant: BentoCardVariant.elevatedWhite,
+            borderRadius: 22,
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE5E5EA)),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -421,16 +407,17 @@ class _AuthPageState extends State<AuthPage> {
                 const SizedBox(height: 14),
                 _buildFormInput('Ward / Area in Harur', _wardCtrl, Icons.pin_drop_rounded),
                 const SizedBox(height: 14),
-                const Text('Blood Group (Emergency Aid)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93))),
+                const Text('Blood Group (Emergency Aid)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF6A828B))),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: selectedBloodGroup,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color(0xFFF2F2F7),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    fillColor: const Color(0xFFF0F5F8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD4E3EA))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD4E3EA))),
                   ),
-                  items: bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(fontWeight: FontWeight.w800)))).toList(),
+                  items: bloodGroups.map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF16272E))))).toList(),
                   onChanged: (val) => setState(() => selectedBloodGroup = val ?? 'O+'),
                 ),
                 const SizedBox(height: 14),
@@ -440,45 +427,32 @@ class _AuthPageState extends State<AuthPage> {
                 const SizedBox(height: 14),
                 _buildFormInput('Bio / Occupation', _bioCtrl, Icons.badge_rounded, maxLines: 2),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF007AFF),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.check_circle_rounded, size: 18),
-                    label: _isProcessing
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Save & Sync to Ledger', style: TextStyle(fontWeight: FontWeight.w800)),
-                    onPressed: _isProcessing ? null : _savePersonalDetails,
-                  ),
+                PetrolButton(
+                  label: 'Save & Sync to Ledger',
+                  icon: Icons.check_circle_rounded,
+                  isLoading: _isProcessing,
+                  onTap: _savePersonalDetails,
                 ),
               ],
             ),
           ),
         ] else ...[
-          Container(
+          BentoCard(
+            variant: BentoCardVariant.elevatedWhite,
+            borderRadius: 22,
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE5E5EA)),
-            ),
             child: Column(
               children: [
                 _buildDetailRow(Icons.email_rounded, 'Email Address', profile.email),
-                const Divider(height: 20),
+                const Divider(height: 20, color: Color(0xFFF0F5F8)),
                 _buildDetailRow(Icons.phone_rounded, 'Phone Number', profile.phone),
-                const Divider(height: 20),
+                const Divider(height: 20, color: Color(0xFFF0F5F8)),
                 _buildDetailRow(Icons.home_rounded, 'Ward / Locality', profile.wardLocality),
-                const Divider(height: 20),
+                const Divider(height: 20, color: Color(0xFFF0F5F8)),
                 _buildDetailRow(Icons.bloodtype_rounded, 'Blood Group', profile.bloodGroup),
-                const Divider(height: 20),
+                const Divider(height: 20, color: Color(0xFFF0F5F8)),
                 _buildDetailRow(Icons.contact_emergency_rounded, 'Emergency Contact', '${profile.emergencyContactName} (${profile.emergencyContactPhone})'),
-                const Divider(height: 20),
+                const Divider(height: 20, color: Color(0xFFF0F5F8)),
                 _buildDetailRow(Icons.info_outline_rounded, 'Bio / Occupation', profile.bio),
               ],
             ),
@@ -488,19 +462,16 @@ class _AuthPageState extends State<AuthPage> {
         const SizedBox(height: 24),
 
         // Cryptographic Passport Integrity Seal
-        Container(
+        BentoCard(
+          variant: BentoCardVariant.pastel,
+          borderRadius: 20,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEBF5FF),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.2)),
-          ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF007AFF),
+                  color: Color(0xFF234149),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
@@ -512,15 +483,15 @@ class _AuthPageState extends State<AuthPage> {
                   children: [
                     const Row(
                       children: [
-                        Text('Cryptographic Integrity Seal', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF1C1C1E))),
+                        Text('Cryptographic Integrity Seal', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF16272E))),
                         SizedBox(width: 6),
-                        Text('ACTIVE', style: TextStyle(color: Color(0xFF34C759), fontWeight: FontWeight.w900, fontSize: 9)),
+                        Text('ACTIVE', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w900, fontSize: 9)),
                       ],
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'SHA-256 Checksum: ${profile.verifiedSignature}',
-                      style: const TextStyle(fontSize: 10, fontFamily: 'monospace', fontWeight: FontWeight.w700, color: Color(0xFF007AFF)),
+                      style: const TextStyle(fontSize: 10, fontFamily: 'monospace', fontWeight: FontWeight.w700, color: Color(0xFF234149)),
                     ),
                   ],
                 ),
@@ -532,13 +503,10 @@ class _AuthPageState extends State<AuthPage> {
         const SizedBox(height: 20),
 
         // Multi-Factor Authentication (MFA / 2FA) Section
-        Container(
+        BentoCard(
+          variant: BentoCardVariant.elevatedWhite,
+          borderRadius: 20,
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -547,14 +515,14 @@ class _AuthPageState extends State<AuthPage> {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.shield_outlined, color: Color(0xFF007AFF), size: 20),
+                      Icon(Icons.shield_outlined, color: Color(0xFF234149), size: 20),
                       SizedBox(width: 8),
-                      Text('Two-Factor Authentication (2FA)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      Text('Two-Factor Authentication (2FA)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF16272E))),
                     ],
                   ),
                   Switch.adaptive(
                     value: profile.isMfaEnabled,
-                    activeTrackColor: const Color(0xFF007AFF),
+                    activeTrackColor: const Color(0xFF234149),
                     onChanged: (val) async {
                       await AuthService.toggleMfa(val);
                       _populateProfileData();
@@ -562,7 +530,7 @@ class _AuthPageState extends State<AuthPage> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            backgroundColor: const Color(0xFF007AFF),
+                            backgroundColor: const Color(0xFF234149),
                             content: Text(val ? '✓ 2FA enabled with TOTP authentication.' : '2FA disabled.'),
                           ),
                         );
@@ -576,14 +544,14 @@ class _AuthPageState extends State<AuthPage> {
                 profile.isMfaEnabled
                     ? 'Your account is secured with 30s TOTP rotating codes. Hardware passkeys authorized.'
                     : 'Add an extra layer of security. Require a dynamic 6-digit TOTP passkey on sign in.',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B)),
               ),
               if (profile.isMfaEnabled) ...[
                 const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F2F7),
+                    color: const Color(0xFFE2EDF2),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -592,25 +560,25 @@ class _AuthPageState extends State<AuthPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Current TOTP Passkey Code', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93))),
+                          const Text('Current TOTP Passkey Code', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF6A828B))),
                           const SizedBox(height: 2),
                           Text(
                             IdentityCryptoService.generateMfaOtp(profile.mfaSecret),
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 4, color: Color(0xFF007AFF), fontFamily: 'monospace'),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 4, color: Color(0xFF234149), fontFamily: 'monospace'),
                           ),
                         ],
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEBF5FF),
+                          color: const Color(0xFF234149),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.timer_outlined, size: 12, color: Color(0xFF007AFF)),
+                            Icon(Icons.timer_outlined, size: 12, color: Colors.white),
                             SizedBox(width: 4),
-                            Text('30s Valid', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF007AFF))),
+                            Text('30s Valid', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
                           ],
                         ),
                       ),
@@ -627,30 +595,30 @@ class _AuthPageState extends State<AuthPage> {
         // Password & Security Management
         const Text(
           'PASSWORD & SECURITY KEYS',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF8E8E93), letterSpacing: 1.1),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6A828B), letterSpacing: 1.1),
         ),
         const SizedBox(height: 10),
-        Container(
+        BentoCard(
+          variant: BentoCardVariant.elevatedWhite,
+          borderRadius: 20,
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Update Password', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+              const Text('Update Password', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF16272E))),
               const SizedBox(height: 10),
               TextField(
                 controller: _newPasswordCtrl,
                 obscureText: true,
                 onChanged: (_) => setState(() {}),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF16272E)),
                 decoration: InputDecoration(
                   labelText: 'New Password (min 8 chars, mixed case, digit, symbol)',
+                  labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF6A828B)),
                   filled: true,
-                  fillColor: const Color(0xFFF2F2F7),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  fillColor: const Color(0xFFF0F5F8),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD4E3EA))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD4E3EA))),
                 ),
               ),
               if (_newPasswordCtrl.text.isNotEmpty) ...[
@@ -659,8 +627,8 @@ class _AuthPageState extends State<AuthPage> {
                   builder: (context) {
                     final eval = PasswordSecurityService.evaluatePassword(_newPasswordCtrl.text);
                     Color barColor = const Color(0xFFE44545);
-                    if (eval.score >= 0.7) barColor = const Color(0xFF007AFF);
-                    if (eval.score >= 0.9) barColor = const Color(0xFF34C759);
+                    if (eval.score >= 0.7) barColor = const Color(0xFF247BA0);
+                    if (eval.score >= 0.9) barColor = const Color(0xFF10B981);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,7 +637,7 @@ class _AuthPageState extends State<AuthPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(eval.strengthLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: barColor)),
-                            Text('${(eval.score * 100).toInt()}% Entropy', style: const TextStyle(fontSize: 10, color: Color(0xFF8E8E93))),
+                            Text('${(eval.score * 100).toInt()}% Entropy', style: const TextStyle(fontSize: 10, color: Color(0xFF6A828B))),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -677,7 +645,7 @@ class _AuthPageState extends State<AuthPage> {
                           borderRadius: BorderRadius.circular(3),
                           child: LinearProgressIndicator(
                             value: eval.score,
-                            backgroundColor: const Color(0xFFE5E5EA),
+                            backgroundColor: const Color(0xFFE2EDF2),
                             valueColor: AlwaysStoppedAnimation(barColor),
                             minHeight: 4,
                           ),
@@ -692,8 +660,8 @@ class _AuthPageState extends State<AuthPage> {
                 width: double.infinity,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF007AFF)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: const BorderSide(color: Color(0xFF234149)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () async {
                     final pass = _newPasswordCtrl.text.trim();
@@ -711,56 +679,11 @@ class _AuthPageState extends State<AuthPage> {
                     _newPasswordCtrl.clear();
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(backgroundColor: Color(0xFF007AFF), content: Text('✓ Password updated with high entropy!')),
+                        const SnackBar(backgroundColor: Color(0xFF234149), content: Text('✓ Password updated with high entropy!')),
                       );
                     }
                   },
-                  child: const Text('Update & Encrypt Password', style: TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800)),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Session & Device Security Card
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.devices_rounded, color: Color(0xFF007AFF), size: 20),
-                  SizedBox(width: 8),
-                  Text('Active Security Sessions', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Current device is connected over TLS 1.3 encrypted secure channel with immutable ledger logging.',
-                style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93)),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.phonelink_erase_rounded, color: Color(0xFFE44545), size: 16),
-                  label: const Text('Revoke All Other Sessions', style: TextStyle(color: Color(0xFFE44545), fontWeight: FontWeight.w800)),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        backgroundColor: Color(0xFF007AFF),
-                        content: Text('✓ All other device sessions successfully revoked.'),
-                      ),
-                    );
-                  },
+                  child: const Text('Update & Encrypt Password', style: TextStyle(color: Color(0xFF234149), fontWeight: FontWeight.w800)),
                 ),
               ),
             ],
@@ -776,40 +699,50 @@ class _AuthPageState extends State<AuthPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 10),
+        // Logo & Minimalist Screen 1 Header
         Center(
           child: Container(
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              color: const Color(0xFFEBF5FF),
+              color: const Color(0xFF234149),
               borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF234149).withValues(alpha: 0.22),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Center(
               child: SvgPicture.asset(
                 'assets/brand/myharur_icon.svg',
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         Center(
           child: Text(
             isOfficialMode ? 'Official Governance Portal' : (isSignUp ? 'Create Resident Account' : 'Welcome to MyHarur'),
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF16272E), letterSpacing: -0.6),
           ),
         ),
         const SizedBox(height: 4),
         Center(
           child: Text(
             isOfficialMode ? 'Administrative access with passkey authorization' : 'Verified MMID resident passport with immutable ledger',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6A828B), fontWeight: FontWeight.w600),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 26),
 
-        // Quick Google OAuth Button
+        // Quick Google OAuth Button (High contrast, modern style)
         if (!isOfficialMode) ...[
           SizedBox(
             width: double.infinity,
@@ -817,12 +750,11 @@ class _AuthPageState extends State<AuthPage> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF1C1C1E),
-                elevation: 1.5,
-                shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.12),
+                foregroundColor: const Color(0xFF16272E),
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFE5E5EA), width: 1.2),
+                  borderRadius: BorderRadius.circular(26),
+                  side: const BorderSide(color: Color(0xFFD4E3EA), width: 1.2),
                 ),
               ),
               onPressed: _isProcessing ? null : _handleGoogleSignIn,
@@ -833,17 +765,17 @@ class _AuthPageState extends State<AuthPage> {
                     width: 26,
                     height: 26,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF5FF),
+                      color: const Color(0xFFE2EDF2),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
+                      border: Border.all(color: const Color(0xFF234149).withValues(alpha: 0.15)),
                     ),
                     child: const Center(
                       child: Text(
                         'G',
                         style: TextStyle(
-                          color: Color(0xFF007AFF),
+                          color: Color(0xFF234149),
                           fontWeight: FontWeight.w900,
-                          fontSize: 15,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -851,7 +783,7 @@ class _AuthPageState extends State<AuthPage> {
                   const SizedBox(width: 12),
                   const Text(
                     'Continue with Google',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: -0.2),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF16272E), letterSpacing: -0.2),
                   ),
                 ],
               ),
@@ -860,91 +792,61 @@ class _AuthPageState extends State<AuthPage> {
           const SizedBox(height: 16),
           const Row(
             children: [
-              Expanded(child: Divider()),
+              Expanded(child: Divider(color: Color(0xFFD4E3EA))),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Text('or with email & password', style: TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
+                child: Text('or with email & password', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B), fontWeight: FontWeight.w700)),
               ),
-              Expanded(child: Divider()),
+              Expanded(child: Divider(color: Color(0xFFD4E3EA))),
             ],
           ),
           const SizedBox(height: 16),
         ],
 
-        // Input Fields
+        // Input Fields (Pill Rounded design like Screen 1)
         if (isSignUp) ...[
-          TextField(
+          SquirclePillInput(
             controller: _nameCtrl,
-            decoration: InputDecoration(
-              labelText: 'Full Name',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-            ),
+            hint: 'Full Name',
+            icon: Icons.person_outline_rounded,
           ),
           const SizedBox(height: 12),
-          TextField(
+          SquirclePillInput(
             controller: _phoneCtrl,
+            hint: 'Phone Number',
+            icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Phone Number',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-            ),
           ),
           const SizedBox(height: 12),
         ],
 
-        TextField(
+        SquirclePillInput(
           controller: _emailCtrl,
+          hint: 'Email address',
+          icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            labelText: 'Email address',
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
-          ),
         ),
         const SizedBox(height: 12),
-        TextField(
+        SquirclePillInput(
           controller: _passwordCtrl,
+          hint: 'Password',
+          icon: Icons.lock_outline_rounded,
           obscureText: _obscurePassword,
-          decoration: InputDecoration(
-            labelText: 'Password',
-            suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E5EA))),
+          suffix: IconButton(
+            icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: const Color(0xFF6A828B)),
+            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
 
-        // Action Button
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007AFF),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            onPressed: _isProcessing ? null : _handleAuthAction,
-            child: _isProcessing
-                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text(
-                    isSignUp ? 'Create Account & Generate MMID' : 'Sign In',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                  ),
-          ),
+        // Primary CTA Button (Deep Petrol #234149 from Screen 1)
+        PetrolButton(
+          label: isSignUp ? 'Create Account & Generate MMID' : 'Sign In',
+          isLoading: _isProcessing,
+          onTap: _handleAuthAction,
         ),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
 
         // Toggle Sign Up / Sign In
         if (!isOfficialMode) ...[
@@ -953,13 +855,13 @@ class _AuthPageState extends State<AuthPage> {
               onPressed: () => setState(() => isSignUp = !isSignUp),
               child: Text(
                 isSignUp ? 'Already have an MMID? Sign In' : 'New resident? Register Digital Pass & MMID',
-                style: const TextStyle(color: Color(0xFF007AFF), fontWeight: FontWeight.w800),
+                style: const TextStyle(color: Color(0xFF234149), fontWeight: FontWeight.w800, fontSize: 13),
               ),
             ),
           ),
         ],
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
 
         // Official / SuperAdmin Preset Button
         Center(
@@ -974,7 +876,7 @@ class _AuthPageState extends State<AuthPage> {
             child: Text(
               isOfficialMode ? '← Back to Resident Sign In' : '👑 Root SuperAdmin (admin.qenbel@gmail.com) →',
               style: TextStyle(
-                color: isOfficialMode ? const Color(0xFF8E8E93) : const Color(0xFF267AF4),
+                color: isOfficialMode ? const Color(0xFF6A828B) : const Color(0xFF247BA0),
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
               ),
@@ -991,13 +893,13 @@ class _AuthPageState extends State<AuthPage> {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF007AFF), size: 14),
+            Icon(icon, color: Colors.white, size: 14),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -1016,17 +918,19 @@ class _AuthPageState extends State<AuthPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF8E8E93))),
+        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF6A828B))),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF16272E)),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: const Color(0xFF007AFF), size: 18),
+            prefixIcon: Icon(icon, color: const Color(0xFF234149), size: 18),
             filled: true,
-            fillColor: const Color(0xFFF2F2F7),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            fillColor: const Color(0xFFF0F5F8),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD4E3EA))),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD4E3EA))),
           ),
         ),
       ],
@@ -1037,15 +941,15 @@ class _AuthPageState extends State<AuthPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFF007AFF), size: 18),
+        Icon(icon, color: const Color(0xFF234149), size: 18),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600)),
+              Text(title, style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B), fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
-              Text(value.isNotEmpty ? value : 'Not set', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1C1C1E))),
+              Text(value.isNotEmpty ? value : 'Not set', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF16272E))),
             ],
           ),
         ),

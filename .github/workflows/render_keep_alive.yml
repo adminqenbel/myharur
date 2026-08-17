@@ -1,0 +1,42 @@
+name: Render & Supabase 24/7 Anti-Spin-Off Keep-Alive
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free-tier containers from spinning down
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: "render-keep-alive"
+  cancel-in-progress: true
+
+jobs:
+  keep_alive_pulse:
+    name: Ping Services
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Send Keep-Alive Pulse to Render Web Service
+        run: |
+          RENDER_URL="${{ secrets.RENDER_WEB_URL }}"
+          if [ -z "$RENDER_URL" ]; then
+            RENDER_URL="https://myharur-web.onrender.com"
+          fi
+          echo "Sending keep-alive pulse to $RENDER_URL/healthz..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$RENDER_URL/healthz" || echo "000")
+          echo "Render HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✓ Render container is active and warm."
+          else
+            echo "::warning::Render returned status $HTTP_STATUS (attempting root endpoint)"
+            curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$RENDER_URL/" || true
+          fi
+
+      - name: Send Keep-Alive Pulse to Supabase Edge Functions
+        run: |
+          SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          if [ -n "$SUPABASE_URL" ]; then
+            echo "Pinging Supabase keep-alive edge function at $SUPABASE_URL/functions/v1/keep-alive..."
+            curl -s -o /dev/null -w "Supabase Edge Status: %{http_code}\n" --max-time 15 "$SUPABASE_URL/functions/v1/keep-alive" || true
+          fi

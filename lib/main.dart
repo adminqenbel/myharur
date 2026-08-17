@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'services/supabase_service.dart';
 import 'l10n/translations.dart';
+import 'widgets/glass_components.dart';
 import 'features/onboarding_page.dart';
 import 'features/phase_two_pages.dart';
 import 'features/marketplace_page.dart';
@@ -66,7 +67,7 @@ class WebDownloadLandingPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF121C19).withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.25)),
+                border: Border.all(color: const Color(0xFF234149).withValues(alpha: 0.35)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.6),
@@ -81,19 +82,19 @@ class WebDownloadLandingPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF).withValues(alpha: 0.12),
+                      color: const Color(0xFF234149).withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.3)),
+                      border: Border.all(color: const Color(0xFF8EB7C7).withValues(alpha: 0.3)),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.circle, color: Color(0xFF007AFF), size: 8),
+                        Icon(Icons.circle, color: Color(0xFF8EB7C7), size: 8),
                         SizedBox(width: 8),
                         Text(
                           'OFFICIAL ANDROID RELEASE',
                           style: TextStyle(
-                            color: Color(0xFF007AFF),
+                            color: Color(0xFF8EB7C7),
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.8,
@@ -128,7 +129,7 @@ class WebDownloadLandingPage extends StatelessWidget {
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                     children: const [
-                      _MetaCard(label: 'VERSION', value: 'v0.2.0 (Latest)'),
+                      _MetaCard(label: 'VERSION', value: 'v0.3.0 (Latest)'),
                       _MetaCard(label: 'PACKAGE', value: 'Universal APK'),
                       _MetaCard(label: 'COMPATIBILITY', value: 'Android 6.0+'),
                       _MetaCard(label: 'SECURITY', value: '✓ Verified Build'),
@@ -141,17 +142,17 @@ class WebDownloadLandingPage extends StatelessWidget {
                     height: 56,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF007AFF),
-                        foregroundColor: const Color(0xFF070B0A),
+                        backgroundColor: const Color(0xFF234149),
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                         elevation: 6,
                       ),
                       icon: const Icon(Icons.download_for_offline_rounded, size: 24),
                       label: const Text(
-                        'DOWNLOAD OFFICIAL APK',
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.3),
+                        'Download Universal APK (Direct)',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                       ),
-                      onPressed: () => launchAppUrl('https://github.com/adminqenbel/myharur/releases/latest/download/myharur.apk'),
+                      onPressed: () => launchAppUrl('/myharur.apk'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -239,27 +240,30 @@ class _MetaCard extends StatelessWidget {
 }
 
 class AppTheme {
-  static const ink = Color(0xFF1C1C1E);
-  static const muted = Color(0xFF8E8E93);
-  static const mist = Color(0xFFF2F2F7);
-  static const line = Color(0xFFE5E5EA);
-  static const appleBlue = Color(0xFF007AFF);
-  static const appleBlueLight = Color(0xFFEBF5FF);
-  static const appleBlueDark = Color(0xFF0056B3);
-  static const green = Color(0xFF007AFF); // Apple Blue primary brand
-  static const mint = Color(0xFF007AFF);
-  static const red = Color(0xFFFF3B30); // Apple System Red
-  static const blue = Color(0xFF007AFF);
-  static const amber = Color(0xFFFF9500); // Apple System Orange
-  static const indigo = Color(0xFF5856D6); // Apple System Indigo
+  static const petrolDark = Color(0xFF234149);
+  static const petrolMedium = Color(0xFF2B4C56);
+  static const icePastel = Color(0xFFE2EDF2);
+  static const icePastelBorder = Color(0xFFD4E3EA);
+  static const ink = Color(0xFF16272E);
+  static const muted = Color(0xFF6A828B);
+  static const mist = Color(0xFFF3F7F9);
+  static const line = Color(0xFFE3EDF2);
+  static const green = Color(0xFF234149); // Petrol Dark primary brand
+  static const mint = Color(0xFF8EB7C7);
+  static const red = Color(0xFFE44545);
+  static const blue = Color(0xFF247BA0);
+  static const amber = Color(0xFFF59E0B);
+  static const indigo = Color(0xFF3B5998);
 
   static final light = ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: const Color(0xFFF8F9FB),
+    scaffoldBackgroundColor: const Color(0xFFF6F9FA),
     colorScheme: ColorScheme.fromSeed(
-      seedColor: appleBlue,
+      seedColor: petrolDark,
       brightness: Brightness.light,
       surface: Colors.white,
+      primary: petrolDark,
+      secondary: icePastel,
     ),
     textTheme: const TextTheme(
       displaySmall: TextStyle(fontSize: 30, height: 1.1, fontWeight: FontWeight.w800, color: ink, letterSpacing: -0.6),
@@ -294,89 +298,86 @@ class _TownShellState extends State<TownShell> {
 
     final scaffold = Scaffold(
       drawer: const TownDrawer(),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 260),
-          switchInCurve: Curves.easeInOutCubic,
-          switchOutCurve: Curves.easeInOutCubic,
-          child: KeyedSubtree(
-            key: ValueKey<int>(selected),
-            child: pages[selected],
+      body: AtmosphericBackground(
+        child: SafeArea(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            switchInCurve: Curves.easeInOutCubic,
+            switchOutCurve: Curves.easeInOutCubic,
+            child: KeyedSubtree(
+              key: ValueKey<int>(selected),
+              child: pages[selected],
+            ),
           ),
         ),
       ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                height: 68,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.88),
-                  border: Border.all(color: const Color(0xFF007AFF).withValues(alpha: 0.15)),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF007AFF).withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
+          child: Container(
+            height: 66,
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF234149),
+              borderRadius: BorderRadius.circular(34),
+              border: Border.all(color: const Color(0xFF345660), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF234149).withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
-                child: Row(
-                  children: List.generate(labels.length, (index) {
-                    final active = selected == index;
-                    return Expanded(
-                      child: InkWell(
+              ],
+            ),
+            child: Row(
+              children: List.generate(labels.length, (index) {
+                final active = selected == index;
+                return Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(28),
+                    onTap: () => setState(() => selected = index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeInOut,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: active ? Colors.white : Colors.transparent,
                         borderRadius: BorderRadius.circular(26),
-                        onTap: () => setState(() => selected = index),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          decoration: BoxDecoration(
-                            color: active ? const Color(0xFF007AFF) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(26),
-                            boxShadow: active
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFF007AFF).withValues(alpha: 0.28),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              AppIcon(
-                                icons[index],
-                                color: active ? Colors.white : AppTheme.muted,
-                                size: 19,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                tr(labels[index]),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                                  color: active ? Colors.white : AppTheme.ink,
-                                  letterSpacing: -0.2,
+                        boxShadow: active
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
+                              ]
+                            : [],
                       ),
-                    );
-                  }),
-                ),
-              ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AppIcon(
+                            icons[index],
+                            color: active ? const Color(0xFF234149) : const Color(0xFF90ACB6),
+                            size: 19,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            tr(labels[index]),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+                              color: active ? const Color(0xFF234149) : const Color(0xFF90ACB6),
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
             ),
           ),
         ),
@@ -388,20 +389,20 @@ class _TownShellState extends State<TownShell> {
     }
 
     return Container(
-      color: const Color(0xFFEBF1EE),
+      color: const Color(0xFFE2EDF2),
       child: Center(
         child: Container(
           width: 540,
           margin: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0xFFE5E5EA), width: 1.2),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: const Color(0xFFD4E3EA), width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1C1C1E).withValues(alpha: 0.08),
-                blurRadius: 36,
-                offset: const Offset(0, 12),
+                color: const Color(0xFF234149).withValues(alpha: 0.12),
+                blurRadius: 40,
+                offset: const Offset(0, 14),
               ),
             ],
           ),
@@ -427,7 +428,7 @@ Future<void> launchAppUrl(String url) async {
 }
 
 // ==============================================================================
-// HOME PAGE & TOWN DASHBOARD
+// HOME PAGE & TOWN DASHBOARD (BENTO GRID AESTHETIC)
 // ==============================================================================
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -447,67 +448,39 @@ class HomePage extends StatelessWidget {
                 const TownHeader(showSearch: true),
                 const SizedBox(height: 16),
 
-                // Greeting & Location
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${tr("Vanakkam")}, ${profile.fullName.split(' ').first}',
-                            style: const TextStyle(fontSize: 13, color: Color(0xFF8E8E93), fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            tr('Harur Digital Town'),
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E), letterSpacing: -0.5),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const LocationPill(),
-                  ],
-                ),
+                // Top Avatar / Category Rail (HAIIE DOMES style from reference image)
+                const CategoryAvatarRail(),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 16),
+                // Section: Bento Services Grid
+                const SectionHeader(label: 'SERVICES & MMID PASS', action: 'All Modules'),
+                const SizedBox(height: 12),
 
-                // Holographic MMID Quick Pass Card (Tappable to View Full Digital ID)
-                _buildMmidQuickCard(context, profile),
+                // Hero Holographic MMID Pass Bento Card (Dark Petrol)
+                _buildMmidHeroBentoCard(context, profile),
+                const SizedBox(height: 14),
 
-                const SizedBox(height: 18),
+                // Asymmetric Bento Grid
+                _buildAsymmetricBentoGrid(context),
+                const SizedBox(height: 20),
 
                 // Live Town Announcements Ticker
+                const SectionHeader(label: 'TOWN PULSE & DISPATCH'),
+                const SizedBox(height: 10),
                 _buildAnnouncementsTicker(context),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 22),
-
-                // Digital Services Hub Grid (12 Modules)
-                SectionHeader(label: tr('DIGITAL SERVICES & BAZAAR'), action: 'All Modules'),
-                const SizedBox(height: 12),
-                const TownServicesGrid(),
-
-                const SizedBox(height: 22),
-
-                // Weather & Agricultural Advisory Hub
-                SectionHeader(label: tr('LIVE WEATHER & AGRI ADVISORY')),
-                const SizedBox(height: 12),
+                // Live Weather & Agro Advisory Hub
+                const SectionHeader(label: 'LIVE WEATHER & AGRO ADVISORY', action: 'Harur & HQ'),
+                const SizedBox(height: 10),
                 const WeatherCards(),
-
-                const SizedBox(height: 22),
-
-                // Featured Local News Card
-                const SectionHeader(label: 'HARUR TOWN PULSE & UPDATES', action: 'Read all'),
-                const SizedBox(height: 12),
-                const FeaturedNewsCard(),
-
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
 
                 // Emergency SOS Hotlines Quick Strip
                 SectionHeader(label: tr('24/7 EMERGENCY HELPLINES')),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 _buildEmergencyHotlinesStrip(context),
-
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -516,103 +489,284 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMmidQuickCard(BuildContext context, UserProfile profile) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
+  Widget _buildMmidHeroBentoCard(BuildContext context, UserProfile profile) {
+    return BentoCard(
+      variant: BentoCardVariant.darkPetrol,
+      borderRadius: 28,
+      padding: const EdgeInsets.all(20),
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthPage())),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF007AFF), Color(0xFF5856D6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8EB7C7).withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(color: const Color(0xFF8EB7C7).withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified_user_rounded, color: Color(0xFF8EB7C7), size: 12),
+                    const SizedBox(width: 5),
+                    Text(
+                      'VERIFIED DIGITAL MMID PASS'.toUpperCase(),
+                      style: const TextStyle(color: Color(0xFF8EB7C7), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: const Center(
+                  child: Icon(Icons.qr_code_2_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF007AFF).withValues(alpha: 0.28),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+          const SizedBox(height: 16),
+          Text(
+            profile.fullName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
+              letterSpacing: -0.4,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                'MMID: ${profile.mmid}',
+                style: const TextStyle(color: Color(0xFFB5D4DF), fontSize: 12, fontWeight: FontWeight.w700),
               ),
-              child: const Icon(Icons.qr_code_2_rounded, color: Colors.white, size: 26),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        profile.fullName,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.3),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          profile.primaryRoleTitle.toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'MMID: ${profile.mmid} • ${profile.bloodGroup}',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11, fontWeight: FontWeight.w600),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  profile.primaryRoleTitle.toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                ),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
-          ],
-        ),
+              const Spacer(),
+              Text(
+                profile.bloodGroup,
+                style: const TextStyle(color: Color(0xFF8EB7C7), fontSize: 12, fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildAsymmetricBentoGrid(BuildContext context) {
+    return Column(
+      children: [
+        // Row 1: Large Mandi card (left) + Bus Routes (right)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: BentoCard(
+                variant: BentoCardVariant.pastel,
+                borderRadius: 24,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgriMandiPage())),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF234149).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(child: AppIcon('bag', color: Color(0xFF234149), size: 20)),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF234149),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('₹5,400/Q', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    const Text('Mandi APMC Rates', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+                    const SizedBox(height: 2),
+                    const Text('Daily paddy, turmeric & cotton auctions in Harur.', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B), height: 1.3)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: BentoCard(
+                variant: BentoCardVariant.elevatedWhite,
+                borderRadius: 24,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BusRoutesPage())),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF247BA0).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: AppIcon('compass', color: Color(0xFF247BA0), size: 20)),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text('Bus Routes', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+                    const SizedBox(height: 2),
+                    const Text('TNSTC Harur live timings', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Row 2: 3 Square Bento Cards (Shops, Jobs, SOS)
+        Row(
+          children: [
+            Expanded(
+              child: BentoCard(
+                variant: BentoCardVariant.pastel,
+                borderRadius: 22,
+                padding: const EdgeInsets.all(14),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShopsPage())),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF234149).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: AppIcon('store', color: Color(0xFF234149), size: 18)),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Local Shops', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+                    const SizedBox(height: 1),
+                    const Text('Bazaar directory', style: TextStyle(fontSize: 10, color: Color(0xFF6A828B))),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: BentoCard(
+                variant: BentoCardVariant.elevatedWhite,
+                borderRadius: 22,
+                padding: const EdgeInsets.all(14),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const JobsPage())),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF267AF4).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: AppIcon('briefcase', color: Color(0xFF267AF4), size: 18)),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Job Portal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+                    const SizedBox(height: 1),
+                    const Text('Work & wages', style: TextStyle(fontSize: 10, color: Color(0xFF6A828B))),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: BentoCard(
+                variant: BentoCardVariant.pastel,
+                borderRadius: 22,
+                padding: const EdgeInsets.all(14),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CommunityHubPage())),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: AppIcon('chat', color: Color(0xFF8B5CF6), size: 18)),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Town Hall', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+                    const SizedBox(height: 1),
+                    const Text('Citizen polls', style: TextStyle(fontSize: 10, color: Color(0xFF6A828B))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildAnnouncementsTicker(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
+    return BentoCard(
+      variant: BentoCardVariant.elevatedWhite,
+      borderRadius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewsHubPage())),
       child: Row(
         children: [
-          const Icon(Icons.campaign_rounded, color: Color(0xFFD97706), size: 20),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.campaign_rounded, color: Color(0xFFD97706), size: 18),
+          ),
+          const SizedBox(width: 12),
           const Expanded(
             child: Text(
-              'Morappur - Harur Rail Survey approved • Harur Drinking Water Scheme sanctioned',
+              'Harur-Morappur Broad Gauge inspection completed • Drinking Water Scheme sanctioned',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF92400E)),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF16272E)),
             ),
           ),
-          InkWell(
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewsHubPage())),
-            child: const Text('View', style: TextStyle(color: Color(0xFFD97706), fontWeight: FontWeight.w900, fontSize: 12)),
-          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF6A828B)),
         ],
       ),
     );
@@ -623,7 +777,7 @@ class HomePage extends StatelessWidget {
       children: [
         _buildHotlineCard(tr('Ambulance'), '108', Icons.medical_services_rounded, const Color(0xFFE44545)),
         const SizedBox(width: 8),
-        _buildHotlineCard(tr('Police Control'), '04346-222100', Icons.local_police_rounded, const Color(0xFF267AF4)),
+        _buildHotlineCard(tr('Police Control'), '04346-222100', Icons.local_police_rounded, const Color(0xFF247BA0)),
         const SizedBox(width: 8),
         _buildHotlineCard(tr('Fire Station'), '101', Icons.local_fire_department_rounded, const Color(0xFFF59E0B)),
       ],
@@ -633,14 +787,14 @@ class HomePage extends StatelessWidget {
   Widget _buildHotlineCard(String label, String number, IconData icon, Color color) {
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => launchAppUrl('tel:$number'),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.25)),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
           ),
           child: Column(
             children: [
@@ -648,7 +802,7 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 6),
               Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
               const SizedBox(height: 2),
-              Text(number, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
+              Text(number, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
             ],
           ),
         ),
@@ -687,8 +841,8 @@ class TownHeader extends StatelessWidget {
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('myharur', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -.7)),
-                Text('digital town', style: TextStyle(fontSize: 9, color: AppTheme.muted, letterSpacing: 1.2, fontWeight: FontWeight.w800)),
+                Text('myharur', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -.7, color: Color(0xFF16272E))),
+                Text('digital town', style: TextStyle(fontSize: 9, color: Color(0xFF6A828B), letterSpacing: 1.2, fontWeight: FontWeight.w800)),
               ],
             ),
           ],
@@ -701,13 +855,13 @@ class TownHeader extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xFFEBF5FF),
+              color: const Color(0xFFE2EDF2),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF9DD8C5)),
+              border: Border.all(color: const Color(0xFFD4E3EA)),
             ),
             child: Text(
               isTamil ? 'தமிழ்' : 'EN',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF007AFF)),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF234149)),
             ),
           ),
         ),
@@ -720,12 +874,12 @@ class TownHeader extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F2F7),
+              color: const Color(0xFFE2EDF2),
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE5E5EA)),
+              border: Border.all(color: const Color(0xFFD4E3EA)),
             ),
             child: const Center(
-              child: Icon(Icons.notifications_outlined, size: 18, color: Color(0xFF1C1C1E)),
+              child: Icon(Icons.notifications_outlined, size: 18, color: Color(0xFF16272E)),
             ),
           ),
         ),
@@ -760,14 +914,14 @@ class TownHeader extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFFEBF5FF),
+              color: const Color(0xFF234149),
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF007AFF), width: 1.5),
+              border: Border.all(color: const Color(0xFF345660), width: 1.5),
             ),
             child: Center(
               child: Text(
                 profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'H',
-                style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF007AFF), fontSize: 13),
+                style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 13),
               ),
             ),
           ),
@@ -790,14 +944,14 @@ class LocationPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F2F7),
+          color: const Color(0xFFE2EDF2),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE5E5EA)),
+          border: Border.all(color: const Color(0xFFD4E3EA)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_on_rounded, color: Color(0xFF007AFF), size: 14),
+            const Icon(Icons.location_on_rounded, color: Color(0xFF234149), size: 14),
             const SizedBox(width: 4),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 100),
@@ -805,201 +959,12 @@ class LocationPill extends StatelessWidget {
                 locationName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF1C1C1E)),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF16272E)),
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF8E8E93)),
+            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF6A828B)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class TownServicesGrid extends StatelessWidget {
-  const TownServicesGrid({super.key});
-
-  static const services = [
-    ('store', 'Local Shops', 'Bazaar & Stores', Color(0xFF007AFF)),
-    ('briefcase', 'Job Portal', 'Work & Wages', Color(0xFF267AF4)),
-    ('bag', 'Mandi Rates', 'Agri & Crop Rates', Color(0xFFF59E0B)),
-    ('compass', 'Bus Timings', 'Routes & Transit', Color(0xFF10B981)),
-    ('alert', 'Emergency SOS', '108 & Police Hub', Color(0xFFE44545)),
-    ('chat', 'Community Hub', 'Polls & Town Hall', Color(0xFF8B5CF6)),
-    ('heart', 'Blood Donors', 'Lifeline Network', Color(0xFFEC4899)),
-    ('shield', 'Grievances', 'Municipal Helpdesk', Color(0xFF06B6D4)),
-    ('bag', 'Marketplace', 'Buy, Sell, Rent', Color(0xFF14B8A6)),
-    ('calendar', 'Town Events', 'Festivals & Meets', Color(0xFFF97316)),
-    ('award', 'Leaderboard', 'Citizen Honours', Color(0xFFEAB308)),
-    ('news', 'Govt Orders', 'Official Circulars', Color(0xFF8E8E93)),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: services.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.95,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemBuilder: (context, i) {
-        final s = services[i];
-        return InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () => _openServicePage(context, s.$1, s.$2),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE5E5EA)),
-              boxShadow: const [
-                BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 3)),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: s.$4.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: AppIcon(s.$1, color: s.$4, size: 20),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  tr(s.$2),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF1C1C1E)),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  s.$3,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 9, color: Color(0xFF8E8E93), fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _openServicePage(BuildContext context, String icon, String title) {
-    Widget page;
-    switch (title) {
-      case 'Local Shops':
-        page = const ShopsPage();
-        break;
-      case 'Job Portal':
-        page = const JobsPage();
-        break;
-      case 'Mandi Rates':
-        page = const AgriMandiPage();
-        break;
-      case 'Bus Timings':
-        page = const BusRoutesPage();
-        break;
-      case 'Emergency SOS':
-        page = const EmergencySosPage();
-        break;
-      case 'Community Hub':
-        page = const CommunityHubPage();
-        break;
-      case 'Blood Donors':
-        page = const BloodDonorsPage();
-        break;
-      case 'Grievances':
-        page = const GrievanceSubmissionPage();
-        break;
-      case 'Marketplace':
-        page = const MarketplacePage();
-        break;
-      case 'Town Events':
-        page = const EventsPage();
-        break;
-      case 'Leaderboard':
-        page = const RankingsPage();
-        break;
-      case 'Govt Orders':
-        page = const GovtOrdersPage();
-        break;
-      default:
-        page = const NewsHubPage();
-    }
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-  }
-}
-
-class CategoryRail extends StatelessWidget {
-  const CategoryRail({super.key});
-  static const items = [
-    ('store', 'Shops'),
-    ('briefcase', 'Jobs'),
-    ('bag', 'Mandi'),
-    ('compass', 'Bus'),
-    ('heart', 'SOS 108'),
-    ('chat', 'Town Chat'),
-    ('calendar', 'Events'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 94,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return SizedBox(
-            width: 68,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => _openCategory(context, item.$1),
-              child: Column(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: index == 0 ? const Color(0xFFEBF5FF) : const Color(0xFFF2F2F7),
-                      border: Border.all(color: index == 0 ? const Color(0xFF007AFF) : const Color(0xFFE5E5EA)),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Center(
-                      child: AppIcon(item.$1, color: index == 0 ? AppTheme.green : AppTheme.ink, size: 24),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.$2,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: index == 0 ? FontWeight.w900 : FontWeight.w700,
-                      color: index == 0 ? AppTheme.green : AppTheme.ink,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }
@@ -1033,47 +998,6 @@ void _openCategory(BuildContext context, String category) {
       page = const NewsHubPage();
   }
   Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-}
-
-class FeaturedNewsCard extends StatelessWidget {
-  const FeaturedNewsCard({super.key});
-  @override
-  Widget build(BuildContext context) => InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewsHubPage())),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFFBEB),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFFDE68A)),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  AppIcon('news', color: Color(0xFFD97706), size: 20),
-                  SizedBox(width: 8),
-                  Text('OFFICIAL DISPATCH', style: TextStyle(color: Color(0xFFD97706), fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.w900)),
-                  Spacer(),
-                  Icon(Icons.arrow_forward_rounded, color: Color(0xFF92400E), size: 18),
-                ],
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Southern Railway inspects Harur-Morappur broad gauge corridor',
-                style: TextStyle(fontSize: 16, height: 1.25, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'High-level inspection completed for 36 km route linking Dharmapuri district with Salem main line.',
-                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12, height: 1.35),
-              ),
-            ],
-          ),
-        ),
-      );
 }
 
 class WeatherCards extends StatelessWidget {
@@ -1123,44 +1047,173 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WeatherHubPage())),
-        child: Container(
+        child: BentoCard(
+          variant: BentoCardVariant.elevatedWhite,
+          borderRadius: 22,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE5E5EA)),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const AppIcon('cloud', color: AppTheme.blue, size: 22),
+              const AppIcon('cloud', color: Color(0xFF247BA0), size: 22),
               const SizedBox(height: 12),
-              Text(temperature, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
-              Text(place, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF1C1C1E))),
+              Text(temperature, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+              Text(place, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF16272E))),
               const SizedBox(height: 2),
-              Text(caption, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
+              Text(caption, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
             ],
           ),
         ),
       );
 }
 
+/// Category & Avatar Scroll Rail (Screen 2 HAIIE DOMES style)
+class CategoryAvatarRail extends StatelessWidget {
+  const CategoryAvatarRail({super.key});
+
+  static const items = [
+    ('store', 'Bazaar', 'Shops'),
+    ('bag', 'Mandi', 'Agri Rates'),
+    ('briefcase', 'Jobs', 'Daily Wage'),
+    ('compass', 'Transit', 'Bus Routes'),
+    ('heart', 'Donors', 'Blood 108'),
+    ('chat', 'Town Chat', 'Civic Polls'),
+    ('calendar', 'Events', 'Festivals'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final isFirst = index == 0;
+
+          return InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _openCategory(context, item.$1),
+            child: SizedBox(
+              width: 62,
+              child: Column(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: isFirst ? const Color(0xFF234149) : const Color(0xFFE2EDF2),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isFirst ? const Color(0xFF345660) : const Color(0xFFD4E3EA),
+                        width: 1.0,
+                      ),
+                      boxShadow: isFirst
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF234149).withValues(alpha: 0.25),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Center(
+                      child: AppIcon(
+                        item.$1,
+                        color: isFirst ? Colors.white : const Color(0xFF234149),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.$2,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isFirst ? FontWeight.w900 : FontWeight.w700,
+                      color: const Color(0xFF16272E),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 // ==============================================================================
-// EXPLORE PAGE
+// EXPLORE PAGE (SCREEN 3 AESTHETIC: SEARCH PILL, SQUIRCLE TILES, CLEAN LIST)
 // ==============================================================================
-class ExplorePage extends StatelessWidget {
+class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
 
-  static const cards = [
-    ('store', 'Local Shops', 'Harur Bazaar & merchants'),
-    ('briefcase', 'Jobs Portal', 'Daily wage & local hiring'),
-    ('bag', 'Marketplace', 'Buy, sell, agri tools'),
-    ('calendar', 'Events', 'Cultural festivals & sports'),
-    ('award', 'Rankings', 'Leaderboard & donations'),
-    ('heart', 'Emergency 108', 'Lifeline & police control'),
+  @override
+  State<ExplorePage> createState() => _ExplorePageState();
+}
+
+class _ExplorePageState extends State<ExplorePage> {
+  int selectedCategoryIndex = 0;
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  final categoryTiles = [
+    {'icon': 'store', 'label': 'Shops', 'sub': 'Bazaar'},
+    {'icon': 'compass', 'label': 'Transit', 'sub': 'TNSTC'},
+    {'icon': 'bag', 'label': 'Market', 'sub': 'Classified'},
   ];
+
+  final exploreListItems = [
+    {
+      'title': 'Harur Town Municipal Drinking Water Scheme',
+      'subtitle': 'Phase-2 pipeline laying underway near Theerthamalai road.',
+      'category': 'Municipal Project',
+      'icon': Icons.water_drop_rounded,
+      'color': Color(0xFF247BA0),
+    },
+    {
+      'title': 'Morappur - Harur Railway Junction Land Survey',
+      'subtitle': 'Southern Railway survey team stationed at Harur Taluk Office.',
+      'category': 'Transit & Rail',
+      'icon': Icons.train_rounded,
+      'color': Color(0xFF234149),
+    },
+    {
+      'title': 'APMC Daily Agri Commodity Auction',
+      'subtitle': 'Harur Regulated Market yard open for paddy, ragi, and maize.',
+      'category': 'Agri Mandi',
+      'icon': Icons.agriculture_rounded,
+      'color': Color(0xFFF59E0B),
+    },
+    {
+      'title': 'Theerthamalai Sacred Hill Temple Car Festival',
+      'subtitle': 'Annual Masi Theertham festival preparations and special bus permits.',
+      'category': 'Heritage & Event',
+      'icon': Icons.temple_hindu_rounded,
+      'color': Color(0xFF8B5CF6),
+    },
+    {
+      'title': 'Harur Government Hospital Blood Bank Active Drive',
+      'subtitle': 'Emergency call for O+ and B+ units with digital pass credit points.',
+      'category': 'Emergency 108',
+      'icon': Icons.favorite_rounded,
+      'color': Color(0xFFE44545),
+    },
+  ];
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1172,68 +1225,153 @@ class ExplorePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const TownHeader(showSearch: true),
-                const SizedBox(height: 24),
-                Text(tr('Explore'), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E), letterSpacing: -0.5)),
-                const SizedBox(height: 4),
-                const Text('Discover everything happening across Harur & Dharmapuri.', style: TextStyle(fontSize: 13, color: Color(0xFF8E8E93))),
+                const TownHeader(showSearch: false),
                 const SizedBox(height: 20),
-                GridView.builder(
-                  itemCount: cards.length,
+
+                // Search Pill with Action Chip (matching Screen 3)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFD4E3EA), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF234149).withValues(alpha: 0.05),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_rounded, color: Color(0xFF6A828B), size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchCtrl,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF16272E)),
+                          decoration: const InputDecoration(
+                            hintText: 'Search shops, bus routes, schemes...',
+                            hintStyle: TextStyle(color: Color(0xFF90ACB6), fontSize: 13),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF234149),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Text(
+                          'SEARCH',
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 3 Prominent Squircle Category Tiles (Screen 3 style)
+                Row(
+                  children: [
+                    SquircleTile(
+                      icon: const AppIcon('store', color: Color(0xFF234149), size: 24),
+                      label: 'Shops',
+                      sublabel: 'Bazaar Hub',
+                      isSelected: selectedCategoryIndex == 0,
+                      onTap: () => setState(() => selectedCategoryIndex = 0),
+                    ),
+                    const SizedBox(width: 10),
+                    SquircleTile(
+                      icon: const Icon(Icons.arrow_upward_rounded, color: Color(0xFF247BA0), size: 24),
+                      label: 'Transit',
+                      sublabel: 'Bus Timings',
+                      isSelected: selectedCategoryIndex == 1,
+                      onTap: () => setState(() => selectedCategoryIndex = 1),
+                    ),
+                    const SizedBox(width: 10),
+                    SquircleTile(
+                      icon: const AppIcon('bag', color: Color(0xFF234149), size: 24),
+                      label: 'Agri Mandi',
+                      sublabel: 'Daily Crop',
+                      isSelected: selectedCategoryIndex == 2,
+                      onTap: () => setState(() => selectedCategoryIndex = 2),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Section: Notices & Updates
+                const SectionHeader(label: 'NOTICES & VERIFIED UPDATES', action: 'Filter'),
+                const SizedBox(height: 12),
+
+                // Clean List Items in Squircle Containers (Screen 3 style)
+                ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 1.05,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemBuilder: (context, index) {
-                    final card = cards[index];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {
-                        final Widget page = switch (card.$1) {
-                          'store' => const ShopsPage(),
-                          'briefcase' => const JobsPage(),
-                          'bag' => const MarketplacePage(),
-                          'calendar' => const EventsPage(),
-                          'award' => const RankingsPage(),
-                          'heart' => const EmergencySosPage(),
-                          _ => const HomePage(),
-                        };
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFE5E5EA)),
-                          boxShadow: const [
-                            BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 4)),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEBF5FF),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Center(
-                                child: AppIcon(card.$1, color: AppTheme.green, size: 22),
-                              ),
+                  itemCount: exploreListItems.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) {
+                    final item = exploreListItems[i];
+                    return BentoCard(
+                      variant: BentoCardVariant.elevatedWhite,
+                      borderRadius: 20,
+                      padding: const EdgeInsets.all(16),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewsHubPage())),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: (item['color'] as Color).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            const Spacer(),
-                            Text(card.$2, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
-                            const SizedBox(height: 2),
-                            Text(card.$3, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: Color(0xFF8E8E93))),
-                          ],
-                        ),
+                            child: Center(
+                              child: Icon(item['icon'] as IconData, color: item['color'] as Color, size: 20),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE2EDF2),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        (item['category'] as String).toUpperCase(),
+                                        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF234149)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item['title'] as String,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF16272E), height: 1.2),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['subtitle'] as String,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.chevron_right_rounded, color: Color(0xFF90ACB6), size: 20),
+                        ],
                       ),
                     );
                   },
@@ -1262,91 +1400,96 @@ class AlertsPage extends StatelessWidget {
         children: [
           const TownHeader(showSearch: false),
           const SizedBox(height: 24),
-          Text(tr('Alerts'), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E), letterSpacing: -0.5)),
+          Text(tr('Alerts'), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF16272E), letterSpacing: -0.5)),
           const SizedBox(height: 4),
-          const Text('Emergency dispatch & verified municipal announcements.', style: TextStyle(fontSize: 13, color: Color(0xFF8E8E93))),
+          const Text('Emergency dispatch & verified municipal announcements.', style: TextStyle(fontSize: 13, color: Color(0xFF6A828B))),
           const SizedBox(height: 20),
 
-          // Primary Emergency Action Box
-          InkWell(
-            borderRadius: BorderRadius.circular(24),
+          // Primary Emergency Action Box (Squircle Bento)
+          BentoCard(
+            variant: BentoCardVariant.elevatedWhite,
+            borderRadius: 24,
+            padding: const EdgeInsets.all(20),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmergencySosPage())),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFECEB),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFF8C9C5)),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      AppIcon('alert', color: AppTheme.red, size: 26),
-                      Spacer(),
-                      Icon(Icons.arrow_forward_rounded, color: AppTheme.red),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  Text('Need Immediate Assistance?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E))),
-                  SizedBox(height: 4),
-                  Text('Trigger instant SOS broadcast to nearest Harur responders & 108 ambulance.', style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE44545).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const AppIcon('alert', color: Color(0xFFE44545), size: 24),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE44545),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: const Text('24/7 SOS', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Need Immediate Assistance?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF16272E))),
+                const SizedBox(height: 4),
+                const Text('Trigger instant SOS broadcast to nearest Harur responders & 108 ambulance.', style: TextStyle(color: Color(0xFF6A828B), fontSize: 12, height: 1.35)),
+              ],
             ),
           ),
 
           const SizedBox(height: 24),
           const SectionHeader(label: 'GOVERNMENT ORDERS & OFFICIAL CIRCULARS'),
           const SizedBox(height: 10),
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
+          BentoCard(
+            variant: BentoCardVariant.pastel,
+            borderRadius: 20,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GovtOrdersPage())),
-            child: const SoftCard(
-              child: Row(
-                children: [
-                  AppIcon('news', color: AppTheme.blue, size: 22),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Browse Government Orders (G.O.)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                        SizedBox(height: 2),
-                        Text('Published by verified Dharmapuri district officials.', style: TextStyle(fontSize: 11, color: AppTheme.muted)),
-                      ],
-                    ),
+            child: const Row(
+              children: [
+                AppIcon('news', color: Color(0xFF247BA0), size: 22),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Browse Government Orders (G.O.)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF16272E))),
+                      SizedBox(height: 2),
+                      Text('Published by verified Dharmapuri district officials.', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
+                    ],
                   ),
-                  Icon(Icons.chevron_right_rounded),
-                ],
-              ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Color(0xFF90ACB6)),
+              ],
             ),
           ),
 
           const SizedBox(height: 12),
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
+          BentoCard(
+            variant: BentoCardVariant.elevatedWhite,
+            borderRadius: 20,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GrievanceSubmissionPage())),
-            child: const SoftCard(
-              child: Row(
-                children: [
-                  AppIcon('shield', color: AppTheme.green, size: 22),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Track Civic Grievances', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                        SizedBox(height: 2),
-                        Text('Submit street, water, or road issues to town officials.', style: TextStyle(fontSize: 11, color: AppTheme.muted)),
-                      ],
-                    ),
+            child: const Row(
+              children: [
+                AppIcon('shield', color: Color(0xFF234149), size: 22),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Track Civic Grievances', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF16272E))),
+                      SizedBox(height: 2),
+                      Text('Submit street, water, or road issues to town officials.', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
+                    ],
                   ),
-                  Icon(Icons.chevron_right_rounded),
-                ],
-              ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Color(0xFF90ACB6)),
+              ],
             ),
           ),
         ],
@@ -1374,21 +1517,27 @@ class AccountPage extends StatelessWidget {
           const TownHeader(showSearch: false),
           const SizedBox(height: 20),
 
-          // Profile Header Row
+          // Profile Header Row (Squircle Avatar)
           Row(
             children: [
               Container(
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEBF5FF),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF007AFF), width: 2),
+                  color: const Color(0xFF234149),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF234149).withValues(alpha: 0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Text(
                     profile.fullName.isNotEmpty ? profile.fullName[0].toUpperCase() : 'H',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF007AFF)),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
                   ),
                 ),
               ),
@@ -1399,7 +1548,7 @@ class AccountPage extends StatelessWidget {
                   children: [
                     Text(
                       profile.fullName,
-                      style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: Color(0xFF1C1C1E)),
+                      style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: Color(0xFF16272E)),
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -1407,7 +1556,7 @@ class AccountPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF007AFF),
+                            color: const Color(0xFF234149),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -1418,7 +1567,7 @@ class AccountPage extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           'MMID: ${profile.mmid}',
-                          style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 11, fontWeight: FontWeight.w700),
+                          style: const TextStyle(color: Color(0xFF6A828B), fontSize: 11, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -1430,36 +1579,47 @@ class AccountPage extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Manage Profile & Security
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
+          // Manage Profile & Security (Squircle Bento)
+          BentoCard(
+            variant: BentoCardVariant.darkPetrol,
+            borderRadius: 22,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AuthPage())),
-            child: SoftCard(
-              child: Row(
-                children: [
-                  const AppIcon('shield', color: AppTheme.green, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isLoggedIn ? 'Manage Digital Pass & Security' : 'Sign In / Register Digital Pass',
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isLoggedIn ? '${profile.wardLocality} • Blood Group: ${profile.bloodGroup}' : 'Google OAuth, Password & MMID creation',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.muted),
-                        ),
-                      ],
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
-                  const Icon(Icons.chevron_right_rounded),
-                ],
-              ),
+                  child: const AppIcon('shield', color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isLoggedIn ? 'Manage Digital Pass & Security' : 'Sign In / Register Digital Pass',
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isLoggedIn ? '${profile.wardLocality} • Blood Group: ${profile.bloodGroup}' : 'Google OAuth, Password & MMID creation',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFFB5D4DF)),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Colors.white),
+              ],
             ),
           ),
+
+          const SizedBox(height: 20),
+
+          // System Health & Backend Diagnostics
+          const _BackendHealthCard(),
 
           const SizedBox(height: 24),
           const SectionHeader(label: 'TOWN SERVICES & TOOLS'),
@@ -1469,58 +1629,145 @@ class AccountPage extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeader(label: 'COMMUNITY MODERATION & CIVIC SAFETY'),
           const SizedBox(height: 10),
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
+          BentoCard(
+            variant: BentoCardVariant.elevatedWhite,
+            borderRadius: 20,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportAbusePage())),
-            child: const SoftCard(
-              child: Row(
-                children: [
-                  Icon(Icons.flag_rounded, color: Color(0xFFE44545), size: 22),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Report Abuse, Scams or False Content', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                        SizedBox(height: 2),
-                        Text('Protect Harur town by reporting violations to moderators.', style: TextStyle(fontSize: 11, color: AppTheme.muted)),
-                      ],
-                    ),
+            child: const Row(
+              children: [
+                Icon(Icons.flag_rounded, color: Color(0xFFE44545), size: 22),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Report Abuse, Scams or False Content', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF16272E))),
+                      SizedBox(height: 2),
+                      Text('Protect Harur town by reporting violations to moderators.', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
+                    ],
                   ),
-                  Icon(Icons.chevron_right_rounded),
-                ],
-              ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Color(0xFF90ACB6)),
+              ],
             ),
           ),
 
           const SizedBox(height: 24),
           const SectionHeader(label: 'GOVERNANCE & ADMIN ACCESS'),
           const SizedBox(height: 10),
-          InkWell(
-            borderRadius: BorderRadius.circular(20),
+          BentoCard(
+            variant: BentoCardVariant.pastel,
+            borderRadius: 20,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminDashboardPage())),
-            child: const SoftCard(
-              child: Row(
-                children: [
-                  AppIcon('shield', color: AppTheme.red, size: 22),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('SuperAdmin Governance Console', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                        SizedBox(height: 2),
-                        Text('Passkey moderation, consensus & municipal ledger', style: TextStyle(fontSize: 11, color: AppTheme.muted)),
-                      ],
-                    ),
+            child: const Row(
+              children: [
+                AppIcon('shield', color: Color(0xFF234149), size: 22),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('SuperAdmin Governance Console', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF16272E))),
+                      SizedBox(height: 2),
+                      Text('Passkey moderation, consensus & municipal ledger', style: TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
+                    ],
                   ),
-                  Icon(Icons.chevron_right_rounded),
-                ],
-              ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Color(0xFF90ACB6)),
+              ],
             ),
           ),
 
           const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+}
+
+/// Backend & Database Diagnostics Card
+class _BackendHealthCard extends StatefulWidget {
+  const _BackendHealthCard();
+
+  @override
+  State<_BackendHealthCard> createState() => _BackendHealthCardState();
+}
+
+class _BackendHealthCardState extends State<_BackendHealthCard> {
+  bool _isChecking = false;
+  Map<String, dynamic>? _healthData;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkHealth();
+  }
+
+  Future<void> _checkHealth() async {
+    setState(() => _isChecking = true);
+    final data = await BackendHealthService.verifyFullSystem();
+    await KeepAliveService.pingServices();
+    if (mounted) {
+      setState(() {
+        _healthData = data;
+        _isChecking = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isConfigured = SupabaseConfig.isConfigured;
+
+    return BentoCard(
+      variant: BentoCardVariant.elevatedWhite,
+      borderRadius: 22,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isConfigured ? Icons.cloud_done_rounded : Icons.cloud_queue_rounded,
+                color: isConfigured ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'BACKEND & DATABASE STATUS',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF16272E), letterSpacing: 0.8),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: _isChecking ? null : _checkHealth,
+                child: _isChecking
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.refresh_rounded, size: 14, color: Color(0xFF247BA0)),
+                          SizedBox(width: 2),
+                          Text('Pulse', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF247BA0))),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            isConfigured
+                ? '✓ Connected to Supabase PostgreSQL (${SupabaseConfig.activeUrl})'
+                : 'Offline Prototype Mode (Local SQLite/Mock Store). Pass SUPABASE_URL to link live PostgreSQL.',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isConfigured ? const Color(0xFF10B981) : const Color(0xFF6A828B)),
+          ),
+          if (_healthData != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Database: ${_healthData!['database'] ?? "Checking"} • KeepAlive: Active (every 10m)',
+              style: const TextStyle(fontSize: 10, color: Color(0xFF90ACB6), fontWeight: FontWeight.w600),
+            ),
+          ],
         ],
       ),
     );
@@ -1536,19 +1783,25 @@ class SectionHeader extends StatelessWidget {
   final String? action;
   @override
   Widget build(BuildContext context) => Row(children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF8E8E93),
-                letterSpacing: 1.1)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF6A828B),
+            letterSpacing: 1.1,
+          ),
+        ),
         const Spacer(),
         if (action != null)
-          Text(action!,
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.green)),
+          Text(
+            action!,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF234149),
+            ),
+          ),
       ]);
 }
 
@@ -1561,13 +1814,13 @@ class SoftCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE5E5EA)),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFD4E3EA)),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x06000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
+              color: const Color(0xFF234149).withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ]),
       child: child);
@@ -1585,10 +1838,10 @@ class RoundIconButton extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-              color: const Color(0xFFF2F2F7),
+              color: const Color(0xFFE2EDF2),
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE5E5EA))),
-          child: Center(child: AppIcon(icon, color: AppTheme.ink, size: 19))));
+              border: Border.all(color: const Color(0xFFD4E3EA))),
+          child: Center(child: AppIcon(icon, color: const Color(0xFF234149), size: 19))));
 }
 
 class AppIcon extends StatelessWidget {
@@ -1625,24 +1878,35 @@ class AccountRows extends StatelessWidget {
   }
 
   Widget _buildRow(BuildContext context, String icon, String label, String detail, Widget destination) => InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => destination)),
-        child: SoftCard(
+        child: BentoCard(
+          variant: BentoCardVariant.elevatedWhite,
+          borderRadius: 20,
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              AppIcon(icon, color: AppTheme.green, size: 20),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF234149).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(child: AppIcon(icon, color: const Color(0xFF234149), size: 20)),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF16272E))),
                     const SizedBox(height: 2),
-                    Text(detail, style: const TextStyle(fontSize: 11, color: AppTheme.muted)),
+                    Text(detail, style: const TextStyle(fontSize: 11, color: Color(0xFF6A828B))),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF90ACB6)),
             ],
           ),
         ),
