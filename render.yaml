@@ -2,9 +2,16 @@ services:
   - type: web
     name: myharur-web
     env: docker
+    region: oregon
+    plan: free            # Free tier — pinged every 10 min by QenBel keep-alive cron
     dockerfilePath: ./Dockerfile
-    # Same image works unmodified when moved to Hostinger VPS later —
-    # Render just runs `docker build` + `docker run` against it.
+    # Docker Build Args: forward env vars as build-time --dart-define values
+    # Set these in Render Dashboard > myharur-web > Environment
+    dockerBuildArgs:
+      - key: SUPABASE_URL
+        fromEnvVar: SUPABASE_URL
+      - key: SUPABASE_PUBLISHABLE_KEY
+        fromEnvVar: SUPABASE_PUBLISHABLE_KEY
     envVars:
       - key: SUPABASE_URL
         sync: false   # set in Render dashboard, not committed to git
@@ -17,3 +24,6 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: "1; mode=block"

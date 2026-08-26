@@ -1,7 +1,7 @@
 name: myharur
-description: A trusted digital-town app for Harur and Dharmapuri.
+description: MyHarur — digital town platform for Harur & Dharmapuri, Tamil Nadu. A QenBel product.
 publish_to: none
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -9,13 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_svg: ^2.0.17
-  geolocator: ^14.0.2
-  image_picker: ^1.2.1
+  # Supabase — identity + product DB
   supabase_flutter: ^2.10.3
+  # UI
+  flutter_svg: ^2.0.17
+  # Utilities
   url_launcher: ^6.3.1
   http: ^1.2.2
   crypto: ^3.0.3
+  image_picker: ^1.2.1
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:
