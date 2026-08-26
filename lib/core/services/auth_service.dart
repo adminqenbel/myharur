@@ -18,7 +18,7 @@ import '../models/user_profile.dart';
 /// Google OAuth Android client ID
 /// (configured in Supabase Auth > Providers > Google)
 const String kAndroidOAuthClientId =
-    '976428818123-tr1tgub2a690vh7g88s2icpq19smmuvv.apps.googleusercontent.com';
+    '976428818123-7jakg2dukc0r0ehtvm84ovh5brrq3tca.apps.googleusercontent.com';
 
 class AuthNotifier extends ChangeNotifier {
   static final AuthNotifier instance = AuthNotifier._();
