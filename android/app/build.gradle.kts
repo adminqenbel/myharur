@@ -1,8 +1,23 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Push notifications: the Firebase config file is per-project and not in the repo. Without it the app builds and
+// runs normally and simply reports notifications as unavailable. See docs/NOTIFICATIONS.md.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
+// Release signing: create android/key.properties (gitignored) — see docs/RELEASE.md.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val hasReleaseKey = keystoreProps.containsKey("storeFile")
 
 android {
     namespace = "com.myharur.app"
@@ -24,11 +39,31 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProps["storeFile"] as String)
+                storePassword = keystoreProps["storePassword"] as String
+                keyAlias = keystoreProps["keyAlias"] as String
+                keyPassword = keystoreProps["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Shrinks and obfuscates the Java/Kotlin layer and removes unused resources.
+            // (Dart code is obfuscated separately with --obfuscate --split-debug-info, see docs/RELEASE.md.)
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (hasReleaseKey) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                // Debug-signed builds are fine for local testing but Google Play rejects them.
+                logger.warn("WARNING: android/key.properties not found - release build is signed with the DEBUG key.")
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 }
