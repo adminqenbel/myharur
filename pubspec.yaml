@@ -1,7 +1,7 @@
 name: myharur
 description: MyHarur — digital town platform for Harur & Dharmapuri, Tamil Nadu. A QenBel product.
 publish_to: none
-version: 1.0.0+5
+version: 1.1.0+6
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -9,24 +9,48 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   # Supabase — identity + product DB
   supabase_flutter: ^2.10.3
-  # UI
-  flutter_svg: ^2.0.17
   # Utilities
   url_launcher: ^6.3.1
   http: ^1.2.2
-  crypto: ^3.0.3
-  image_picker: ^1.2.1
-  geolocator: ^14.0.2
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.4     # encrypted session storage
+  flutter_map: ^8.1.1                # OpenStreetMap
+  latlong2: ^0.9.1
+  geolocator: ^14.0.2                # optional 'use current location'
+  qr_flutter: ^4.1.0                 # authenticator (TOTP) enrolment QR
+  package_info_plus: ^8.3.0          # app version in error reports
+  image_picker: ^1.2.3
+  flutter_image_compress: ^2.5.1
+  device_info_plus: ^12.4.0
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true
+  generate: true          # gen-l10n: lib/l10n/app_*.arb -> AppLocalizations
   assets:
     - assets/icons/
     - assets/brand/
+  fonts:
+    # Inter (SIL Open Font License 1.1, see assets/fonts/OFL.txt)
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.otf
+        - asset: assets/fonts/Inter-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.otf
+          weight: 700

@@ -1,146 +1,238 @@
-import "package:flutter/foundation.dart";
+import "package:supabase_flutter/supabase_flutter.dart";
 import "supabase_config.dart";
 import "../models/alert.dart";
+import "../models/place.dart";
+import '../util/secure_log.dart';
 
 // ==============================================================================
 // ALERTS SERVICE — v1 core launch surface
+//
+// Lifecycle (enforced in Postgres, see supabase/migrations/*moderation_pipeline*):
+//   submit  -> automated filter -> 'pending' (or auto 'rejected')
+//   review  -> any moderator/admin approves or rejects via moderate_alert()
+//   feed    -> only 'published', unexpired alerts are public
+// The client never chooses status, source or author; the database overwrites them.
 // ==============================================================================
+
+enum SubmitOutcome {
+  submitted,     // accepted, awaiting human review
+  autoRejected,  // blocked by the automated filter
+  rateLimited,   // too many recent submissions
+  cooldown,      // 3 auto-rejections in 24 h: posting paused
+  restricted,    // the account is restricted pending staff review
+  invalidImage,  // a photo was refused
+  invalid,       // failed length validation
+  accountIssue,  // profile missing / account disabled / signed out
+  failed,        // network or unexpected error
+}
+
+const _selectFields = """
+  id, kind, category, title, body, source, status, link_url, image_paths,
+  published_as_role, created_by_uid, expires_at,
+  emergency_tagged, created_at,
+  location_text, location_lat, location_lng, location_source,
+  moderation_flags, flagged_by_system, moderation_reason
+""";
+
 class AlertsService {
-  /// Fetch published alerts + pending community alerts (for in-feed visibility)
-  static Future<List<Alert>> fetchFeedAlerts({
+  /// Public feed: published, unexpired alerts only.
+  /// Returns null on error (so the UI can show a retry state) and [] when empty.
+  static Future<List<Alert>?> fetchFeedAlerts({
     String? category,
-    int? wardId,
+    String kind = "report",
     int limit = 30,
   }) async {
     final client = SupabaseConfig.client;
-    if (client == null) return [];
+    if (client == null) return null;
 
     try {
-      var filterQuery = client
+      var query = client
           .from("alerts")
-          .select("""
-            id, category, ward_id, title, body, source, status,
-            published_as_role, created_by_uid, expires_at,
-            emergency_tagged, created_at,
-            wards(name)
-          """)
-          .inFilter("status", ["published", "pending"]);
+          .select(_selectFields)
+          .eq("status", "published")
+          .eq("kind", kind)
+          .or("expires_at.is.null,expires_at.gt.${DateTime.now().toUtc().toIso8601String()}");
 
-      if (category != null) {
-        filterQuery = filterQuery.eq("category", category);
-      }
-      if (wardId != null) {
-        filterQuery = filterQuery.eq("ward_id", wardId);
-      }
+      if (category != null) query = query.eq("category", category);
 
-      final response = await filterQuery
+      final response = await query
           .order("emergency_tagged", ascending: false)
           .order("created_at", ascending: false)
           .limit(limit);
 
-      return (response as List).map((row) {
-        final wardName = row["wards"]?["name"] as String?;
-        return Alert.fromJson({...row, "ward_name": wardName});
-      }).toList();
+      return _parse(response);
     } catch (e) {
-      debugPrint("[ALERTS] fetchFeedAlerts error: $e");
-      return [];
+      secureLog("[ALERTS] fetchFeedAlerts error: $e");
+      return null;
     }
   }
 
-  /// Submit a community alert (goes to pending + moderation queue)
-  static Future<bool> submitCommunityAlert({
+  /// Submit an alert (residents and staff alike). Goes through the automated
+  /// filter, then waits for a moderator/admin.
+  static Future<SubmitOutcome> submitAlert({
     required String category,
     required String title,
     required String body,
-    int? wardId,
+    String kind = "report",
+    String? linkUrl,
+    List<String> imagePaths = const [],
+    PickedLocation? location,
     bool emergencyTagged = false,
-    String? createdByUid,
   }) async {
     final client = SupabaseConfig.client;
-    if (client == null) return false;
+    if (client == null || client.auth.currentUser == null) {
+      return SubmitOutcome.accountIssue;
+    }
 
     try {
-      final alertData = {
-        "category": category,
-        "title": title.trim(),
-        "body": body.trim(),
-        "ward_id": wardId,
-        "source": "community",
-        "status": "pending",
-        "emergency_tagged": emergencyTagged,
-        "created_by_uid": createdByUid,
-      };
-
-      final alertRes = await client.from("alerts").insert(alertData).select().single();
-
-      // Create moderation queue entry
-      await client.from("moderation_queue").insert({
-        "alert_id": alertRes["id"],
-        "category": category,
-        "ward_id": wardId,
-        "emergency_tagged": emergencyTagged,
-        "flagged_by_system": false,
-      });
-
-      return true;
+      final row = await client
+          .from("alerts")
+          .insert({
+            "kind": kind,
+            "category": category,
+            if (linkUrl != null && linkUrl.trim().isNotEmpty) "link_url": linkUrl.trim(),
+            if (imagePaths.isNotEmpty) "image_paths": imagePaths,
+            "title": title.trim(),
+            "body": body.trim(),
+            if (location != null && !location.isEmpty) ...location.toColumns("location"),
+            "emergency_tagged": emergencyTagged,
+          })
+          .select("status")
+          .single();
+      return row["status"] == "rejected"
+          ? SubmitOutcome.autoRejected
+          : SubmitOutcome.submitted;
+    } on PostgrestException catch (e) {
+      secureLog("[ALERTS] submitAlert error: ${e.message}");
+      final m = e.message;
+      if (m.contains("rate_limited")) return SubmitOutcome.rateLimited;
+      if (m.contains("cooldown")) return SubmitOutcome.cooldown;
+      if (m.contains("account_restricted")) return SubmitOutcome.restricted;
+      if (m.contains("invalid_image")) return SubmitOutcome.invalidImage;
+      if (m.contains("invalid_length")) return SubmitOutcome.invalid;
+      if (m.contains("profile_missing") ||
+          m.contains("account_disabled") ||
+          m.contains("authentication_required")) {
+        return SubmitOutcome.accountIssue;
+      }
+      return SubmitOutcome.failed;
     } catch (e) {
-      debugPrint("[ALERTS] submitCommunityAlert error: $e");
-      return false;
+      secureLog("[ALERTS] submitAlert error: $e");
+      return SubmitOutcome.failed;
     }
   }
 
-  /// Publish an official alert (admin/superadmin only — enforced by RLS)
-  static Future<bool> publishOfficialAlert({
-    required String category,
-    required String title,
-    required String body,
-    int? wardId,
-    required String publishedAsRole,
-    String? createdByUid,
-    Duration? expiresIn,
-  }) async {
+  /// The signed-in person's own posts (both kinds, any status). Deleted posts are not returned.
+  static Future<List<Alert>?> fetchMine({int limit = 50}) async {
     final client = SupabaseConfig.client;
-    if (client == null) return false;
-
+    final uid = client?.auth.currentUser?.id;
+    if (client == null || uid == null) return null;
     try {
-      await client.from("alerts").insert({
-        "category": category,
-        "title": title.trim(),
-        "body": body.trim(),
-        "ward_id": wardId,
-        "source": "official",
-        "status": "published",
-        "published_as_role": publishedAsRole,
-        "created_by_uid": createdByUid,
-        "expires_at": expiresIn != null
-            ? DateTime.now().add(expiresIn).toIso8601String()
-            : null,
-        "emergency_tagged": false,
-      });
-      return true;
+      final response = await client
+          .from("alerts")
+          .select(_selectFields)
+          .eq("created_by_uid", uid)
+          .order("created_at", ascending: false)
+          .limit(limit);
+      return _parse(response);
     } catch (e) {
-      debugPrint("[ALERTS] publishOfficialAlert error: $e");
-      return false;
+      secureLog("[ALERTS] fetchMine error: $e");
+      return null;
     }
   }
 
-  /// Fetch single alert by ID
-  static Future<Alert?> fetchById(String alertId) async {
+  /// Deletes a post: the author any time, staff with a written [reason].
+  /// Returns null on success, otherwise the database error code (`forbidden`, `reason_required`, `network`).
+  static Future<String?> deleteContent(String id, {String? reason}) async {
+    final client = SupabaseConfig.client;
+    if (client == null) return "network";
+    try {
+      await client.rpc("delete_content", params: {"p_id": id, if (reason != null) "p_reason": reason});
+      return null;
+    } on PostgrestException catch (e) {
+      secureLog("[ALERTS] delete error: ${e.message}");
+      final m = e.message;
+      if (m.contains("reason_required")) return "reason_required";
+      if (m.contains("forbidden")) return "forbidden";
+      if (m.contains("not_found")) return "not_found";
+      return "failed";
+    } catch (e) {
+      secureLog("[ALERTS] delete error: $e");
+      return "network";
+    }
+  }
+
+  // ── Staff: review queue ─────────────────────────────────────────────────────
+
+  /// Pending alerts for review. Emergency first, then system-flagged, then oldest.
+  /// RLS returns rows only to moderators/admins; anyone else gets just their own.
+  static Future<List<Alert>?> fetchReviewQueue({int limit = 50}) async {
     final client = SupabaseConfig.client;
     if (client == null) return null;
     try {
-      final res = await client
+      final response = await client
           .from("alerts")
-          .select("*, wards(name)")
-          .eq("id", alertId)
-          .maybeSingle();
-      if (res == null) return null;
-      final wardName = res["wards"]?["name"] as String?;
-      return Alert.fromJson({...res, "ward_name": wardName});
+          .select(_selectFields)
+          .eq("status", "pending")
+          .order("emergency_tagged", ascending: false)
+          .order("flagged_by_system", ascending: false)
+          .order("created_at", ascending: true)
+          .limit(limit);
+      return _parse(response);
     } catch (e) {
-      debugPrint("[ALERTS] fetchById error: $e");
+      secureLog("[ALERTS] fetchReviewQueue error: $e");
       return null;
     }
+  }
+
+  /// Number of alerts waiting for review (staff only; RLS returns 0 for everyone else).
+  static Future<int> pendingCount() async {
+    final client = SupabaseConfig.client;
+    if (client == null) return 0;
+    try {
+      final res = await client.from("alerts").select("id").eq("status", "pending").count(CountOption.exact);
+      return res.count;
+    } catch (e) {
+      secureLog("[ALERTS] pendingCount error: $e");
+      return 0;
+    }
+  }
+
+  /// Approve an alert (goes live for [liveHours]).
+  static Future<bool> approve(String alertId, {int liveHours = 168}) =>
+      _moderate(alertId, "approve", hours: liveHours);
+
+  /// Reject an alert. [reason]: spam | false | duplicate | low_quality | inappropriate
+  static Future<bool> reject(String alertId, String reason) =>
+      _moderate(alertId, "reject", reason: reason);
+
+  static Future<bool> _moderate(
+    String alertId,
+    String decision, {
+    String? reason,
+    int? hours,
+  }) async {
+    final client = SupabaseConfig.client;
+    if (client == null) return false;
+    try {
+      await client.rpc("moderate_alert", params: {
+        "p_alert_id": alertId,
+        "p_decision": decision,
+        if (reason != null) "p_reason": reason,
+        if (hours != null) "p_hours": hours,
+      });
+      return true;
+    } catch (e) {
+      secureLog("[ALERTS] moderate($decision) error: $e");
+      return false;
+    }
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  static List<Alert> _parse(dynamic response) {
+    return (response as List).map((row) {
+      return Alert.fromJson(Map<String, dynamic>.from(row as Map));
+    }).toList();
   }
 }

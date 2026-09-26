@@ -1,205 +1,184 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // ==============================================================================
-// MYHARUR APP THEME — Apple-like, Blue Primary, Clean & Simple
+// MYHARUR DESIGN TOKENS — iOS-style: quiet neutrals, one blue, generous spacing.
+// The single expressive element is the weather gradient (blue -> red).
 // ==============================================================================
 
 class AppColors {
-  // Primary — iOS blue
+  // Brand / system blue
   static const primary = Color(0xFF007AFF);
-  static const primaryDark = Color(0xFF0056CC);
-  static const primaryLight = Color(0xFF5AC8FA);
-  static const primarySurface = Color(0xFFE8F2FF);
+  static const primaryPressed = Color(0xFF0062CC);
+  static const primaryTint = Color(0x1F007AFF); // 12%
 
   // Semantic
-  static const success = Color(0xFF34C759);
+  static const success = Color(0xFF30B350);
   static const warning = Color(0xFFFF9500);
   static const danger = Color(0xFFFF3B30);
-  static const info = Color(0xFF5AC8FA);
 
-  // Category alert colors
-  static const road = Color(0xFFFF9500);        // Amber
-  static const electricity = Color(0xFFFFCC00); // Yellow
-  static const water = Color(0xFF007AFF);        // Blue
-  static const govt = Color(0xFF5856D6);         // Indigo
+  // Alert categories
+  static const road = Color(0xFFFF9500);
+  static const electricity = Color(0xFFF2B600);
+  static const water = Color(0xFF0A84FF);
+  static const govt = Color(0xFF5E5CE6);
 
-  // Neutrals — iOS system palette
-  static const ink = Color(0xFF1C1C1E);
-  static const secondaryLabel = Color(0xFF636366);
+  // Text (iOS label hierarchy)
+  static const ink = Color(0xFF111114);
+  static const secondaryLabel = Color(0xFF636368);
   static const tertiaryLabel = Color(0xFF8E8E93);
-  static const quaternaryLabel = Color(0xFFAEAEB2);
-  static const separator = Color(0xFFD1D1D6);
-  static const opaqueSeparator = Color(0xFFC6C6C8);
-  static const systemBackground = Color(0xFFF2F2F7);
-  static const secondaryBackground = Color(0xFFFFFFFF);
-  static const tertiaryBackground = Color(0xFFE5E5EA);
-  static const groupedBackground = Color(0xFFF2F2F7);
+  static const quaternaryLabel = Color(0xFFB4B4BA);
 
-  // Glass
-  static const glassFill = Color(0x14FFFFFF);
-  static const glassBorder = Color(0x1AFFFFFF);
-  static const glassDark = Color(0x99000000);
+  // Surfaces
+  static const background = Color(0xFFF2F2F7); // grouped background
+  static const card = Colors.white;
+  static const fill = Color(0x1F767680); // segmented / search fill
+  static const separator = Color(0xFFD9D9DE);
+  static const hairline = Color(0x1F3C3C43);
 
-  // Brand dark (petrol — kept for MMID card accent)
-  static const petrol = Color(0xFF234149);
-  static const petrolLight = Color(0xFF8EB7C7);
+  // Weather hero: blue -> violet -> red
+  static const weatherBlue = Color(0xFF0A6CFF);
+  static const weatherViolet = Color(0xFF6B4DE6);
+  static const weatherRed = Color(0xFFF0384A);
+  static const weatherGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [weatherBlue, weatherViolet, weatherRed],
+    stops: [0.0, 0.52, 1.0],
+  );
+
+  // Backwards-compatible aliases
+  static const systemBackground = background;
+  static const secondaryBackground = card;
+}
+
+class AppSpacing {
+  static const gutter = 16.0;
+  static const cardRadius = 22.0;
+  static const rowRadius = 14.0;
 }
 
 class AppTextStyles {
-  static const _base = TextStyle(fontFamily: 'Inter');
+  static const _f = 'Inter';
+  // Slightly taller line-height keeps Tamil glyphs from clipping.
+  static TextStyle _s(double size, FontWeight w, {double ls = 0, Color color = AppColors.ink, double h = 1.28}) =>
+      TextStyle(fontFamily: _f, fontSize: size, fontWeight: w, letterSpacing: ls, color: color, height: h);
 
-  // Display
-  static final largeTitle = _base.copyWith(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: AppColors.ink);
-  static final title1 = _base.copyWith(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: 0.35, color: AppColors.ink);
-  static final title2 = _base.copyWith(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: 0.35, color: AppColors.ink);
-  static final title3 = _base.copyWith(fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: 0.38, color: AppColors.ink);
-  static final headline = _base.copyWith(fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: -0.41, color: AppColors.ink);
-
-  // Body
-  static final body = _base.copyWith(fontSize: 17, fontWeight: FontWeight.w400, letterSpacing: -0.41, color: AppColors.ink);
-  static final callout = _base.copyWith(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: -0.32, color: AppColors.ink);
-  static final subheadline = _base.copyWith(fontSize: 15, fontWeight: FontWeight.w400, letterSpacing: -0.24, color: AppColors.ink);
-  static final footnote = _base.copyWith(fontSize: 13, fontWeight: FontWeight.w400, letterSpacing: -0.08, color: AppColors.secondaryLabel);
-  static final caption1 = _base.copyWith(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0, color: AppColors.secondaryLabel);
-  static final caption2 = _base.copyWith(fontSize: 11, fontWeight: FontWeight.w400, letterSpacing: 0.07, color: AppColors.tertiaryLabel);
-
-  // Labels
-  static final labelLarge = _base.copyWith(fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: -0.41, color: AppColors.primary);
-  static final labelSmall = _base.copyWith(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: AppColors.tertiaryLabel);
+  static final largeTitle = _s(34, FontWeight.w700, ls: -0.6, h: 1.15);
+  static final title1 = _s(28, FontWeight.w700, ls: -0.4, h: 1.2);
+  static final title2 = _s(22, FontWeight.w700, ls: -0.3, h: 1.22);
+  static final title3 = _s(20, FontWeight.w600, ls: -0.3);
+  static final headline = _s(17, FontWeight.w600, ls: -0.3);
+  static final body = _s(17, FontWeight.w400, ls: -0.3, h: 1.35);
+  static final callout = _s(16, FontWeight.w400, ls: -0.25, h: 1.35);
+  static final subheadline = _s(15, FontWeight.w400, ls: -0.2, h: 1.32);
+  static final footnote = _s(13, FontWeight.w400, ls: -0.05, color: AppColors.secondaryLabel);
+  static final caption1 = _s(12, FontWeight.w400, color: AppColors.secondaryLabel);
+  static final caption2 = _s(11, FontWeight.w400, color: AppColors.tertiaryLabel);
+  static final labelLarge = _s(17, FontWeight.w600, ls: -0.3, color: AppColors.primary);
+  static final labelSmall = _s(11, FontWeight.w500, color: AppColors.tertiaryLabel);
 }
 
 class AppTheme {
   static ThemeData get light {
-    return ThemeData(
+    final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.systemBackground,
       fontFamily: 'Inter',
+      scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
-        secondary: AppColors.primaryLight,
-        surface: AppColors.secondaryBackground,
+        secondary: AppColors.primary,
+        surface: AppColors.card,
         error: AppColors.danger,
         onPrimary: Colors.white,
         onSurface: AppColors.ink,
         onError: Colors.white,
       ),
-
-      // AppBar — transparent iOS-style
+      // iOS-style push transition + swipe-back on Android too
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      }),
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: const Color(0x0F000000),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.secondaryBackground.withValues(alpha: 0.9),
+        backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: AppTextStyles.headline,
         iconTheme: const IconThemeData(color: AppColors.primary),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-
-      // Cards — white with subtle shadow
-      cardTheme: CardThemeData(
-        color: AppColors.secondaryBackground,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.separator, width: 0.5),
-        ),
-        margin: EdgeInsets.zero,
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.card,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        border: _border(AppColors.separator, 0.5),
+        enabledBorder: _border(AppColors.separator, 0.5),
+        focusedBorder: _border(AppColors.primary, 1.5),
+        errorBorder: _border(AppColors.danger, 1),
+        focusedErrorBorder: _border(AppColors.danger, 1.5),
+        hintStyle: AppTextStyles.body.copyWith(color: AppColors.quaternaryLabel),
+        labelStyle: AppTextStyles.subheadline.copyWith(color: AppColors.tertiaryLabel),
+        floatingLabelStyle: AppTextStyles.footnote,
       ),
-
-      // Buttons
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          textStyle: AppTextStyles.headline,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          minimumSize: const Size(double.infinity, 50),
-        ),
+      dividerTheme: const DividerThemeData(color: AppColors.hairline, thickness: 0.5, space: 0.5),
+      textSelectionTheme: const TextSelectionThemeData(cursorColor: AppColors.primary),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF2C2C2E),
+        contentTextStyle: AppTextStyles.subheadline.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          minimumSize: const Size(double.infinity, 50),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(24)),
+        titleTextStyle: AppTextStyles.headline,
+        contentTextStyle: AppTextStyles.subheadline.copyWith(color: AppColors.secondaryLabel),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        dragHandleColor: AppColors.separator,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           textStyle: AppTextStyles.headline,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(14)),
         ),
-      ),
-
-      // Input
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.secondaryBackground,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.separator, width: 0.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.separator, width: 0.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.danger, width: 1),
-        ),
-        hintStyle: AppTextStyles.body.copyWith(color: AppColors.tertiaryLabel),
-        labelStyle: AppTextStyles.footnote,
-      ),
-
-      // Divider
-      dividerTheme: const DividerThemeData(
-        color: AppColors.separator,
-        thickness: 0.5,
-        space: 1,
-      ),
-
-      // Bottom nav (custom pill nav used instead)
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.secondaryBackground,
-        indicatorColor: AppColors.primarySurface,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppTextStyles.caption2.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700);
-          }
-          return AppTextStyles.caption2;
-        }),
-      ),
-
-      // Text theme bridging
-      textTheme: TextTheme(
-        displaySmall: AppTextStyles.largeTitle,
-        headlineMedium: AppTextStyles.title1,
-        headlineSmall: AppTextStyles.title2,
-        titleLarge: AppTextStyles.title3,
-        titleMedium: AppTextStyles.headline,
-        bodyLarge: AppTextStyles.body,
-        bodyMedium: AppTextStyles.callout,
-        bodySmall: AppTextStyles.subheadline,
-        labelLarge: AppTextStyles.labelLarge,
-        labelMedium: AppTextStyles.footnote,
-        labelSmall: AppTextStyles.caption2,
       ),
     );
+    return base;
   }
+
+  static OutlineInputBorder _border(Color c, double w) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: c, width: w),
+      );
+}
+
+/// iOS-like bounce on every platform.
+class BouncingScrollBehavior extends MaterialScrollBehavior {
+  const BouncingScrollBehavior();
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) => child;
 }
 
 // ==============================================================================
-// ALERT CATEGORY HELPERS
+// ALERT CATEGORY HELPERS (colors + icons; labels come from AppLocalizations)
 // ==============================================================================
 extension AlertCategoryTheme on String {
   Color get categoryColor {
@@ -208,20 +187,34 @@ extension AlertCategoryTheme on String {
       case 'electricity': return AppColors.electricity;
       case 'water': return AppColors.water;
       case 'govt': return AppColors.govt;
+      // community news categories
+      case 'traffic': return AppColors.road;
+      case 'civic': return AppColors.govt;
+      case 'health': return AppColors.success;
+      case 'education': return AppColors.weatherBlue;
+      case 'community': return AppColors.primary;
+      case 'other': return AppColors.tertiaryLabel;
       default: return AppColors.primary;
     }
   }
 
-  String get categoryIcon {
+  IconData get categoryIconData {
     switch (toLowerCase()) {
-      case 'road': return '\u{1F6E3}';
-      case 'electricity': return '\u26A1';
-      case 'water': return '\u{1F4A7}';
-      case 'govt': return '\u{1F3DB}';
-      default: return '\u{1F4E2}';
+      case 'road': return Icons.traffic_rounded;
+      case 'electricity': return Icons.bolt_rounded;
+      case 'water': return Icons.water_drop_rounded;
+      case 'govt': return Icons.account_balance_rounded;
+      case 'traffic': return Icons.traffic_rounded;
+      case 'civic': return Icons.account_balance_rounded;
+      case 'health': return Icons.health_and_safety_rounded;
+      case 'education': return Icons.school_rounded;
+      case 'community': return Icons.groups_rounded;
+      case 'other': return Icons.article_rounded;
+      default: return Icons.campaign_rounded;
     }
   }
 
+  /// English fallback label (used by tests and non-UI code).
   String get categoryLabel {
     switch (toLowerCase()) {
       case 'road': return 'Road';

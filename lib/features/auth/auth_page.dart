@@ -1,275 +1,227 @@
 import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import '../../core/l10n/locale_controller.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/error_reporter.dart';
 import '../../core/services/supabase_config.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/glass_components.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/widgets/ui.dart';
+import '../common/language_switch.dart';
 
 // ==============================================================================
-// AUTH PAGE â€” Google OAuth + Email/Password (staff)
-// Shown when the user is not authenticated.
-// After auth, onboarding_state is checked to route to the correct step.
+// AUTH PAGE: two clearly separate paths.
+//   Register: Google only (new account). A username + password can be added afterwards.
+//   Sign in:  Google, or @username + password (for accounts that set a password).
+// There is no e-mail sign-up: the database refuses it.
 // ==============================================================================
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key});
+  /// True when opened from "Add another account": shows a close button and closes itself once a
+  /// different account is signed in.
+  final bool addingAccount;
+  const AuthPage({super.key, this.addingAccount = false});
+
+  /// Bumped by the failure page's "Use username instead" to jump to the username form.
+  static final ValueNotifier<int> showUsernameIntent = ValueNotifier<int>(0);
 
   @override
   State<AuthPage> createState() => _AuthPageState();
 }
 
-class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin {
-  bool _isSignUp = false;
-  bool _obscurePw = true;
-  bool _processing = false;
+class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
+  final _username = TextEditingController();
+  final _password = TextEditingController();
+  int _tab = 0; // 0 = sign in, 1 = register
+  bool _obscure = true;
+  bool _googleBusy = false;
+  bool _usernameBusy = false;
+  bool _awaitingBrowser = false;
+  Timer? _timeout;
   String? _error;
-
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  StreamSubscription<AuthState>? _authSub;
-  bool _googlePending = false;
-
-  late AnimationController _animCtrl;
-  late Animation<double> _fadeAnim;
+  late final String _startedAs = AuthService.currentProfile.id;
 
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
-    _animCtrl.forward();
+    WidgetsBinding.instance.addObserver(this);
+    AuthPage.showUsernameIntent.addListener(_onUsernameIntent);
+    if (widget.addingAccount) AuthNotifier.instance.addListener(_onAccountChanged);
+  }
 
-    // Listen for Google OAuth callback
-    final client = SupabaseConfig.client;
-    if (client != null) {
-      _authSub = client.auth.onAuthStateChange.listen((data) {
-        if (!mounted) return;
-        if (data.event == AuthChangeEvent.signedIn && _googlePending) {
-          _googlePending = false;
-          // AuthService.init() listener handles the rest
-        }
-      });
-    }
+  /// Add-account mode: a different person is now signed in, so this page is done.
+  void _onAccountChanged() {
+    final id = AuthService.currentProfile.id;
+    if (!mounted || id == 'guest' || id == _startedAs) return;
+    AuthNotifier.instance.removeListener(_onAccountChanged);
+    Navigator.of(context).maybePop();
+    AppErrors.restart(); // fresh screens for the new account
   }
 
   @override
   void dispose() {
-    _authSub?.cancel();
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
-    _animCtrl.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    AuthPage.showUsernameIntent.removeListener(_onUsernameIntent);
+    AuthNotifier.instance.removeListener(_onAccountChanged);
+    _timeout?.cancel();
+    _username.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _handleGoogle() async {
-    setState(() { _processing = true; _error = null; _googlePending = true; });
-    final ok = await AuthService.signInWithGoogle();
-    if (!mounted) return;
-    if (!ok) {
-      setState(() { _processing = false; _error = 'Google sign-in could not be launched. Check your connection.'; _googlePending = false; });
-    }
-    // If ok, we wait for the auth state listener to fire
-    setState(() => _processing = false);
+  void _onUsernameIntent() => setState(() {
+        _tab = 0;
+        _error = null;
+      });
+
+  /// Coming back from the Google browser without a session means the person cancelled or it failed.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !_awaitingBrowser) return;
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      if (!mounted || !_awaitingBrowser || AuthService.isAuthenticated) return;
+      _awaitingBrowser = false;
+      _timeout?.cancel();
+      setState(() => _googleBusy = false);
+      AuthService.reportFailure(AuthFailureReason.cancelled);
+    });
   }
 
-  Future<void> _handleEmailAction() async {
-    final email = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Please enter your email and password.');
+  Future<void> _google() async {
+    setState(() {
+      _googleBusy = true;
+      _error = null;
+    });
+    final launched = await AuthService.signInWithGoogle();
+    if (!mounted) return;
+    if (!launched) {
+      setState(() => _googleBusy = false);
+      AuthService.reportFailure(AuthFailureReason.failed);
       return;
     }
+    _awaitingBrowser = true;
+    _timeout?.cancel();
+    _timeout = Timer(const Duration(seconds: 120), () {
+      if (!mounted || AuthService.isAuthenticated) return;
+      _awaitingBrowser = false;
+      setState(() => _googleBusy = false);
+      AuthService.reportFailure(AuthFailureReason.timeout);
+    });
+    // the browser is open now; the busy state ends when the session arrives or the person comes back
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _googleBusy = false);
+    });
+  }
 
-    setState(() { _processing = true; _error = null; });
-
-    bool ok;
-    if (_isSignUp) {
-      ok = await AuthService.signUpWithEmailPassword(
-        email: email,
-        password: password,
-        fullName: 'Harur Resident',
-      );
-    } else {
-      ok = await AuthService.signInWithEmailPassword(email, password);
+  Future<void> _usernameSignIn() async {
+    final t = context.t;
+    final u = _username.text.trim();
+    final p = _password.text;
+    if (u.isEmpty || p.isEmpty) {
+      setState(() => _error = t.wrongCredentials);
+      return;
     }
-
+    setState(() {
+      _usernameBusy = true;
+      _error = null;
+    });
+    final result = await AuthService.signInWithUsername(u, p);
     if (!mounted) return;
-    setState(() => _processing = false);
-
-    if (!ok) {
-      setState(() => _error = _isSignUp
-          ? 'Sign-up failed. Email may already be registered or password too weak.'
-          : 'Sign-in failed. Check your email and password.');
-    }
-    // On success AuthService.init() listener handles routing
+    setState(() {
+      _usernameBusy = false;
+      _error = switch (result) {
+        UsernameLoginResult.ok => null,
+        UsernameLoginResult.invalid => t.wrongCredentials,
+        UsernameLoginResult.tooManyAttempts => t.tooManyAttempts((AuthService.lastRetryAfterSeconds / 60).ceil().clamp(1, 999)),
+        UsernameLoginResult.locked => AuthService.lockedPermanently || AuthService.lockedUntil == null
+            ? t.passwordLoginOff
+            : t.passwordLoginPaused(DateFormat.MMMd(Localizations.localeOf(context).languageCode).add_jm().format(AuthService.lockedUntil!)),
+        UsernameLoginResult.network => t.authNetwork,
+        UsernameLoginResult.error => t.authFailedBody,
+      };
+      if (result != UsernameLoginResult.ok) _password.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isConfigured = SupabaseConfig.isConfigured;
+    final t = context.t;
+    final configured = SupabaseConfig.isConfigured;
 
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
-      body: AtmosphericBackground(
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        // Scrolls when the screen is short (small phones, keyboard open); when there is room the
+        // two blocks sit at the top and bottom of the screen.
+        child: LayoutBuilder(
+          builder: (context, c) => SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: c.maxHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── top block: language + brand ───────────────────────────
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 40),
-
-                      // Logo / Brand
-                      Center(
-                        child: Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.35),
-                                blurRadius: 24,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.location_city_rounded, color: Colors.white, size: 36),
-                        ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          widget.addingAccount
+                              ? IconButton(tooltip: t.closeAction, icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.of(context).maybePop())
+                              : const SizedBox.shrink(),
+                          const LanguageSwitch(width: 168),
+                        ],
                       ),
-                      const SizedBox(height: 24),
-
-                      Text(
-                        'MyHarur',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.largeTitle,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Harur & Dharmapuri\'s digital town platform',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.footnote,
-                      ),
-                      const SizedBox(height: 40),
-
-                      // Backend not configured warning
-                      if (!isConfigured) ...[
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
-                          ),
-                          child: Row(children: [
-                            const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 18),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(
-                              'Running without backend connection. Auth unavailable.',
-                              style: AppTextStyles.caption1.copyWith(color: AppColors.warning),
-                            )),
-                          ]),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Google Sign-In button
-                      _GoogleSignInButton(
-                        onPressed: isConfigured ? _handleGoogle : null,
-                        loading: _processing && _googlePending,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Divider
-                      Row(children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text('or staff login', style: AppTextStyles.caption1),
-                        ),
-                        const Expanded(child: Divider()),
-                      ]),
-
-                      const SizedBox(height: 20),
-
-                      // Email / Password (staff only)
-                      GlassCard(
-                        fillColor: Colors.white.withValues(alpha: 0.92),
-                        blurSigma: 16,
-                        borderRadius: 20,
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.email_outlined),
-                                labelText: 'Staff Email',
-                                hintText: 'name@qenbel.com',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _passwordCtrl,
-                              obscureText: _obscurePw,
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                                labelText: 'Password',
-                                suffixIcon: IconButton(
-                                  icon: Icon(_obscurePw ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                                  onPressed: () => setState(() => _obscurePw = !_obscurePw),
-                                ),
-                              ),
-                            ),
-                            if (_error != null) ...[
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.danger.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(_error!, style: AppTextStyles.caption1.copyWith(color: AppColors.danger)),
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: isConfigured && !(_processing && _googlePending)
-                                  ? _handleEmailAction
-                                  : null,
-                              child: _processing && !_googlePending
-                                  ? const SizedBox(height: 18, width: 18,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                  : Text(_isSignUp ? 'Create Account' : 'Sign In'),
-                            ),
-                            const SizedBox(height: 10),
-                            TextButton(
-                              onPressed: () => setState(() => _isSignUp = !_isSignUp),
-                              child: Text(_isSignUp ? 'Already have an account? Sign In' : 'New here? Create Account'),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-                      Text(
-                        'A QenBel product • Powered by Supabase',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.caption2,
-                      ),
+                      const SizedBox(height: 28),
+                      const Center(child: BrandLogo(width: 170)),
+                      const SizedBox(height: 10),
+                      Text(t.appName, textAlign: TextAlign.center, style: AppTextStyles.title1),
                       const SizedBox(height: 24),
                     ],
                   ),
-                ),
+
+                  // ── bottom block: sign in / register ──────────────────────
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!configured) ...[
+                        Banner2(icon: Icons.cloud_off_rounded, text: t.noBackend, color: AppColors.warning),
+                        const SizedBox(height: 12),
+                      ],
+                      SegmentedPill(
+                        labels: [t.tabSignIn, t.tabRegister],
+                        selected: _tab,
+                        onChanged: (i) => setState(() {
+                          _tab = i;
+                          _error = null;
+                        }),
+                      ),
+                      const SizedBox(height: 18),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 260),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: _tab == 0 ? _signIn(context, configured) : _register(context, configured),
+                        ),
+                      ),
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(_error!, textAlign: TextAlign.center, style: AppTextStyles.footnote.copyWith(color: AppColors.danger)),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16, bottom: 14),
+                        child: Text(t.authFooter, textAlign: TextAlign.center, style: AppTextStyles.caption2),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -277,60 +229,114 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
       ),
     );
   }
+
+  // ── Sign in ────────────────────────────────────────────────────────────────
+  Widget _signIn(BuildContext context, bool configured) {
+    final t = context.t;
+    return Column(
+      key: const ValueKey('signin'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(t.signInExplain, textAlign: TextAlign.center, style: AppTextStyles.subheadline.copyWith(color: AppColors.secondaryLabel)),
+        const SizedBox(height: 14),
+        _GoogleButton(label: t.continueWithGoogle, loading: _googleBusy, onTap: configured ? _google : null),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(children: [
+            const Expanded(child: Divider()),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(t.orDivider, style: AppTextStyles.caption1)),
+            const Expanded(child: Divider()),
+          ]),
+        ),
+        TextField(
+          controller: _username,
+          autocorrect: false,
+          enableSuggestions: false,
+          textInputAction: TextInputAction.next,
+          autofillHints: const [AutofillHints.username],
+          decoration: InputDecoration(labelText: t.usernameField, prefixText: '@'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _password,
+          obscureText: _obscure,
+          autofillHints: const [AutofillHints.password],
+          onSubmitted: (_) => _usernameSignIn(),
+          decoration: InputDecoration(
+            labelText: t.password,
+            suffixIcon: IconButton(
+              icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppColors.tertiaryLabel),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        PrimaryButton(label: t.usernameSignIn, loading: _usernameBusy, onPressed: configured ? _usernameSignIn : null),
+        const SizedBox(height: 10),
+        Text(t.noPasswordYet, textAlign: TextAlign.center, style: AppTextStyles.caption1),
+      ],
+    );
+  }
+
+  // ── Register ───────────────────────────────────────────────────────────────
+  Widget _register(BuildContext context, bool configured) {
+    final t = context.t;
+    return Column(
+      key: const ValueKey('register'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(t.registerWelcome, textAlign: TextAlign.center, style: AppTextStyles.title3),
+        const SizedBox(height: 8),
+        Text(t.registerExplain, textAlign: TextAlign.center, style: AppTextStyles.subheadline.copyWith(color: AppColors.secondaryLabel)),
+        const SizedBox(height: 18),
+        _GoogleButton(label: t.registerWithGoogle, loading: _googleBusy, onTap: configured ? _google : null),
+      ],
+    );
+  }
 }
 
-// â”€â”€ Google Sign-In Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _GoogleSignInButton extends StatelessWidget {
-  final VoidCallback? onPressed;
+class _GoogleButton extends StatelessWidget {
+  final String label;
   final bool loading;
-
-  const _GoogleSignInButton({this.onPressed, this.loading = false});
+  final VoidCallback? onTap;
+  const _GoogleButton({required this.label, required this.loading, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.separator),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    return Pressable(
+      onTap: loading ? null : onTap,
+      haptic: true,
+      scale: 0.98,
+      child: Opacity(
+        opacity: onTap == null ? 0.5 : 1,
+        child: SoftShadow(
+          radius: 17,
+          shadows: const [BoxShadow(color: Color(0x14000000), blurRadius: 16, offset: Offset(0, 4))],
+          child: Container(
+            height: 54,
+            decoration: ShapeDecoration(color: Colors.white, shape: squircle(17)),
+            child: Center(
+              child: loading
+                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.2))
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (r) => const SweepGradient(
+                            colors: [Color(0xFF4285F4), Color(0xFF34A853), Color(0xFFFBBC05), Color(0xFFEA4335), Color(0xFF4285F4)],
+                            startAngle: -0.4,
+                            endAngle: 5.9,
+                          ).createShader(r),
+                          child: const Text('G', style: TextStyle(fontFamily: 'Inter', fontSize: 25, fontWeight: FontWeight.w700, color: Colors.white, height: 1)),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(label, style: AppTextStyles.headline),
+                      ],
+                    ),
             ),
-          ],
-        ),
-        child: Center(
-          child: loading
-              ? const SizedBox(height: 20, width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Google G icon
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4285F4),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Icon(Icons.g_mobiledata_rounded, color: Colors.white, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Continue with Google',
-                      style: AppTextStyles.headline.copyWith(fontSize: 16),
-                    ),
-                  ],
-                ),
+          ),
         ),
       ),
     );
   }
 }
-

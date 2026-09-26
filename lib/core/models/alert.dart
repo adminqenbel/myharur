@@ -1,26 +1,38 @@
+import 'place.dart';
+
 // ==============================================================================
-// ALERT MODEL — MyHarur v1 core data model
+// ALERT MODEL — a community or official report
 // ==============================================================================
 class Alert {
   final String id;
-  final String category; // road | electricity | water | govt
-  final int? wardId;
+  final String kind; // report | news
+  final String category; // report: road | electricity | water | govt; news: traffic | civic | health | education | community | other
   final String title;
   final String body;
   final String source; // official | community
   final String status; // published | pending | rejected | expired
   final String? publishedAsRole;
-  final String? createdByUid; // QenBel UID
+  final String? createdByUid;
   final DateTime? expiresAt;
   final bool emergencyTagged;
   final DateTime createdAt;
-  // Optional: populated from join
-  final String? wardName;
+
+  /// Optional https link (news only) and up to three private photos (paths in the content-images bucket).
+  final String? linkUrl;
+  final List<String> imagePaths;
+
+  /// Where it happened: a pinned point and/or typed text. Optional.
+  final PickedLocation? location;
+
+  // Automated filter output (visible to the author and to staff only)
+  final List<String> moderationFlags; // profanity | dangerous_terms | link | phone_number
+  final bool flaggedBySystem;
+  final String? moderationReason;
 
   const Alert({
     required this.id,
+    this.kind = 'report',
     required this.category,
-    this.wardId,
     required this.title,
     required this.body,
     required this.source,
@@ -30,47 +42,47 @@ class Alert {
     this.expiresAt,
     this.emergencyTagged = false,
     required this.createdAt,
-    this.wardName,
+    this.linkUrl,
+    this.imagePaths = const [],
+    this.location,
+    this.moderationFlags = const [],
+    this.flaggedBySystem = false,
+    this.moderationReason,
   });
 
   factory Alert.fromJson(Map<String, dynamic> json) {
     return Alert(
       id: json['id'] as String,
+      kind: json['kind'] as String? ?? 'report',
       category: json['category'] as String? ?? 'govt',
-      wardId: json['ward_id'] as int?,
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       source: json['source'] as String? ?? 'community',
       status: json['status'] as String? ?? 'pending',
       publishedAsRole: json['published_as_role'] as String?,
       createdByUid: json['created_by_uid'] as String?,
-      expiresAt: json['expires_at'] != null
-          ? DateTime.tryParse(json['expires_at'] as String)
-          : null,
+      expiresAt: json['expires_at'] != null ? DateTime.tryParse(json['expires_at'] as String) : null,
       emergencyTagged: json['emergency_tagged'] as bool? ?? false,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      wardName: json['ward_name'] as String?,
+      linkUrl: json['link_url'] as String?,
+      imagePaths: (json['image_paths'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      location: PickedLocation.fromColumns(
+        text: json['location_text'] as String?,
+        lat: (json['location_lat'] as num?)?.toDouble(),
+        lng: (json['location_lng'] as num?)?.toDouble(),
+        source: json['location_source'] as String?,
+      ),
+      moderationFlags: (json['moderation_flags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      flaggedBySystem: json['flagged_by_system'] as bool? ?? false,
+      moderationReason: json['moderation_reason'] as String?,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'category': category,
-    'ward_id': wardId,
-    'title': title,
-    'body': body,
-    'source': source,
-    'status': status,
-    'published_as_role': publishedAsRole,
-    'created_by_uid': createdByUid,
-    'expires_at': expiresAt?.toIso8601String(),
-    'emergency_tagged': emergencyTagged,
-  };
-
+  bool get isNews => kind == 'news';
   bool get isOfficial => source == 'official';
   bool get isPending => status == 'pending';
   bool get isPublished => status == 'published';
-  bool get isExpired => status == 'expired' ||
-      (expiresAt != null && DateTime.now().isAfter(expiresAt!));
+  bool get isExpired => status == 'expired' || (expiresAt != null && DateTime.now().isAfter(expiresAt!));
 
   String get timeAgo {
     final diff = DateTime.now().difference(createdAt);

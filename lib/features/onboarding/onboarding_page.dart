@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/locale_controller.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/glass_components.dart';
+import '../../core/widgets/ui.dart';
+import '../common/language_switch.dart';
 
 // ==============================================================================
-// ONBOARDING FLOW — Blocking state machine
-// Steps: PENDING_USERNAME → PENDING_PROFILE → PENDING_OCCUPATION → PENDING_SOURCE → COMPLETE
-// Cannot reach home screen mid-flow. Staff accounts skip (seeded as COMPLETE).
+// ONBOARDING — a short, blocking flow: username -> about you -> occupation.
+// State lives in profiles.onboarding_state: PENDING_USERNAME -> PENDING_PROFILE ->
+// PENDING_OCCUPATION -> COMPLETE. Ward is NOT part of onboarding (optional, set later).
 // ==============================================================================
-
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
+
+  /// The optional password step is offered once per launch, right after the username.
+  static bool _passwordOffered = false;
+
+  @visibleForTesting
+  static void debugReset() => _passwordOffered = false;
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -19,20 +26,32 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
-    final state = AuthService.currentProfile.onboardingState;
-    return switch (state) {
-      'PENDING_USERNAME'   => const _UsernameStep(),
-      'PENDING_PROFILE'    => const _ProfileStep(),
-      'PENDING_OCCUPATION' => const _OccupationStep(),
-      'PENDING_SOURCE'     => const _SourceStep(),
-      _ => const _UsernameStep(),  // fallback
-    };
+    // _AuthShell hands us a const widget, which Flutter never rebuilds on its own, so we
+    // listen ourselves; otherwise the flow stays stuck on the step it started at even
+    // though the new onboarding_state was saved.
+    return ListenableBuilder(
+      listenable: AuthNotifier.instance,
+      builder: (context, _) {
+        final state = AuthService.currentProfile.onboardingState;
+        return switch (state) {
+          'PENDING_USERNAME' => const _UsernameStep(),
+          'PENDING_PROFILE' => OnboardingPage._passwordOffered
+              ? const _ProfileStep()
+              : _PasswordStep(onDone: () => setState(() => OnboardingPage._passwordOffered = true)),
+          'PENDING_OCCUPATION' => const _OccupationStep(),
+          'PENDING_SOURCE' => const _AutoComplete(), // legacy state from an older flow
+          _ => const _UsernameStep(),
+        };
+      },
+    );
   }
 }
 
-// ── Base scaffold for all onboarding steps ──────────────────────────────────────
-class _OnboardingScaffold extends StatelessWidget {
-  final String stepLabel;
+const _totalSteps = 4;
+
+// ── Shared scaffold ────────────────────────────────────────────────────────────
+class _StepScaffold extends StatelessWidget {
+  final int step;
   final String title;
   final String subtitle;
   final Widget content;
@@ -40,95 +59,76 @@ class _OnboardingScaffold extends StatelessWidget {
   final VoidCallback? onNext;
   final bool loading;
   final String? error;
-  final int currentStep; // 1-4
-  final bool canSkip;
-  final VoidCallback? onSkip;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
 
-  const _OnboardingScaffold({
-    required this.stepLabel,
+  const _StepScaffold({
+    required this.step,
     required this.title,
     required this.subtitle,
     required this.content,
     required this.buttonLabel,
-    this.onNext,
+    required this.onNext,
     this.loading = false,
     this.error,
-    required this.currentStep,
-    this.canSkip = false,
-    this.onSkip,
+    this.secondaryLabel,
+    this.onSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = context.t;
     return Scaffold(
-      backgroundColor: AppColors.systemBackground,
-      body: AtmosphericBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 24),
-
-                // Step progress
-                Row(
-                  children: List.generate(4, (i) => Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(right: i < 3 ? 6 : 0),
-                      decoration: BoxDecoration(
-                        color: i < currentStep ? AppColors.primary : AppColors.separator,
-                        borderRadius: BorderRadius.circular(2),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: List.generate(
+                        _totalSteps,
+                        (i) => Expanded(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 320),
+                            curve: Curves.easeOutCubic,
+                            height: 4,
+                            margin: EdgeInsets.only(right: i < _totalSteps - 1 ? 6 : 0),
+                            decoration: BoxDecoration(
+                              color: i < step ? AppColors.primary : AppColors.separator,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  )),
-                ),
-                const SizedBox(height: 8),
-                Text(stepLabel, style: AppTextStyles.caption2),
-                const SizedBox(height: 24),
-
-                Text(title, style: AppTextStyles.title1),
-                const SizedBox(height: 8),
-                Text(subtitle, style: AppTextStyles.footnote),
-                const SizedBox(height: 32),
-
-                Expanded(child: SingleChildScrollView(child: content)),
-
-                if (error != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.danger.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      error!,
-                      style: AppTextStyles.caption1.copyWith(color: AppColors.danger),
-                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(width: 20),
+                  const LanguageSwitch(width: 132),
                 ],
-
-                ElevatedButton(
-                  onPressed: loading ? null : onNext,
-                  child: loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : Text(buttonLabel),
+              ),
+              const SizedBox(height: 22),
+              Text(t.stepOf(step, _totalSteps), style: AppTextStyles.footnote),
+              const SizedBox(height: 6),
+              Text(title, style: AppTextStyles.title1),
+              const SizedBox(height: 8),
+              Text(subtitle, style: AppTextStyles.callout.copyWith(color: AppColors.secondaryLabel)),
+              const SizedBox(height: 26),
+              Expanded(child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, child: content)),
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(error!, textAlign: TextAlign.center, style: AppTextStyles.footnote.copyWith(color: AppColors.danger)),
                 ),
-
-                if (canSkip) ...[
-                  const SizedBox(height: 10),
-                  TextButton(onPressed: onSkip, child: const Text('Skip for now')),
-                ],
-
-                const SizedBox(height: 24),
-              ],
-            ),
+              PrimaryButton(label: buttonLabel, onPressed: onNext, loading: loading),
+              if (secondaryLabel != null) TextButton(onPressed: onSecondary, child: Text(secondaryLabel!)),
+              const SizedBox(height: 18),
+            ],
           ),
         ),
       ),
@@ -136,7 +136,9 @@ class _OnboardingScaffold extends StatelessWidget {
   }
 }
 
-// ── Step 1: Choose Username ────────────────────────────────────────────────────
+// ── Step 1: username ───────────────────────────────────────────────────────────
+enum _UsernameProblem { short, long, chars, reserved, bad }
+
 class _UsernameStep extends StatefulWidget {
   const _UsernameStep();
   @override
@@ -148,93 +150,189 @@ class _UsernameStepState extends State<_UsernameStep> {
   bool _loading = false;
   String? _error;
 
-  static final _reserved = {
-    'admin', 'superadmin', 'qenbel', 'official',
-    'govt', 'police', 'harur', 'support',
-  };
-  static final _badWords = {
-    'fuck', 'shit', 'bitch', 'thevidiya', 'thevadiya', 'otha', 'pundai',
-  };
+  static const _reserved = {'admin', 'superadmin', 'qenbel', 'official', 'govt', 'police', 'harur', 'support', 'moderator', 'myharur'};
+  static const _bad = {'fuck', 'shit', 'bitch', 'thevidiya', 'thevadiya', 'otha', 'pundai'};
 
-  String? _validate(String raw) {
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  static _UsernameProblem? validate(String raw) {
     final u = raw.trim().toLowerCase().replaceAll('@', '');
-    if (u.length < 3) return 'Username must be at least 3 characters.';
-    if (u.length > 30) return 'Username cannot exceed 30 characters.';
-    if (!RegExp(r'^[a-z0-9_]+$').hasMatch(u)) {
-      return 'Only letters, numbers, and _ allowed.';
-    }
-    final stripped = u.replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (u.length < 3) return _UsernameProblem.short;
+    if (u.length > 30) return _UsernameProblem.long;
+    if (!RegExp(r'^[a-z0-9_]+$').hasMatch(u)) return _UsernameProblem.chars;
+    final stripped = u.replaceAll('_', '');
     for (final r in _reserved) {
-      if (stripped == r || (stripped.startsWith(r) && stripped.length <= r.length + 4)) {
-        return 'This username is reserved for system officials.';
-      }
+      if (stripped == r || (stripped.startsWith(r) && stripped.length <= r.length + 4)) return _UsernameProblem.reserved;
     }
-    for (final b in _badWords) {
-      if (stripped.contains(b)) return 'Username contains prohibited words.';
+    for (final b in _bad) {
+      if (stripped.contains(b)) return _UsernameProblem.bad;
     }
     return null;
   }
 
   Future<void> _next() async {
-    final err = _validate(_ctrl.text);
-    if (err != null) {
-      setState(() => _error = err);
+    final t = context.t;
+    final problem = validate(_ctrl.text);
+    if (problem != null) {
+      setState(() => _error = switch (problem) {
+            _UsernameProblem.short => t.usernameShort,
+            _UsernameProblem.long => t.usernameLong,
+            _UsernameProblem.chars => t.usernameChars,
+            _UsernameProblem.reserved => t.usernameReserved,
+            _UsernameProblem.bad => t.usernameBad,
+          });
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final ok = await AuthService.saveProfile(
-      fullName: AuthService.currentProfile.fullName,
-      phone: AuthService.currentProfile.phone,
-      username: '@${_ctrl.text.trim().toLowerCase()}',
+      username: '@${_ctrl.text.trim().toLowerCase().replaceAll('@', '')}',
       onboardingState: 'PENDING_PROFILE',
     );
     if (!mounted) return;
-    setState(() => _loading = false);
-    if (!ok) setState(() => _error = 'Could not save username. Please try again.');
+    setState(() {
+      _loading = false;
+      if (!ok) {
+        final code = AuthService.lastSaveErrorCode;
+        final msg = AuthService.lastSaveErrorMessage ?? '';
+        _error = code == '23505'
+            ? t.usernameTaken
+            : msg.contains('username_reserved')
+                ? t.usernameReserved
+                : msg.contains('username_bad')
+                    ? t.usernameBad
+                    : msg.contains('username_invalid')
+                        ? t.usernameChars
+                        : t.saveFailed;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return _OnboardingScaffold(
-      stepLabel: 'STEP 1 OF 4',
-      title: 'Choose your\nusername',
-      subtitle: 'This is your public handle in MyHarur. It cannot be changed later.',
-      currentStep: 1,
-      buttonLabel: 'Continue',
+    final t = context.t;
+    return _StepScaffold(
+      step: 1,
+      title: t.obUsernameTitle,
+      subtitle: t.obUsernameSub,
+      buttonLabel: t.continueLabel,
       onNext: _next,
       loading: _loading,
       error: _error,
       content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
+          TextField(
             controller: _ctrl,
-            keyboardType: TextInputType.visiblePassword,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              prefixText: '@',
-              hintText: 'your_handle',
-              labelText: 'Username',
-            ),
+            onSubmitted: (_) => _next(),
             onChanged: (_) => setState(() => _error = null),
+            decoration: InputDecoration(prefixText: '@', hintText: 'your_name', labelText: t.username),
           ),
-          const SizedBox(height: 12),
-          Row(children: [
-            const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.tertiaryLabel),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                'Letters, numbers, and underscores only. No profanity or reserved names.',
-                style: AppTextStyles.caption2,
-              ),
-            ),
-          ]),
+          const SizedBox(height: 10),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text(t.usernameHint, style: AppTextStyles.caption1)),
         ],
       ),
     );
   }
 }
 
-// ── Step 2: Profile details ────────────────────────────────────────────────────
+// ── Step 2: optional password (for username sign-in) ───────────────────────────
+class _PasswordStep extends StatefulWidget {
+  final VoidCallback onDone;
+  const _PasswordStep({required this.onDone});
+  @override
+  State<_PasswordStep> createState() => _PasswordStepState();
+}
+
+class _PasswordStepState extends State<_PasswordStep> {
+  final _pw = TextEditingController();
+  final _confirm = TextEditingController();
+  bool _obscure = true;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _pw.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final t = context.t;
+    final username = AuthService.currentProfile.username;
+    if (!AuthService.isStrongPassword(_pw.text, username: username)) {
+      setState(() => _error = t.passwordWeak);
+      return;
+    }
+    if (_pw.text != _confirm.text) {
+      setState(() => _error = t.passwordMismatch);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final ok = await AuthService.setPassword(_pw.text);
+    if (!mounted) return;
+    if (ok) {
+      widget.onDone();
+    } else {
+      setState(() {
+        _loading = false;
+        _error = t.passwordFailed;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return _StepScaffold(
+      step: 2,
+      title: t.obPasswordTitle,
+      subtitle: t.obPasswordSub,
+      buttonLabel: t.save,
+      onNext: _save,
+      loading: _loading,
+      error: _error,
+      secondaryLabel: t.skipForNow,
+      onSecondary: widget.onDone,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _pw,
+            obscureText: _obscure,
+            autofillHints: const [AutofillHints.newPassword],
+            decoration: InputDecoration(
+              labelText: t.newPassword,
+              suffixIcon: IconButton(
+                icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppColors.tertiaryLabel),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(controller: _confirm, obscureText: _obscure, decoration: InputDecoration(labelText: t.confirmPassword)),
+          Padding(padding: const EdgeInsets.fromLTRB(4, 8, 4, 0), child: Text(t.passwordRules, style: AppTextStyles.caption1)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Step 2: about you ──────────────────────────────────────────────────────────
 class _ProfileStep extends StatefulWidget {
   const _ProfileStep();
   @override
@@ -244,91 +342,92 @@ class _ProfileStep extends StatefulWidget {
 class _ProfileStepState extends State<_ProfileStep> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  int? _selectedWardId;
-  String _bloodGroup = 'O+';
+  String? _blood; // optional: null = not set
   bool _loading = false;
   String? _error;
 
-  final _bloodGroups = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-'];
-  final _wards = List.generate(18, (i) => {'id': i + 1, 'name': 'Ward ${i + 1}'});
+  static const _groups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
   @override
   void initState() {
     super.initState();
     final p = AuthService.currentProfile;
-    _nameCtrl.text = p.fullName == 'Harur Resident' ? '' : p.fullName;
+    // Pre-fill from the Google account so most people just tap Continue.
+    final google = AuthService.googleName;
+    _nameCtrl.text = p.fullName != 'Harur Resident' ? p.fullName : (google ?? '');
     _phoneCtrl.text = p.phone;
-    _selectedWardId = p.wardId;
-    if (p.bloodGroup.isNotEmpty) _bloodGroup = p.bloodGroup;
+    if (p.bloodGroup.isNotEmpty) _blood = p.bloodGroup;
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _next() async {
+    final t = context.t;
     if (_nameCtrl.text.trim().length < 2) {
-      setState(() => _error = 'Please enter your full name.');
+      setState(() => _error = t.nameRequired);
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final ok = await AuthService.saveProfile(
-      fullName: _nameCtrl.text.trim(),
-      phone: _phoneCtrl.text.trim(),
-      wardId: _selectedWardId,
-      bloodGroup: _bloodGroup,
+      fullName: _nameCtrl.text,
+      phone: _phoneCtrl.text,
+      bloodGroup: _blood ?? '',
       onboardingState: 'PENDING_OCCUPATION',
     );
     if (!mounted) return;
-    setState(() => _loading = false);
-    if (!ok) setState(() => _error = 'Could not save. Please try again.');
+    setState(() {
+      _loading = false;
+      if (!ok) _error = t.saveFailed;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return _OnboardingScaffold(
-      stepLabel: 'STEP 2 OF 4',
-      title: 'Tell us\nabout yourself',
-      subtitle: 'Help the town know you. Your ward helps us show relevant alerts.',
-      currentStep: 2,
-      buttonLabel: 'Continue',
+    final t = context.t;
+    return _StepScaffold(
+      step: 3,
+      title: t.obProfileTitle,
+      subtitle: t.obProfileSub,
+      buttonLabel: t.continueLabel,
       onNext: _next,
       loading: _loading,
       error: _error,
       content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
+          TextField(
             controller: _nameCtrl,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Full Name',
-              hintText: 'Your real name',
-            ),
+            textInputAction: TextInputAction.next,
+            decoration: InputDecoration(labelText: t.fullName),
           ),
           const SizedBox(height: 12),
-          TextFormField(
+          TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'Phone Number (optional)',
-              hintText: '+91 9XXXXXXXX',
-            ),
+            decoration: InputDecoration(labelText: t.phoneOptional, hintText: '+91'),
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<int>(
-            initialValue: _selectedWardId,
-            decoration: const InputDecoration(labelText: 'Your Ward (Harur)'),
-            hint: const Text('Select ward'),
-            items: _wards.map((w) => DropdownMenuItem<int>(
-              value: w['id'] as int,
-              child: Text(w['name'] as String),
-            )).toList(),
-            onChanged: (v) => setState(() => _selectedWardId = v),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _bloodGroup,
-            decoration: const InputDecoration(labelText: 'Blood Group'),
-            items: _bloodGroups
-                .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                .toList(),
-            onChanged: (v) => setState(() => _bloodGroup = v ?? 'O+'),
+          const SizedBox(height: 22),
+          Padding(padding: const EdgeInsets.only(left: 4, bottom: 10), child: Text(t.bloodGroupOptional, style: AppTextStyles.footnote)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final g in _groups)
+                FilterPill(
+                  label: g,
+                  selected: _blood == g,
+                  onTap: () => setState(() => _blood = _blood == g ? null : g),
+                ),
+            ],
           ),
         ],
       ),
@@ -336,7 +435,7 @@ class _ProfileStepState extends State<_ProfileStep> {
   }
 }
 
-// ── Step 3: Occupation ──────────────────────────────────────────────────────────
+// ── Step 3: occupation ─────────────────────────────────────────────────────────
 class _OccupationStep extends StatefulWidget {
   const _OccupationStep();
   @override
@@ -346,156 +445,81 @@ class _OccupationStep extends StatefulWidget {
 class _OccupationStepState extends State<_OccupationStep> {
   String? _selected;
   bool _loading = false;
+  String? _error;
 
-  final _options = [
-    {'value': 'student',      'label': 'Student',       'icon': '\u{1F393}'},
-    {'value': 'shop_owner',   'label': 'Shop Owner',    'icon': '\u{1F3EA}'},
-    {'value': 'employee',     'label': 'Employee',      'icon': '\u{1F4BC}'},
-    {'value': 'govt_employee','label': 'Govt Employee', 'icon': '\u{1F3DB}'},
-    {'value': 'farmer',       'label': 'Farmer',        'icon': '\u{1F33E}'},
-    {'value': 'other',        'label': 'Other',         'icon': '\u2728'},
-  ];
-
-  Future<void> _next() async {
+  Future<void> _finish() async {
+    final t = context.t;
     if (_selected == null) return;
-    setState(() => _loading = true);
-    await AuthService.saveProfile(
-      fullName: AuthService.currentProfile.fullName,
-      phone: AuthService.currentProfile.phone,
-      occupation: _selected,
-      onboardingState: 'PENDING_SOURCE',
-    );
-    if (mounted) setState(() => _loading = false);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final ok = await AuthService.saveProfile(occupation: _selected, onboardingState: 'COMPLETE');
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (!ok) _error = t.saveFailed;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return _OnboardingScaffold(
-      stepLabel: 'STEP 3 OF 4',
-      title: 'What do\nyou do?',
-      subtitle: 'Helps us show more relevant alerts and services for you.',
-      currentStep: 3,
-      buttonLabel: 'Continue',
-      onNext: _selected != null ? _next : null,
+    final t = context.t;
+    final options = <(String, String, IconData)>[
+      ('student', t.occStudent, Icons.school_rounded),
+      ('shop_owner', t.occShopOwner, Icons.storefront_rounded),
+      ('employee', t.occEmployee, Icons.work_rounded),
+      ('govt_employee', t.occGovtEmployee, Icons.account_balance_rounded),
+      ('farmer', t.occFarmer, Icons.agriculture_rounded),
+      ('other', t.occOther, Icons.more_horiz_rounded),
+    ];
+    const colors = [Color(0xFF5E5CE6), Color(0xFFFF9500), Color(0xFF007AFF), Color(0xFF34AADC), Color(0xFF30B350), Color(0xFF8E8E93)];
+
+    return _StepScaffold(
+      step: 4,
+      title: t.obOccupationTitle,
+      subtitle: t.obOccupationSub,
+      buttonLabel: t.getStarted,
+      onNext: _selected == null ? null : _finish,
       loading: _loading,
-      content: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: _options.map((opt) {
-          final selected = _selected == opt['value'];
-          return GestureDetector(
-            onTap: () => setState(() => _selected = opt['value']),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: selected ? AppColors.primary : AppColors.separator,
-                ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.20),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ]
-                    : [],
+      error: _error,
+      content: GroupedSection(
+        margin: EdgeInsets.zero,
+        dividerIndent: 58,
+        children: [
+          for (var i = 0; i < options.length; i++)
+            GroupedRow(
+              icon: options[i].$3,
+              iconColor: colors[i],
+              title: options[i].$2,
+              trailing: AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: _selected == options[i].$1 ? 1 : 0,
+                child: const Icon(Icons.check_rounded, color: AppColors.primary),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(opt['icon']!, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Text(
-                    opt['label']!,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: selected ? Colors.white : AppColors.ink,
-                    ),
-                  ),
-                ],
-              ),
+              onTap: () => setState(() => _selected = options[i].$1),
             ),
-          );
-        }).toList(),
+        ],
       ),
     );
   }
 }
 
-// ── Step 4: How'd you hear (SKIPPABLE) ─────────────────────────────────────────
-class _SourceStep extends StatefulWidget {
-  const _SourceStep();
+// ── Legacy state: finish silently ──────────────────────────────────────────────
+class _AutoComplete extends StatefulWidget {
+  const _AutoComplete();
   @override
-  State<_SourceStep> createState() => _SourceStepState();
+  State<_AutoComplete> createState() => _AutoCompleteState();
 }
 
-class _SourceStepState extends State<_SourceStep> {
-  String? _selected;
-  bool _loading = false;
-
-  final _sources = [
-    'Friend / Family',
-    'Social Media',
-    'Local News',
-    'Poster / Banner',
-    'Government notice',
-    'Other',
-  ];
-
-  Future<void> _complete({bool skip = false}) async {
-    setState(() => _loading = true);
-    await AuthService.saveProfile(
-      fullName: AuthService.currentProfile.fullName,
-      phone: AuthService.currentProfile.phone,
-      onboardingState: 'COMPLETE',
-    );
-    if (mounted) setState(() => _loading = false);
-    // AuthNotifier fires → MyHarurApp rebuilds → TownShell appears
+class _AutoCompleteState extends State<_AutoComplete> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => AuthService.saveProfile(onboardingState: 'COMPLETE'));
   }
 
   @override
-  Widget build(BuildContext context) {
-    return _OnboardingScaffold(
-      stepLabel: 'STEP 4 OF 4',
-      title: 'How did you\nhear about us?',
-      subtitle: 'Optional \u2014 this helps us spread the word more effectively.',
-      currentStep: 4,
-      buttonLabel: 'Get Started',
-      onNext: () => _complete(),
-      loading: _loading,
-      canSkip: true,
-      onSkip: () => _complete(skip: true),
-      content: Column(
-        children: _sources.map((s) {
-          final selected = _selected == s;
-          return GestureDetector(
-            onTap: () => setState(() => _selected = s),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primarySurface : Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: selected ? AppColors.primary : AppColors.separator,
-                  width: selected ? 1.5 : 0.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(child: Text(s, style: AppTextStyles.subheadline)),
-                  if (selected)
-                    const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      const Scaffold(backgroundColor: AppColors.background, body: Center(child: CircularProgressIndicator()));
 }

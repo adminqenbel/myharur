@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'supabase_config.dart';
+import '../util/secure_log.dart';
 
 // ==============================================================================
 // FEATURE FLAG SERVICE — server-controlled module on/off gates
@@ -33,9 +33,9 @@ class FeatureFlagService {
         _flags = {..._flags, ...fetched};
       }
       _loaded = true;
-      debugPrint('[FLAGS] Loaded: $_flags');
+      secureLog('[FLAGS] Loaded: $_flags');
     } catch (e) {
-      debugPrint('[FLAGS] loadFlags error: $e — using defaults (all off)');
+      secureLog('[FLAGS] loadFlags error: $e — using defaults (all off)');
     }
   }
 

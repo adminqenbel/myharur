@@ -1,71 +1,131 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'core/services/supabase_config.dart';
+import 'core/l10n/locale_controller.dart';
+import 'core/models/weather.dart';
+import 'core/services/alerts_service.dart';
 import 'core/services/auth_service.dart';
+import 'core/services/error_reporter.dart';
 import 'core/services/feature_flag_service.dart';
+import 'core/services/push_service.dart';
+import 'core/services/supabase_config.dart';
+import 'core/services/weather_service.dart';
 import 'core/theme/app_theme.dart';
-import 'core/widgets/glass_components.dart';
-import 'features/auth/auth_page.dart';
-import 'features/home/home_page.dart';
-import 'features/onboarding/onboarding_page.dart';
+import 'core/widgets/ui.dart';
 import 'features/account/account_page.dart';
-import 'features/explore/explore_page.dart';
-import 'features/alerts/submit_alert_page.dart';
+import 'features/account/notifications_page.dart';
+import 'features/auth/auth_page.dart';
+import 'features/errors/error_pages.dart';
+import 'features/home/home_page.dart';
+import 'features/moderation/moderation_page.dart';
+import 'features/news/news_page.dart';
+import 'features/onboarding/onboarding_page.dart';
+import 'features/reports/reports_page.dart';
+import 'features/security/force_password_page.dart';
+import 'features/security/mfa_pages.dart';
+import 'features/security/suspended_page.dart';
+import 'features/splash/splash_gate.dart';
+import 'features/update/update_gate.dart';
+import 'features/weather/weather_page.dart';
 
 // ==============================================================================
 // MAIN ENTRY POINT
+// Every uncaught error is caught here: a widget that fails to build shows a small friendly box,
+// uncaught async errors are reported (redacted) instead of crashing, and a crash loop shows the
+// crash page with Restart / Report.
 // ==============================================================================
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+Future<void> main() async {
+  await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    _installErrorHandlers();
 
-  // Set system UI style
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-  ));
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ));
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  // Initialize Supabase (MyHarur product DB)
-  await SupabaseConfig.initialize();
+    await Future.wait([LocaleController.instance.load(), warmBrandLogo()]);
+    await SupabaseConfig.initialize();
+    AuthService.init();
+    unawaited(FeatureFlagService.loadFlags()); // fail-safe defaults; don't delay first paint
+    unawaited(WeatherService.fetch(WeatherLocation.harur)); // warm the cache during the splash
 
-  // Wire up auth state listener
-  AuthService.init();
+    runApp(const AppRoot());
+  }, (error, stack) => AppErrors.handle(error, stack));
+}
 
-  // Load feature flags from DB (fail-safe — defaults all off)
-  await FeatureFlagService.loadFlags();
-
-  runApp(const MyHarurApp());
+void _installErrorHandlers() {
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    AppErrors.handle(details.exception, details.stack, screen: details.library ?? '');
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppErrors.handle(error, stack);
+    return true; // handled: do not crash the process
+  };
+  // In release a broken widget shows a small neutral box instead of Flutter's red error screen.
+  ErrorWidget.builder = (details) => kDebugMode ? ErrorWidget(details) : const FriendlyErrorBox();
 }
 
 // ==============================================================================
-// ROOT APP
+// ROOT: "Restart" rebuilds everything under a fresh key.
 // ==============================================================================
-class MyHarurApp extends StatelessWidget {
-  const MyHarurApp({super.key});
+class AppRoot extends StatelessWidget {
+  const AppRoot({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MyHarur',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+    return ValueListenableBuilder<int>(
+      valueListenable: AppErrors.restartCount,
+      builder: (context, n, _) => KeyedSubtree(key: ValueKey(n), child: const MyHarurApp()),
+    );
+  }
+}
 
-      // Deep-link handler for Google OAuth callback
-      onGenerateRoute: (settings) {
-        if (settings.name != null &&
-            settings.name!.startsWith('/login-callback')) {
-          return MaterialPageRoute(builder: (_) => const _AuthShell());
-        }
-        return MaterialPageRoute(builder: (_) => const _AuthShell());
-      },
+class MyHarurApp extends StatelessWidget {
+  const MyHarurApp({super.key});
 
-      home: const _AuthShell(),
+  /// Routes that belong to the OAuth return trip must not be treated as "not found".
+  static bool _isSignInReturn(String? name) {
+    final n = name ?? '';
+    return n.isEmpty || n == '/' || n.contains('login-callback') || n.contains('code=') || n.contains('access_token') || n.contains('error=');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: LocaleController.instance,
+      builder: (context, _) => MaterialApp(
+        onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        scrollBehavior: const BouncingScrollBehavior(),
+        locale: LocaleController.instance.locale,
+        supportedLocales: LocaleController.supported,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+
+        // The crash page sits above everything (including dialogs and other routes).
+        builder: (context, child) => ValueListenableBuilder<CrashInfo?>(
+          valueListenable: AppErrors.crash,
+          builder: (context, info, _) => info == null ? (child ?? const SizedBox.shrink()) : CrashPage(info: info),
+        ),
+
+        home: const SplashGate(child: UpdateGate(child: _AuthShell())),
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          settings: settings,
+          builder: (_) => _isSignInReturn(settings.name) ? const _AuthShell() : const NotFoundPage(),
+        ),
+      ),
     );
   }
 }
 
 // ==============================================================================
-// AUTH SHELL — Listens to AuthNotifier, routes to the correct screen
+// AUTH SHELL: sign-in, sign-in failure, onboarding, two-factor gates, then the app
 // ==============================================================================
 class _AuthShell extends StatelessWidget {
   const _AuthShell();
@@ -73,22 +133,30 @@ class _AuthShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: AuthNotifier.instance,
+      listenable: Listenable.merge([AuthNotifier.instance, AuthService.failure, AuthService.mfa]),
       builder: (context, _) {
-        final authenticated = AuthService.isAuthenticated;
-        final profile = AuthService.currentProfile;
-
-        // Not logged in → Auth page
-        if (!authenticated) {
+        final failure = AuthService.failure.value;
+        if (!AuthService.isAuthenticated) {
+          if (failure != null) {
+            return AuthFailurePage(
+              reason: failure,
+              onUseUsername: () {
+                AuthService.clearFailure();
+                AuthPage.showUsernameIntent.value++;
+              },
+            );
+          }
           return const AuthPage();
         }
+        if (!AuthService.currentProfile.isActive && !AuthService.currentProfile.isGuest) return const SuspendedPage();
+        if (AuthService.currentProfile.mustChangePassword) return const ForcePasswordPage();
+        if (!AuthService.currentProfile.isOnboardingComplete) return const OnboardingPage();
 
-        // Logged in but onboarding not complete → Onboarding flow
-        if (!profile.isOnboardingComplete) {
-          return const OnboardingPage();
-        }
+        // Two-factor: admins must have it; anyone who has enrolled must pass the code check.
+        final mfa = AuthService.mfa.value;
+        if (mfa == MfaStatus.needsChallenge) return const MfaChallengePage();
+        if (mfa == MfaStatus.notEnrolled && AuthService.currentProfile.requiresMfa) return const MfaEnrollPage(mandatory: true);
 
-        // Fully authenticated and onboarded → Main shell
         return const TownShell();
       },
     );
@@ -96,104 +164,111 @@ class _AuthShell extends StatelessWidget {
 }
 
 // ==============================================================================
-// TOWN SHELL — Main app scaffold with bottom navigation
-// Modules gated by feature flags (jobs/events/chat/tournaments are all OFF v1)
+// TOWN SHELL: Home | News | Weather | Reports | (Review, staff only) | Account
+// Pages are built lazily on first visit and then kept alive (scroll positions survive).
 // ==============================================================================
+enum AppTab { home, news, weather, reports, review, account }
+
 class TownShell extends StatefulWidget {
   const TownShell({super.key});
+
+  /// Lets a page (e.g. a "See all" link on Home) switch tabs.
+  static void goTo(BuildContext context, AppTab tab) => context.findAncestorStateOfType<_TownShellState>()?._select(tab);
 
   @override
   State<TownShell> createState() => _TownShellState();
 }
 
 class _TownShellState extends State<TownShell> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _pages = const [
-    HomePage(),
-    _AllAlertsPage(),
-    ExplorePage(),
-    AccountPage(),
-  ];
+  AppTab _tab = AppTab.home;
+  final Set<AppTab> _visited = {AppTab.home};
+  int _pending = 0;
+  Timer? _timer;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.systemBackground,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      extendBody: true,
-      bottomNavigationBar: PillNavBar(
-        selectedIndex: _selectedIndex,
-        items: buildNavItems(),
-        onTap: (i) => setState(() => _selectedIndex = i),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _refreshPending();
+    _timer = Timer.periodic(const Duration(seconds: 90), (_) => _refreshPending());
+    PushService.openReportsRequests.addListener(_openReports);
+    // ask once, a few seconds in, so it never competes with the first screen
+    Future<void>.delayed(const Duration(seconds: 6), () {
+      if (mounted) maybeAskAboutNotifications(context);
+    });
   }
-}
 
-// ==============================================================================
-// All Alerts Tab — Full unfiltered alerts list + submit CTA
-// ==============================================================================
-class _AllAlertsPage extends StatelessWidget {
-  const _AllAlertsPage();
+  @override
+  void dispose() {
+    _timer?.cancel();
+    PushService.openReportsRequests.removeListener(_openReports);
+    super.dispose();
+  }
+
+  /// A tapped notification lands on the Reports tab.
+  void _openReports() => _select(AppTab.reports);
+
+  Future<void> _refreshPending() async {
+    if (!AuthService.currentProfile.isStaff) {
+      if (_pending != 0 && mounted) setState(() => _pending = 0);
+      return;
+    }
+    final n = await AlertsService.pendingCount();
+    if (mounted && n != _pending) setState(() => _pending = n);
+  }
+
+  void _select(AppTab tab) {
+    if (tab == _tab) return;
+    setState(() {
+      _tab = tab;
+      _visited.add(tab);
+    });
+    if (tab == AppTab.review) _refreshPending();
+  }
+
+  Widget _page(AppTab tab) => switch (tab) {
+        AppTab.home => const HomePage(),
+        AppTab.news => const NewsPage(),
+        AppTab.weather => const WeatherPage(),
+        AppTab.reports => const ReportsPage(),
+        AppTab.review => const ModerationPage(asTab: true),
+        AppTab.account => const AccountPage(),
+      };
 
   @override
   Widget build(BuildContext context) {
-    return AtmosphericBackground(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('All Alerts', style: AppTextStyles.largeTitle),
-                      Text(
-                        'Road · Electricity · Water · Government',
-                        style: AppTextStyles.footnote,
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SubmitAlertPage()),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                          SizedBox(width: 4),
-                          Text('Report',
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    final t = context.t;
+    return ListenableBuilder(
+      listenable: AuthNotifier.instance, // roles can change while the app is open
+      builder: (context, _) {
+        final staff = AuthService.currentProfile.isStaff;
+        final tabs = <AppTab>[AppTab.home, AppTab.news, AppTab.weather, AppTab.reports, if (staff) AppTab.review, AppTab.account];
+        final current = tabs.contains(_tab) ? _tab : AppTab.home;
+
+        TabSpec spec(AppTab tab) => switch (tab) {
+              AppTab.home => TabSpec(t.tabHome, Icons.home_outlined, Icons.home_rounded),
+              AppTab.news => TabSpec(t.tabNews, Icons.newspaper_outlined, Icons.newspaper_rounded),
+              AppTab.weather => TabSpec(t.tabWeather, Icons.cloud_outlined, Icons.cloud_rounded),
+              AppTab.reports => TabSpec(t.tabReports, Icons.campaign_outlined, Icons.campaign_rounded),
+              AppTab.review => TabSpec(t.tabReview, Icons.fact_check_outlined, Icons.fact_check_rounded, badge: _pending),
+              AppTab.account => TabSpec(t.tabAccount, Icons.person_outline_rounded, Icons.person_rounded),
+            };
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: FadeOnChange(
+            token: current,
+            child: IndexedStack(
+              index: tabs.indexOf(current),
+              children: [for (final tab in tabs) _visited.contains(tab) ? _page(tab) : const SizedBox.shrink()],
             ),
-            const SizedBox(height: 12),
-            // Reuse HomePage widget but in expanded context — this gives the 
-            // full feed with all categories without nesting issue
-            const Expanded(child: HomePage()),
-          ],
-        ),
-      ),
+          ),
+          bottomNavigationBar: AppTabBar(
+            selected: tabs.indexOf(current),
+            tabs: [for (final tab in tabs) spec(tab)],
+            onTap: (i) => _select(tabs[i]),
+          ),
+        );
+      },
     );
   }
 }

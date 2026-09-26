@@ -1,14 +1,13 @@
+import 'place.dart';
+
 // ==============================================================================
 // USER PROFILE MODEL — MyHarur product-specific profile
-// Identity (UID, email, global roles) comes from QenBel Supabase
-// Product data (mmid, ward, occupation, onboarding) lives in MyHarur Supabase
+// Product data (mmid, address, occupation, onboarding) lives in the MyHarur Supabase project.
 // ==============================================================================
 class UserProfile {
-  // Identity (from QenBel Supabase JWT)
-  final String id;           // Supabase auth.users.id (same UID across both DBs)
-  final String? qenbelUid;   // Explicit QenBel UID reference
+  final String id; // Supabase auth.users.id
+  final String? qenbelUid;
 
-  // MyHarur product fields (from MyHarur profiles table)
   final String mmid;
   final String username;
   final String fullName;
@@ -16,9 +15,6 @@ class UserProfile {
   final String phone;
   final bool phoneVerified;
   final String? avatarUrl;
-  final int? wardId;
-  final String wardLocality;  // denormalized display name
-  final bool wardVerified;
   final String onboardingState; // PENDING_USERNAME | PENDING_PROFILE | PENDING_OCCUPATION | PENDING_SOURCE | COMPLETE
   final String? occupation;
   final String bloodGroup;
@@ -28,8 +24,13 @@ class UserProfile {
   final int emergencyStrikes;
   final bool isActive;
 
-  // Roles (from MyHarur user_roles join table)
-  final List<String> roles; // ['resident'] | ['resident','govt_official'] etc.
+  /// Set after a super admin recovered the account: the person must choose a new password first.
+  final bool mustChangePassword;
+
+  /// Optional home address (typed and/or pinned on the map). Null for everyone until they set it.
+  final PickedLocation? address;
+
+  final List<String> roles; // ['resident'] | ['resident','moderator'] etc.
 
   const UserProfile({
     required this.id,
@@ -41,9 +42,6 @@ class UserProfile {
     this.phone = '',
     this.phoneVerified = false,
     this.avatarUrl,
-    this.wardId,
-    this.wardLocality = 'Harur Town',
-    this.wardVerified = false,
     this.onboardingState = 'PENDING_USERNAME',
     this.occupation,
     this.bloodGroup = '',
@@ -52,30 +50,34 @@ class UserProfile {
     this.bio = '',
     this.emergencyStrikes = 0,
     this.isActive = true,
+    this.mustChangePassword = false,
+    this.address,
     this.roles = const ['resident'],
   });
 
   // ── Role helpers ─────────────────────────────────────────────────────────────
   bool get isSuperAdmin => roles.contains('superadmin');
   bool get isAdmin => roles.contains('admin') || isSuperAdmin;
+  bool get isModerator => roles.contains('moderator');
   bool get isGovtOfficial => roles.contains('govt_official');
   bool get isResident => roles.contains('resident');
 
-  /// Can directly publish to official categories
-  bool get canDirectPublish => isAdmin || isSuperAdmin;
+  /// Can review (approve / reject) pending alerts. Mirrors is_staff() in the DB,
+  /// which is the real gate — this only decides whether to show the Review tab.
+  bool get isStaff => isModerator || isAdmin;
 
-  /// Can bypass moderation queue for govt category
-  bool get canPublishGovt => isGovtOfficial || isAdmin || isSuperAdmin;
+  /// Admins and super admins must use an authenticator app (enforced in the database too).
+  bool get requiresMfa => isAdmin;
 
   /// Lost emergency-tag privilege after 2 strikes
   bool get hasEmergencyPrivilege => emergencyStrikes < 2;
 
-  /// Onboarding is fully complete
   bool get isOnboardingComplete => onboardingState == 'COMPLETE';
 
   String get primaryRole {
     if (isSuperAdmin) return 'SuperAdmin';
     if (isAdmin) return 'Admin';
+    if (isModerator) return 'Moderator';
     if (isGovtOfficial) return 'Govt Official';
     return 'Resident';
   }
@@ -105,9 +107,6 @@ class UserProfile {
       phone: json['phone'] as String? ?? '',
       phoneVerified: json['phone_verified'] as bool? ?? false,
       avatarUrl: json['avatar_url'] as String?,
-      wardId: json['ward_id'] as int?,
-      wardLocality: json['ward_locality'] as String? ?? 'Harur Town',
-      wardVerified: json['ward_verified'] as bool? ?? false,
       onboardingState: json['onboarding_state'] as String? ?? 'PENDING_USERNAME',
       occupation: json['occupation'] as String?,
       bloodGroup: json['blood_group'] as String? ?? '',
@@ -116,6 +115,13 @@ class UserProfile {
       bio: json['bio'] as String? ?? '',
       emergencyStrikes: json['emergency_strikes'] as int? ?? 0,
       isActive: json['is_active'] as bool? ?? true,
+      mustChangePassword: json['must_change_password'] as bool? ?? false,
+      address: PickedLocation.fromColumns(
+        text: json['address_text'] as String?,
+        lat: (json['address_lat'] as num?)?.toDouble(),
+        lng: (json['address_lng'] as num?)?.toDouble(),
+        source: json['address_source'] as String?,
+      ),
       roles: roles ?? const ['resident'],
     );
   }
@@ -126,9 +132,6 @@ class UserProfile {
     String? phone,
     bool? phoneVerified,
     String? avatarUrl,
-    int? wardId,
-    String? wardLocality,
-    bool? wardVerified,
     String? onboardingState,
     String? occupation,
     String? bloodGroup,
@@ -137,6 +140,9 @@ class UserProfile {
     String? bio,
     int? emergencyStrikes,
     bool? isActive,
+    bool? mustChangePassword,
+    PickedLocation? address,
+    bool clearAddress = false,
     List<String>? roles,
   }) {
     return UserProfile(
@@ -149,9 +155,6 @@ class UserProfile {
       phone: phone ?? this.phone,
       phoneVerified: phoneVerified ?? this.phoneVerified,
       avatarUrl: avatarUrl ?? this.avatarUrl,
-      wardId: wardId ?? this.wardId,
-      wardLocality: wardLocality ?? this.wardLocality,
-      wardVerified: wardVerified ?? this.wardVerified,
       onboardingState: onboardingState ?? this.onboardingState,
       occupation: occupation ?? this.occupation,
       bloodGroup: bloodGroup ?? this.bloodGroup,
@@ -160,6 +163,8 @@ class UserProfile {
       bio: bio ?? this.bio,
       emergencyStrikes: emergencyStrikes ?? this.emergencyStrikes,
       isActive: isActive ?? this.isActive,
+      mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+      address: clearAddress ? null : (address ?? this.address),
       roles: roles ?? this.roles,
     );
   }
