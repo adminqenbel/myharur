@@ -53,24 +53,48 @@ jobs:
       - name: Run Widget & Unit Tests
         run: flutter test
 
-      - name: Build Android APK (Release)
-        # SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY must be set as GitHub
-        # Actions repo secrets (Settings > Secrets and variables > Actions).
-        # Without these, the APK builds successfully but every Supabase
-        # call fails at runtime with no visible error — this was the
-        # actual root cause of prior "broken app" builds.
+      - name: Prepare release signing (optional)
+        # Add these repo secrets once you have an upload keystore (see docs/RELEASE.md):
+        #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+        #   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+        # Without them the build is signed with the debug key (fine for testing, rejected by Google Play).
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > android/upload-keystore.jks
+            {
+              echo "storeFile=../upload-keystore.jks"
+              echo "storePassword=$KS_PASS"
+              echo "keyAlias=$KEY_ALIAS"
+              echo "keyPassword=$KEY_PASS"
+            } > android/key.properties
+            echo "SIGNED=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No signing secrets set - release build will be debug-signed."
+          fi
+
+      - name: Build Android APK + App Bundle (Release)
+        # SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY are optional overrides: the app has the
+        # production values built in. Set them as repo secrets only to point a build at
+        # a different Supabase project.
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
-            echo "::error::SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY secret is not set. Add them in repo Settings > Secrets and variables > Actions before building a release APK."
-            exit 1
-          fi
-          flutter build apk --release \
-            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY"
+          DEFINES=""
+          [ -n "$SUPABASE_URL" ] && DEFINES="$DEFINES --dart-define=SUPABASE_URL=$SUPABASE_URL"
+          [ -n "$SUPABASE_PUBLISHABLE_KEY" ] && DEFINES="$DEFINES --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
+          # Obfuscated release: class and function names are scrambled in the shipped code. Keep build/symbols
+          # (uploaded below) to decode crash stack traces later.
+          flutter build apk --release --obfuscate --split-debug-info=build/symbols $DEFINES
           cp build/app/outputs/flutter-apk/app-release.apk ./myharur.apk
+          if [ "$SIGNED" = "true" ]; then
+            flutter build appbundle --release --obfuscate --split-debug-info=build/symbols $DEFINES
+          fi
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
@@ -78,8 +102,18 @@ jobs:
           name: myharur-android-apk-${{ github.sha }}
           path: |
             build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
             ./myharur.apk
+          if-no-files-found: warn
           retention-days: 90
+
+      - name: Upload debug symbols (needed to read obfuscated crash traces)
+        uses: actions/upload-artifact@v4
+        with:
+          name: myharur-symbols-${{ github.sha }}
+          path: build/symbols
+          if-no-files-found: warn
+          retention-days: 365
 
       - name: Read version from pubspec.yaml
         if: github.ref == 'refs/heads/main'

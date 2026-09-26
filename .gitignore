@@ -6,6 +6,9 @@ credentials.txt
 *.pem
 *.key
 *.p12
+*.jks
+*.keystore
+android/key.properties
 
 # Flutter/Dart generated files
 .dart_tool/
