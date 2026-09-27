@@ -1063,5 +1063,188 @@ for fn in ("internal_digest_tokens()", "internal_digest_plan(now())", "internal_
     _, err = run(PN, "authenticated", f"select * from public.{fn}")
     check(f"residents cannot call {fn.split('(')[0]}", err is not None)
 
+print("\n[34] events and jobs: submission validation")
+def event(uid, cat="cultural", title="Temple festival this weekend", body="Annual temple festival with cultural programs",
+          starts=None, ends=None, loc="Harur bus stand", link=None):
+    starts_sql = starts or "now() + interval '2 days'"
+    ends_sql = ends or "null"
+    sql = (f"insert into public.alerts(kind,category,title,body,starts_at,ends_at,location_text,link_url,created_by_uid,status,source,published_as_role) "
+           f"values ('event',%s,%s,%s,{starts_sql},{ends_sql},%s,%s,%s,'published','official','Official') "
+           f"returning id,status,kind,category,starts_at,ends_at,location_text")
+    return run(uid, "authenticated", sql, (cat, title, body, loc, link, str(uid or uuid.uuid4())))
+EU = aged("event-author@x")
+rows, err = event(EU)
+check("a valid event is accepted (pending)", err is None and rows[0][1] == "pending" and rows[0][2] == "event", err)
+_, err = run(EU, "authenticated",
+    "insert into public.alerts(kind,category,title,body,location_text,created_by_uid) values ('event','cultural','Missing start date here','Body text long enough for this test',%s,%s)",
+    ("Harur", str(EU)))
+check("an event without a start date is refused", err is not None and "starts_at_required" in str(err), err)
+_, err = run(EU, "authenticated",
+    "insert into public.alerts(kind,category,title,body,starts_at,created_by_uid) values ('event','cultural','No venue given at all here','Body text long enough for this test',now()+interval '2 days',%s)",
+    (str(EU),))
+check("an event without any venue is refused", err is not None and "venue_required" in str(err), err)
+_, err = run(EU, "authenticated",
+    "insert into public.alerts(kind,category,title,body,starts_at,ends_at,location_text,created_by_uid) values ('event','cultural','Ends before it starts test','Body text long enough for this test',now()+interval '3 days',now()+interval '1 day','Harur',%s)",
+    (str(EU),))
+check("an event ending before it starts is refused", err is not None, err)
+_, err = run(EU, "authenticated",
+    "insert into public.alerts(kind,category,title,body,starts_at,location_text,created_by_uid) values ('event','road','Wrong category for an event','Body text long enough for this test',now()+interval '2 days','Harur',%s)",
+    (str(EU),))
+check("a report category is not valid for an event", err is not None, err)
+rows, err = run(EU, "authenticated",
+    "insert into public.alerts(kind,category,title,body,starts_at,location_lat,location_lng,location_source,created_by_uid) values ('event','sports','Pinned on the map only','Body text long enough for this test',now()+interval '2 days',12.06,78.49,'map',%s) returning location_lat",
+    (str(EU),))
+check("a map pin alone satisfies the venue requirement", err is None and rows[0][0] is not None, err)
+EU2 = aged("event-author2@x")  # fresh user: EU above already used 2 of its own hourly quota
+outs = [event(EU2, title=f"Another festival {i}")[1] for i in range(3)]
+check("events are limited to 2 an hour for residents", outs[:2] == [None, None] and outs[2] is not None and "rate_limited" in str(outs[2]), outs)
+
+def job(uid, cat="full_time", title="Shop assistant needed in Harur", body="Looking for a shop assistant, six days a week",
+        employer="Amma Stores", contact="9500000000", pay="12000 per month", ends="now() + interval '10 days'", loc=None, link=None):
+    ends_sql = ends or "null"
+    sql = (f"insert into public.alerts(kind,category,title,body,employer,contact_text,pay_text,ends_at,location_text,link_url,created_by_uid,status,source,published_as_role) "
+           f"values ('job',%s,%s,%s,%s,%s,%s,{ends_sql},%s,%s,%s,'published','official','Official') "
+           f"returning id,status,employer,contact_text,starts_at,ends_at")
+    return run(uid, "authenticated", sql, (cat, title, body, employer, contact, pay, loc, link, str(uid or uuid.uuid4())))
+JU = aged("job-author@x")
+rows, err = job(JU)
+check("a valid job is accepted (pending) and starts_at stays null", err is None and rows[0][1] == "pending" and rows[0][4] is None, err)
+_, err = job(JU, employer="")
+check("a job without an employer is refused", err is not None and "employer_and_contact_required" in str(err), err)
+_, err = job(JU, contact="")
+check("a job without a contact is refused", err is not None and "employer_and_contact_required" in str(err), err)
+_, err = job(JU, ends=None)
+check("a job without a closing date is refused", err is not None and "closing_date_required" in str(err), err)
+_, err = job(JU, ends="now() - interval '1 day'")
+check("a job with a closing date already in the past is refused", err is not None and "closing_date_required" in str(err), err)
+_, err = job(JU, cat="cultural")
+check("an event category is not valid for a job", err is not None, err)
+rows, err = job(JU, loc=None, link=None)
+check("location and apply link are optional for a job", err is None, err)
+JU2 = aged("job-author2@x")  # fresh user: JU above already used 2 of its own hourly quota
+outs = [job(JU2, title=f"Another job {i}")[1] for i in range(3)]
+check("jobs are limited to 2 an hour for residents", outs[:2] == [None, None] and outs[2] is not None and "rate_limited" in str(outs[2]), outs)
+
+print("\n[35] events and jobs: approval sets expiry from the event/job's own date")
+EA = aged("event-approve@x")
+ev, err = event(EA, starts="now() + interval '1 day'", ends="now() + interval '2 days'")
+eid = str(ev[0][0])
+run(M, "authenticated", "select public.moderate_alert(%s,'approve')", (eid,))
+cur.execute("select expires_at from public.alerts where id=%s", (eid,))
+exp = cur.fetchone()[0]
+cur.execute("select ends_at from public.alerts where id=%s", (eid,))
+ends_at = cur.fetchone()[0]
+check("an approved event expires exactly at its own end time", exp == ends_at, (exp, ends_at))
+
+ev2, err = event(EA, starts="now() + interval '1 day'", ends=None)
+eid2 = str(ev2[0][0])
+run(M, "authenticated", "select public.moderate_alert(%s,'approve')", (eid2,))
+cur.execute("select expires_at > now() + interval '6 days' from public.alerts where id=%s", (eid2,))
+check("an event with no end date falls back to the normal ~7-day expiry", cur.fetchone()[0] is True)
+
+JA = aged("job-approve@x")  # fresh user: JU/JU2 already used their hourly quota above
+ja, err = job(JA, ends="now() + interval '5 days'")
+jid = str(ja[0][0])
+run(M, "authenticated", "select public.moderate_alert(%s,'approve')", (jid,))
+cur.execute("select expires_at from public.alerts where id=%s", (jid,))
+jexp = cur.fetchone()[0]
+cur.execute("select ends_at from public.alerts where id=%s", (jid,))
+jends = cur.fetchone()[0]
+check("an approved job expires exactly at its closing date", jexp == jends, (jexp, jends))
+
+print("\n[36] events and jobs reuse delete / report / block / feed generically")
+rows, err = run(None, "anon", "select count(*) from public.alerts where id=%s and kind='event'", (eid,), aal="aal1")
+check("an approved event is in the public feed", rows[0][0] == 1, rows)
+_, err = run(EA, "authenticated", "select public.delete_content(%s)", (eid,))
+rows, _ = run(None, "anon", "select count(*) from public.alerts where id=%s", (eid,), aal="aal1")
+check("deleting an event removes it from the feed, same as a report", err is None and rows[0][0] == 0, err)
+reporters = [aged(f"job-reporter{i}@x") for i in range(3)]
+for r in reporters:
+    run(r, "authenticated", "select public.report_content(%s,'spam')", (jid,))
+cur.execute("select status from public.user_restrictions where user_id=%s", (JA,))
+check("reporting a job author 3 times auto-restricts them, same as any other post", cur.fetchone() == ("restricted",))
+run(SU, "authenticated", "select public.admin_resolve_user_report(%s,'dismiss')", (JA,))
+
+print("\n[37] module flags: only a super admin with 2FA can flip them")
+rows, _ = run(None, "anon", "select enabled from public.module_flags where module='events'", aal="aal1")
+check("anyone can read module flags (needed before sign-in)", rows == [(False,)], rows)
+for who, aal, label, code in ((R1n, "aal2", "a resident cannot flip a flag", "forbidden"),
+                              (A, "aal2", "an admin (not super) cannot flip a flag", "forbidden"),
+                              (SU, "aal1", "a super admin without 2FA cannot flip a flag", "aal2_required")):
+    _, err = run(who, "authenticated", "select public.admin_set_module_flag('events', true)", aal=aal)
+    check(label, err is not None and code in str(err), err)
+_, err = run(SU, "authenticated", "select public.admin_set_module_flag('bogus_module', true)", aal="aal2")
+check("an unknown module name is refused", err is not None and "unknown_module" in str(err), err)
+_, err = run(SU, "authenticated", "select public.admin_set_module_flag('events', true)", aal="aal2")
+rows, _ = run(None, "anon", "select enabled from public.module_flags where module='events'", aal="aal1")
+check("a super admin with 2FA turns a module on", err is None and rows == [(True,)], (err, rows))
+cur.execute("select count(*) from public.crud_audit_logs where action='module_flag.set' and record_id='events'")
+check("flipping a flag is audited", cur.fetchone()[0] == 1)
+run(SU, "authenticated", "select public.admin_set_module_flag('events', false)", aal="aal2")  # leave it off
+
+print("\n[38] ads")
+_, err = run(SU, "authenticated",
+    "select public.admin_create_ad('Diwali sale','Up to 50% off at Amma Stores',null,'https://example.com/sale','home',0,now(),now()+interval '30 days')",
+    aal="aal1")
+check("creating an ad needs 2FA", err is not None and "aal2_required" in str(err), err)
+_, err = run(A, "authenticated",
+    "select public.admin_create_ad('x','y',null,'https://example.com','home',0,now(),null)", aal="aal2")
+check("an admin (not super) cannot create an ad", err is not None and "forbidden" in str(err), err)
+_, err = run(SU, "authenticated",
+    "select public.admin_create_ad('Bad link ad','body text here',null,'javascript:alert(1)','home',0,now(),null)", aal="aal2")
+check("an ad link must be https", err is not None, err)
+_, err = run(SU, "authenticated",
+    "select public.admin_create_ad('Bad placement','body text here',null,'https://example.com','tv',0,now(),null)", aal="aal2")
+check("placement is restricted to home/news/reports", err is not None, err)
+rows, err = run(SU, "authenticated",
+    "select public.admin_create_ad('Diwali sale','Up to 50% off at Amma Stores this festival season',null,'https://example.com/sale','home',5,now()-interval '1 day',now()+interval '30 days')",
+    aal="aal2")
+check("a super admin with 2FA creates a draft ad", err is None, err)
+ad_id = str(rows[0][0])
+rows, _ = run(None, "anon", "select count(*) from public.ads where id=%s", (ad_id,), aal="aal1")
+check("a draft ad is invisible to everyone until activated", rows[0][0] == 0, rows)
+_, err = run(R1n, "authenticated", "select public.admin_set_ad_status(%s,'active')", (ad_id,))
+check("a resident cannot change an ad's status", err is not None, err)
+_, err = run(SU, "authenticated", "select public.admin_set_ad_status(%s,'active')", (ad_id,), aal="aal2")
+rows, _ = run(None, "anon", "select title, placement from public.ads where id=%s", (ad_id,), aal="aal1")
+check("once active and within its date range, anyone can see it", err is None and rows == [("Diwali sale", "home")], (err, rows))
+_, err = run(SU, "authenticated", "select public.admin_set_ad_status(%s,'bogus')", (ad_id,), aal="aal2")
+check("an invalid status is refused", err is not None, err)
+rows, err = run(SU, "authenticated", "select * from public.admin_list_ads()", aal="aal2")
+check("super admin can list every ad regardless of status", err is None and len(rows) >= 1, err)
+rows, err = run(R1n, "authenticated", "select * from public.admin_list_ads()")
+check("a resident cannot list ads (admin_list_ads returns nothing, not an error)", err is None and len(rows or []) == 0, rows)
+
+# expired ad is not shown even though status is active
+rows, err = run(SU, "authenticated",
+    "select public.admin_create_ad('Expired ad','This one already ended, should not show up',null,'https://example.com','news',0,now()-interval '10 days',now()-interval '1 day')",
+    aal="aal2")
+expired_id = str(rows[0][0])
+run(SU, "authenticated", "select public.admin_set_ad_status(%s,'active')", (expired_id,), aal="aal2")
+rows, _ = run(None, "anon", "select count(*) from public.ads where id=%s", (expired_id,), aal="aal1")
+check("an active ad past its end date is not shown", rows[0][0] == 0, rows)
+
+# impressions and clicks
+_, err = run(None, "anon", "select public.record_ad_event(%s,'impression')", (ad_id,), aal="aal1")
+check("anon cannot record ad events (sign-in required)", err is not None)
+_, err = run(R1n, "authenticated", "select public.record_ad_event(%s,'impression')", (ad_id,))
+run(R1n, "authenticated", "select public.record_ad_event(%s,'click')", (ad_id,))
+cur.execute("select impressions, clicks from public.ads where id=%s", (ad_id,))
+check("impression and click counts increment", err is None and cur.fetchone() == (1, 1))
+_, err = run(R1n, "authenticated", "select public.record_ad_event(%s,'bogus')", (ad_id,))
+check("an unknown event kind is refused", err is not None)
+_, err = run(R1n, "authenticated", "select public.record_ad_event(%s,'impression')", (expired_id,))
+cur.execute("select impressions from public.ads where id=%s", (expired_id,))
+check("events are not counted against an ad that is no longer active", err is None and cur.fetchone()[0] == 0)
+outs = [run(R2, "authenticated", "select public.record_ad_event(%s,'impression')", (ad_id,))[1] for _ in range(301)]
+check("ad events are rate limited (300/day)", outs[-1] is not None and "rate_limited" in str(outs[-1]), outs[-1])
+_, err = run(SU, "authenticated", "select public.admin_delete_ad(%s)", (ad_id,), aal="aal2")
+rows, _ = run(SU, "authenticated", "select count(*) from public.admin_list_ads()", aal="aal2")
+check("super admin deletes an ad", err is None, err)
+
+print("\n[39] the legacy jobs/events tables from the original baseline are gone")
+cur.execute("select to_regclass('public.jobs'), to_regclass('public.events')")
+check("public.jobs and public.events no longer exist (replaced by alerts.kind)", cur.fetchone() == (None, None))
+
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

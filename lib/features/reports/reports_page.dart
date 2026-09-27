@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/models/alert.dart';
 import '../../core/services/alerts_service.dart';
+import '../../core/services/feature_flag_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
+import '../ads/sponsored_card.dart';
 import '../alerts/submit_alert_page.dart';
 import '../help/help_page.dart';
 import 'alert_widgets.dart';
 
 // ==============================================================================
-// REPORTS: the community feed (road, electricity, water, government).
-// Only approved reports appear here; new ones go through the filter and review first.
-// The emergency helplines live one tap away at the top.
+// REPORTS: the community feed (road, electricity, water, government), with Events and Jobs as extra
+// segments once a super admin turns those modules on (Account > Admin panel > Feature flags). Every
+// kind reuses the same feed, review and submit machinery; only the category set and a few fields differ.
+// The emergency helplines live one tap away at the top of the Reports segment.
 // ==============================================================================
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -21,14 +24,21 @@ class ReportsPage extends StatefulWidget {
   State<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends State<ReportsPage> {
-  static const _categories = ['road', 'electricity', 'water', 'govt'];
+const _categoriesByKind = {
+  'report': ['road', 'electricity', 'water', 'govt'],
+  'event': ['cultural', 'sports', 'education', 'religious', 'government', 'business', 'other'],
+  'job': ['full_time', 'part_time', 'contract', 'internship', 'daily_wage', 'other'],
+};
 
+class _ReportsPageState extends State<ReportsPage> {
+  String _kind = 'report';
   String? _category;
   List<Alert> _alerts = [];
   bool _loading = true;
   bool _error = false;
   Timer? _timer;
+
+  List<String> get _kinds => ['report', if (FeatureFlagService.isEnabled('events')) 'event', if (FeatureFlagService.isEnabled('jobs')) 'job'];
 
   @override
   void initState() {
@@ -46,7 +56,7 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _load({bool silent = false}) async {
     if (!mounted) return;
     if (!silent) setState(() => _loading = _alerts.isEmpty);
-    final alerts = await AlertsService.fetchFeedAlerts(category: _category, limit: 40);
+    final alerts = await AlertsService.fetchFeedAlerts(kind: _kind, category: _category, limit: 40);
     if (!mounted) return;
     setState(() {
       if (alerts != null) _alerts = alerts; // a failed refresh keeps what is already on screen
@@ -55,43 +65,75 @@ class _ReportsPageState extends State<ReportsPage> {
     });
   }
 
+  void _switchKind(String kind) {
+    if (kind == _kind) return;
+    setState(() {
+      _kind = kind;
+      _category = null;
+      _alerts = [];
+    });
+    _load();
+  }
+
   Future<void> _openSubmit() async {
-    await Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => const SubmitAlertPage()));
+    await Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => SubmitAlertPage(kind: _kind)));
     if (mounted) _load(silent: true);
   }
 
   @override
   Widget build(BuildContext context) {
     final t = context.t;
+    final kinds = _kinds;
+    final categories = _categoriesByKind[_kind]!;
+    final labelFor = {'report': t.tabReports, 'event': t.tabEvents, 'job': t.tabJobs};
+    final addLabelFor = {'report': t.report, 'event': t.addEvent, 'job': t.postJob};
+    final emptyFor = {
+      'report': (title: t.alertsEmptyTitle, body: t.alertsEmptyBody),
+      'event': (title: t.eventsEmptyTitle, body: t.eventsEmptyBody),
+      'job': (title: t.jobsEmptyTitle, body: t.jobsEmptyBody),
+    }[_kind]!;
 
     return CustomScrollView(
       slivers: [
-        LargeTitleSliver(title: t.reportsTitle, trailing: BarIconButton(icon: Icons.add_rounded, tooltip: t.report, onTap: _openSubmit)),
+        LargeTitleSliver(title: labelFor[_kind]!, trailing: BarIconButton(icon: Icons.add_rounded, tooltip: addLabelFor[_kind], onTap: _openSubmit)),
         refreshSliver(() => _load()),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, 4, AppSpacing.gutter, 14),
-            child: AppCard(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpPage())),
-              child: Row(
-                children: [
-                  const IconTile(icon: Icons.emergency_rounded, color: AppColors.danger, size: 40),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.emergencyHelplines, style: AppTextStyles.headline),
-                        Text(t.emergencyHelplinesSub, style: AppTextStyles.footnote),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right_rounded, color: AppColors.quaternaryLabel),
-                ],
+        if (kinds.length > 1)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, 4, AppSpacing.gutter, 12),
+              child: SegmentedPill(
+                labels: [for (final k in kinds) labelFor[k]!],
+                selected: kinds.indexOf(_kind),
+                onChanged: (i) => _switchKind(kinds[i]),
               ),
             ),
           ),
-        ),
+        if (_kind == 'report')
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, 4, AppSpacing.gutter, 14),
+              child: AppCard(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpPage())),
+                child: Row(
+                  children: [
+                    const IconTile(icon: Icons.emergency_rounded, color: AppColors.danger, size: 40),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.emergencyHelplines, style: AppTextStyles.headline),
+                          Text(t.emergencyHelplinesSub, style: AppTextStyles.footnote),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.quaternaryLabel),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        if (_kind == 'report') const SliverToBoxAdapter(child: SponsoredCard(placement: 'reports')),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 14),
@@ -104,7 +146,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   _load();
                 },
               ),
-              for (final c in _categories)
+              for (final c in categories)
                 FilterPill(
                   label: context.categoryName(c),
                   selected: _category == c,
@@ -122,7 +164,7 @@ class _ReportsPageState extends State<ReportsPage> {
         else if (_error)
           SliverToBoxAdapter(child: EmptyState(icon: Icons.wifi_off_rounded, title: t.alertsErrorTitle, body: t.alertsErrorBody, actionLabel: t.retry, onAction: _load))
         else if (_alerts.isEmpty)
-          SliverToBoxAdapter(child: EmptyState(icon: Icons.notifications_none_rounded, title: t.alertsEmptyTitle, body: t.alertsEmptyBody, actionLabel: t.report, onAction: _openSubmit))
+          SliverToBoxAdapter(child: EmptyState(icon: Icons.notifications_none_rounded, title: emptyFor.title, body: emptyFor.body, actionLabel: addLabelFor[_kind], onAction: _openSubmit))
         else
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, 0, AppSpacing.gutter, 24),

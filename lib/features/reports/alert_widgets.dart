@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/models/alert.dart';
 import '../../core/theme/app_theme.dart';
@@ -7,6 +8,13 @@ import '../../core/widgets/ui.dart';
 import '../map/location_preview.dart';
 import 'photo_widgets.dart';
 import 'post_actions.dart';
+
+/// "Tue, 15 Sep" or, with a time, "Tue, 15 Sep · 6:30 PM".
+String _formatWhen(BuildContext context, DateTime d, {required bool withTime}) {
+  final lang = Localizations.localeOf(context).languageCode;
+  final date = DateFormat('EEE, d MMM', lang).format(d);
+  return withTime ? '$date · ${DateFormat.jm(lang).format(d)}' : date;
+}
 
 // ── Alert card ─────────────────────────────────────────────────────────────────
 /// A report or news card. [compact] is the fixed-height variant used in Home's sliding rail.
@@ -22,6 +30,11 @@ class AlertCard extends StatelessWidget {
     final color = alert.category.categoryColor;
     final emergency = alert.emergencyTagged;
     final place = alert.location?.text.trim() ?? '';
+    final subtitle = switch (alert.kind) {
+      'event' when alert.startsAt != null => _formatWhen(context, alert.startsAt!, withTime: !alert.allDay),
+      'job' when alert.employer != null && alert.employer!.isNotEmpty => alert.employer!,
+      _ => [context.timeAgo(alert.createdAt), if (place.isNotEmpty) place].join(' · '),
+    };
 
     return AppCard(
       onTap: onTap,
@@ -43,12 +56,7 @@ class AlertCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(context.categoryName(alert.category), style: AppTextStyles.subheadline.copyWith(fontWeight: FontWeight.w600)),
-                    Text(
-                      [context.timeAgo(alert.createdAt), if (place.isNotEmpty) place].join(' · '),
-                      style: AppTextStyles.caption1,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    Text(subtitle, style: AppTextStyles.caption1, maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
@@ -152,6 +160,39 @@ class AlertDetail extends StatelessWidget {
             Text(alert.title, style: AppTextStyles.title2),
             const SizedBox(height: 10),
             Text(alert.body, style: AppTextStyles.body.copyWith(color: AppColors.secondaryLabel, height: 1.45)),
+            if (alert.isEvent) ...[
+              const SizedBox(height: 16),
+              GroupedSection(
+                margin: EdgeInsets.zero,
+                dividerIndent: 58,
+                children: [
+                  if (alert.startsAt != null)
+                    GroupedRow(icon: Icons.event_rounded, iconColor: AppColors.primary, title: t.eventStarts, value: _formatWhen(context, alert.startsAt!, withTime: !alert.allDay)),
+                  if (alert.endsAt != null)
+                    GroupedRow(icon: Icons.event_available_rounded, iconColor: AppColors.tertiaryLabel, title: t.eventEnds, value: _formatWhen(context, alert.endsAt!, withTime: !alert.allDay)),
+                  if (alert.isPaid)
+                    GroupedRow(icon: Icons.confirmation_number_outlined, iconColor: AppColors.warning, title: t.eventPaid),
+                ],
+              ),
+            ],
+            if (alert.isJob) ...[
+              const SizedBox(height: 16),
+              GroupedSection(
+                margin: EdgeInsets.zero,
+                dividerIndent: 58,
+                footer: t.jobScamWarning,
+                children: [
+                  if (alert.employer != null && alert.employer!.isNotEmpty)
+                    GroupedRow(icon: Icons.storefront_rounded, iconColor: AppColors.primary, title: t.jobEmployer, value: alert.employer),
+                  if (alert.contactText != null && alert.contactText!.isNotEmpty)
+                    GroupedRow(icon: Icons.call_rounded, iconColor: AppColors.tertiaryLabel, title: t.jobContact, value: alert.contactText),
+                  if (alert.payText != null && alert.payText!.isNotEmpty)
+                    GroupedRow(icon: Icons.payments_outlined, iconColor: AppColors.tertiaryLabel, title: t.jobPay, value: alert.payText),
+                  if (alert.endsAt != null)
+                    GroupedRow(icon: Icons.event_busy_rounded, iconColor: AppColors.danger, title: t.closesOn, value: _formatWhen(context, alert.endsAt!, withTime: true)),
+                ],
+              ),
+            ],
             if (link != null && link.isNotEmpty) ...[
               const SizedBox(height: 16),
               PrimaryButton(label: t.openLink, tinted: true, icon: Icons.open_in_new_rounded, onPressed: () => safeLaunch(link)),

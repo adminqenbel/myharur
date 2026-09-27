@@ -974,7 +974,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get goHome => 'முகப்புக்குச் செல்';
 
   @override
-  String get tabReports => 'புகார்கள்';
+  String get tabReports => 'அறிக்கைகள்';
 
   @override
   String get tabReview => 'மதிப்பாய்வு';
@@ -1616,4 +1616,267 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get notifPromptNo => 'இப்போது வேண்டாம்';
+
+  @override
+  String get ecCultural => 'பண்பாடு';
+
+  @override
+  String get ecSports => 'விளையாட்டு';
+
+  @override
+  String get ecReligious => 'மத ரீதியான';
+
+  @override
+  String get ecGovernment => 'அரசு';
+
+  @override
+  String get ecBusiness => 'வணிகம்';
+
+  @override
+  String get jcFullTime => 'முழுநேரம்';
+
+  @override
+  String get jcPartTime => 'பகுதிநேரம்';
+
+  @override
+  String get jcContract => 'ஒப்பந்தம்';
+
+  @override
+  String get jcInternship => 'பயிற்சி';
+
+  @override
+  String get jcDailyWage => 'தினக்கூலி';
+
+  @override
+  String get tabEvents => 'நிகழ்வுகள்';
+
+  @override
+  String get tabJobs => 'வேலைகள்';
+
+  @override
+  String get railEvents => 'வரவிருக்கும் நிகழ்வுகள்';
+
+  @override
+  String get railJobs => 'புதிய வேலைகள்';
+
+  @override
+  String get eventsEmptyTitle => 'வரவிருக்கும் நிகழ்வுகள் இல்லை';
+
+  @override
+  String get eventsEmptyBody => 'அரூருக்காக முதலில் ஒன்றைப் பதிவிடுங்கள்.';
+
+  @override
+  String get jobsEmptyTitle => 'இன்னும் வேலைகள் பதிவிடப்படவில்லை';
+
+  @override
+  String get jobsEmptyBody => 'ஒரு காலியிடத்தை முதலில் பதிவிடுங்கள்.';
+
+  @override
+  String get addEvent => 'நிகழ்வு சேர்';
+
+  @override
+  String get postJob => 'வேலை பதிவிடு';
+
+  @override
+  String get tagEvent => 'நிகழ்வு';
+
+  @override
+  String get tagJob => 'வேலை';
+
+  @override
+  String get submitEventTitle => 'நிகழ்வைப் பதிவிடு';
+
+  @override
+  String get submitEventBtn => 'நிகழ்வை அனுப்பு';
+
+  @override
+  String get eventStarts => 'தொடங்குகிறது';
+
+  @override
+  String get eventEnds => 'முடிவு (விருப்பம்)';
+
+  @override
+  String get eventAllDay => 'முழு நாள்';
+
+  @override
+  String get eventPaid => 'கட்டணம் உள்ளது';
+
+  @override
+  String get eventVenueLabel => 'இடம்';
+
+  @override
+  String get eventVenueRequired =>
+      'இடத்தைச் சேர்க்கவும்: வரைபடத்தில் இடவும், எழுதவும், அல்லது இரண்டையும்.';
+
+  @override
+  String get eventRegLink => 'பதிவு இணைப்பு (விருப்பம்)';
+
+  @override
+  String get pickDate => 'தேதியைத் தேர்வுசெய்';
+
+  @override
+  String get pickTime => 'நேரத்தைத் தேர்வுசெய்';
+
+  @override
+  String get errStartsRequired =>
+      'நிகழ்வு தொடங்கும் நேரத்தைத் தேர்வுசெய்யவும்.';
+
+  @override
+  String get errVenueRequired => 'நிகழ்வுக்கான இடத்தைச் சேர்க்கவும்.';
+
+  @override
+  String get submitJobTitle => 'வேலையைப் பதிவிடு';
+
+  @override
+  String get submitJobBtn => 'வேலையை அனுப்பு';
+
+  @override
+  String get jobEmployer => 'பணியளிப்பவர்';
+
+  @override
+  String get jobContact => 'தொடர்பு (தொலைபேசி அல்லது மின்னஞ்சல்)';
+
+  @override
+  String get jobPay => 'ஊதியம் (விருப்பம்)';
+
+  @override
+  String get jobClosing => 'முடிவுத் தேதி';
+
+  @override
+  String get jobApplyLink => 'விண்ணப்ப இணைப்பு (விருப்பம்)';
+
+  @override
+  String get jobScamWarning =>
+      'வேலைக்கு விண்ணப்பிக்க பணம் கொடுக்க வேண்டாம். பணம் கேட்கும் பதிவை புகாரளிக்கவும்.';
+
+  @override
+  String get errEmployerContactRequired =>
+      'பணியளிப்பவரையும் தொடர்பு வழியையும் சேர்க்கவும்.';
+
+  @override
+  String get errClosingRequired =>
+      'எதிர்கால முடிவுத் தேதியைத் தேர்வுசெய்யவும்.';
+
+  @override
+  String get eventDetails => 'நிகழ்வு விவரங்கள்';
+
+  @override
+  String get jobDetails => 'வேலை விவரங்கள்';
+
+  @override
+  String get closesOn => 'முடிவு';
+
+  @override
+  String get featureFlags => 'அம்ச நிலைகள்';
+
+  @override
+  String get featureFlagsSub => 'அனைவருக்கும் தொகுதிகளை இயக்கு அல்லது நிறுத்து';
+
+  @override
+  String get flagEvents => 'நிகழ்வுகள்';
+
+  @override
+  String get flagEventsSub =>
+      'நிகழ்வுகள் தாவல், நிகழ்வுகளைப் பதிவிடுதல் மற்றும் பார்த்தல்';
+
+  @override
+  String get flagJobs => 'வேலைகள்';
+
+  @override
+  String get flagJobsSub =>
+      'வேலைகள் தாவல், வேலைகளைப் பதிவிடுதல் மற்றும் பார்த்தல்';
+
+  @override
+  String get flagOtherNote =>
+      'இங்கு பட்டியலிடப்பட்ட மற்ற தொகுதிகள் இன்னும் செயலியில் உருவாக்கப்படவில்லை; அதனால் அவை தயாராகும் வரை இங்கு காட்டப்படாது.';
+
+  @override
+  String get flagChangeFailed => 'மாற்ற முடியவில்லை. மீண்டும் முயலவும்.';
+
+  @override
+  String get adsAdmin => 'விளம்பரங்கள்';
+
+  @override
+  String get adsAdminSub => 'செயலியில் காட்டப்படும் விளம்பர அட்டைகள்';
+
+  @override
+  String get adCreate => 'புதிய விளம்பரம்';
+
+  @override
+  String get adTitleLabel => 'தலைப்பு';
+
+  @override
+  String get adBodyLabel => 'உரை';
+
+  @override
+  String get adLinkLabel => 'இணைப்பு (https)';
+
+  @override
+  String get adPlacementLabel => 'எங்கு காட்டப்படும்';
+
+  @override
+  String get adPriorityLabel => 'முன்னுரிமை (அதிகமானது முதலில் தெரியும்)';
+
+  @override
+  String get adStartsLabel => 'தொடங்குகிறது';
+
+  @override
+  String get adEndsLabel => 'முடிவு (விருப்பம்)';
+
+  @override
+  String get adImageOptional => 'படம் (விருப்பம்)';
+
+  @override
+  String get adPlacementHome => 'முகப்பு';
+
+  @override
+  String get adPlacementNews => 'செய்திகள்';
+
+  @override
+  String get adPlacementReports => 'அறிக்கைகள்';
+
+  @override
+  String get adStatusDraft => 'வரைவு';
+
+  @override
+  String get adStatusActive => 'செயலில்';
+
+  @override
+  String get adStatusPaused => 'இடைநிறுத்தப்பட்டது';
+
+  @override
+  String get adActivate => 'செயல்படுத்து';
+
+  @override
+  String get adPause => 'இடைநிறுத்து';
+
+  @override
+  String get adDelete => 'விளம்பரத்தை நீக்கு';
+
+  @override
+  String get adDeleteConfirm =>
+      'இந்த விளம்பரத்தை நீக்கவா? இதைத் திரும்பப் பெற முடியாது.';
+
+  @override
+  String get adNone => 'இன்னும் விளம்பரங்கள் இல்லை.';
+
+  @override
+  String adStats(int impressions, int clicks) {
+    return '$impressions பார்வைகள் · $clicks தட்டல்கள்';
+  }
+
+  @override
+  String get sponsored => 'விளம்பரம்';
+
+  @override
+  String get adCreateFailed =>
+      'விளம்பரத்தை உருவாக்க முடியவில்லை. விவரங்களைச் சரிபார்த்து மீண்டும் முயலவும்.';
+
+  @override
+  String get submittedEventMsg =>
+      'நன்றி. உங்கள் நிகழ்வு மதிப்பாய்வுக்கு அனுப்பப்பட்டது; ஏற்கப்பட்டவுடன் தெரியும்.';
+
+  @override
+  String get submittedJobMsg =>
+      'நன்றி. உங்கள் வேலைப் பதிவு மதிப்பாய்வுக்கு அனுப்பப்பட்டது; ஏற்கப்பட்டவுடன் தெரியும்.';
 }

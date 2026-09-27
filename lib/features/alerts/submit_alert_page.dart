@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
+import 'package:intl/intl.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/models/place.dart';
 import '../../core/services/alerts_service.dart';
@@ -12,13 +13,13 @@ import '../../core/widgets/ui.dart';
 import '../map/address_picker.dart';
 
 // ==============================================================================
-// SUBMIT — a report (road, electricity, water, government) or a piece of community news.
-// Either way it is auto-checked, then reviewed by a moderator or admin before it appears.
-// Photos (up to 3) are re-encoded on the phone, which removes any location data inside them.
-// The place is optional: pin it on the map, type it, or use the current location.
+// SUBMIT — a report, a piece of community news, an event or a job. Every kind is auto-checked, then
+// reviewed by a moderator or admin before it appears. Photos (up to 3) are re-encoded on the phone,
+// which removes any location data inside them. Reports/jobs treat the place as optional; an event
+// requires a venue (pinned, typed, or both).
 // ==============================================================================
 class SubmitAlertPage extends StatefulWidget {
-  /// 'report' or 'news'
+  /// 'report', 'news', 'event' or 'job'
   final String kind;
   const SubmitAlertPage({super.key, this.kind = 'report'});
 
@@ -29,11 +30,16 @@ class SubmitAlertPage extends StatefulWidget {
 class _SubmitAlertPageState extends State<SubmitAlertPage> {
   static const _reportCategories = ['road', 'electricity', 'water', 'govt'];
   static const _newsCategories = ['traffic', 'civic', 'health', 'education', 'community', 'other'];
+  static const _eventCategories = ['cultural', 'sports', 'education', 'religious', 'government', 'business', 'other'];
+  static const _jobCategories = ['full_time', 'part_time', 'contract', 'internship', 'daily_wage', 'other'];
 
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
   final _linkCtrl = TextEditingController();
-  late String _category = isNews ? 'community' : 'road';
+  final _employerCtrl = TextEditingController();
+  final _contactCtrl = TextEditingController();
+  final _payCtrl = TextEditingController();
+  late String _category = _categories.first;
   final List<Uint8List> _photos = [];
   PickedLocation? _location;
   bool _emergency = false;
@@ -42,16 +48,67 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
   String? _status; // "Uploading photos…"
   String? _error;
 
+  // event
+  DateTime? _startsAt;
+  DateTime? _endsAt; // events: optional end; jobs: closing date (required)
+  bool _allDay = false;
+  bool _isPaid = false;
+
   bool get isNews => widget.kind == 'news';
-  List<String> get _categories => isNews ? _newsCategories : _reportCategories;
+  bool get isEvent => widget.kind == 'event';
+  bool get isJob => widget.kind == 'job';
+  List<String> get _categories => switch (widget.kind) {
+        'news' => _newsCategories,
+        'event' => _eventCategories,
+        'job' => _jobCategories,
+        _ => _reportCategories,
+      };
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _bodyCtrl.dispose();
     _linkCtrl.dispose();
+    _employerCtrl.dispose();
+    _contactCtrl.dispose();
+    _payCtrl.dispose();
     super.dispose();
   }
+
+  // ── date & time ──────────────────────────────────────────────────────────────
+
+  Future<void> _pickStarts() async {
+    final picked = await _pickDateTime(_startsAt);
+    if (picked != null) setState(() => _startsAt = picked);
+  }
+
+  Future<void> _pickEnds() async {
+    final picked = await _pickDateTime(_endsAt ?? _startsAt);
+    if (picked != null) setState(() => _endsAt = picked);
+  }
+
+  Future<DateTime?> _pickDateTime(DateTime? initial) async {
+    final t = context.t;
+    final now = DateTime.now();
+    final base = initial != null && initial.isAfter(now) ? initial : now;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: base,
+      firstDate: now.subtract(const Duration(days: 1)),
+      lastDate: now.add(const Duration(days: 730)),
+      fieldLabelText: t.pickDate,
+      helpText: t.pickDate,
+    );
+    if (date == null || !mounted) return null;
+    if (_allDay) return DateTime(date.year, date.month, date.day);
+    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(base), helpText: t.pickTime);
+    if (time == null) return DateTime(date.year, date.month, date.day);
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  }
+
+  String _formatDateTime(DateTime d) => _allDay && isEvent
+      ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(d)
+      : DateFormat.yMMMd(Localizations.localeOf(context).languageCode).add_jm().format(d);
 
   // ── photos ────────────────────────────────────────────────────────────────────
 
@@ -112,9 +169,18 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
     final title = _titleCtrl.text.trim();
     final body = _bodyCtrl.text.trim();
     final link = _linkCtrl.text.trim();
+    final hasLink = isNews || isEvent || isJob;
     if (title.length < 5) return setState(() => _error = t.titleMin);
     if (body.length < 10) return setState(() => _error = t.detailsMin);
-    if (isNews && link.isNotEmpty && !_validLink(link)) return setState(() => _error = t.linkInvalid);
+    if (hasLink && link.isNotEmpty && !_validLink(link)) return setState(() => _error = t.linkInvalid);
+    if (isEvent && _startsAt == null) return setState(() => _error = t.errStartsRequired);
+    if (isEvent && (_location == null || _location!.isEmpty)) return setState(() => _error = t.errVenueRequired);
+    if (isJob && (_employerCtrl.text.trim().isEmpty || _contactCtrl.text.trim().isEmpty)) {
+      return setState(() => _error = t.errEmployerContactRequired);
+    }
+    if (isJob && (_endsAt == null || !_endsAt!.isAfter(DateTime.now()))) {
+      return setState(() => _error = t.errClosingRequired);
+    }
 
     setState(() {
       _submitting = true;
@@ -144,10 +210,17 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
       category: _category,
       title: title,
       body: body,
-      linkUrl: isNews ? link : null,
+      linkUrl: hasLink ? link : null,
       imagePaths: uploaded,
       location: _location,
-      emergencyTagged: !isNews && _emergency,
+      emergencyTagged: widget.kind == 'report' && _emergency,
+      startsAt: isEvent ? _startsAt : null,
+      endsAt: isEvent || isJob ? _endsAt : null,
+      allDay: isEvent && _allDay,
+      isPaid: isEvent && _isPaid,
+      employer: isJob ? _employerCtrl.text : null,
+      payText: isJob ? _payCtrl.text : null,
+      contactText: isJob ? _contactCtrl.text : null,
     );
     final stored = outcome == SubmitOutcome.submitted || outcome == SubmitOutcome.autoRejected;
     if (!stored) {
@@ -164,7 +237,13 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
     if (outcome == SubmitOutcome.submitted) {
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      messenger.showSnackBar(SnackBar(content: Text(isNews ? t.submittedNewsMsg : t.submittedMsg), duration: const Duration(seconds: 4)));
+      final msg = switch (widget.kind) {
+        'news' => t.submittedNewsMsg,
+        'event' => t.submittedEventMsg,
+        'job' => t.submittedJobMsg,
+        _ => t.submittedMsg,
+      };
+      messenger.showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 4)));
     } else {
       setState(() => _error = switch (outcome) {
             SubmitOutcome.autoRejected => t.errAutoRejected,
@@ -191,7 +270,12 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
       appBar: AppBar(
         leadingWidth: 100,
         leading: Align(alignment: Alignment.centerLeft, child: TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel))),
-        title: Text(isNews ? t.submitNewsTitle : t.submitTitle),
+        title: Text(switch (widget.kind) {
+          'news' => t.submitNewsTitle,
+          'event' => t.submitEventTitle,
+          'job' => t.submitJobTitle,
+          _ => t.submitTitle,
+        }),
       ),
       body: SafeArea(
         child: Column(
@@ -243,7 +327,7 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
                           decoration: _bare(t.detailsHint),
                         ),
                       ),
-                      if (isNews)
+                      if (isNews || isEvent || isJob)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                           child: TextField(
@@ -251,20 +335,25 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
                             keyboardType: TextInputType.url,
                             autocorrect: false,
                             style: AppTextStyles.body,
-                            decoration: _bare(t.linkOptional).copyWith(prefixIcon: const Icon(Icons.link_rounded, color: AppColors.tertiaryLabel)),
+                            decoration: _bare(isEvent ? t.eventRegLink : (isJob ? t.jobApplyLink : t.linkOptional))
+                                .copyWith(prefixIcon: const Icon(Icons.link_rounded, color: AppColors.tertiaryLabel)),
                           ),
                         ),
                     ],
                   ),
+                  if (isEvent) _eventSection(t),
+                  if (isJob) _jobSection(t),
                   _photoSection(t),
                   GroupedSection(
-                    footer: isNews ? null : (canEmergency ? t.emergencyNote : t.emergencyRevoked),
+                    footer: isEvent
+                        ? (_location == null || _location!.isEmpty ? t.eventVenueRequired : null)
+                        : (widget.kind == 'report' ? (canEmergency ? t.emergencyNote : t.emergencyRevoked) : null),
                     dividerIndent: 58,
                     children: [
                       GroupedRow(
                         icon: Icons.place_rounded,
                         iconColor: AppColors.danger,
-                        title: t.locationOptional,
+                        title: isEvent ? t.eventVenueLabel : t.locationOptional,
                         value: (_location == null || _location!.isEmpty) ? t.noLocation : _location!.label,
                         chevron: true,
                         onTap: () async {
@@ -272,7 +361,7 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
                           if (picked != null) setState(() => _location = picked.isEmpty ? null : picked);
                         },
                       ),
-                      if (!isNews)
+                      if (widget.kind == 'report')
                         GroupedRow(
                           icon: Icons.warning_amber_rounded,
                           iconColor: AppColors.danger,
@@ -299,13 +388,87 @@ class _SubmitAlertPageState extends State<SubmitAlertPage> {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Text(_error!, textAlign: TextAlign.center, style: AppTextStyles.footnote.copyWith(color: AppColors.danger)),
                     ),
-                  PrimaryButton(label: isNews ? t.submitNewsBtn : t.submitReport, loading: _submitting, onPressed: _submit),
+                  PrimaryButton(
+                    label: switch (widget.kind) {
+                      'news' => t.submitNewsBtn,
+                      'event' => t.submitEventBtn,
+                      'job' => t.submitJobBtn,
+                      _ => t.submitReport,
+                    },
+                    loading: _submitting,
+                    onPressed: _submit,
+                  ),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _eventSection(AppLocalizations t) {
+    return GroupedSection(
+      dividerIndent: 58,
+      children: [
+        GroupedRow(
+          icon: Icons.event_rounded,
+          iconColor: AppColors.primary,
+          title: t.eventStarts,
+          value: _startsAt == null ? t.pickDate : _formatDateTime(_startsAt!),
+          chevron: true,
+          onTap: _pickStarts,
+        ),
+        GroupedRow(
+          icon: Icons.event_available_rounded,
+          iconColor: AppColors.tertiaryLabel,
+          title: t.eventEnds,
+          value: _endsAt == null ? t.notSet : _formatDateTime(_endsAt!),
+          chevron: true,
+          onTap: _pickEnds,
+        ),
+        GroupedRow(
+          icon: Icons.today_rounded,
+          iconColor: AppColors.tertiaryLabel,
+          title: t.eventAllDay,
+          trailing: Switch.adaptive(value: _allDay, onChanged: (v) => setState(() => _allDay = v)),
+        ),
+        GroupedRow(
+          icon: Icons.confirmation_number_outlined,
+          iconColor: AppColors.tertiaryLabel,
+          title: t.eventPaid,
+          trailing: Switch.adaptive(value: _isPaid, onChanged: (v) => setState(() => _isPaid = v)),
+        ),
+      ],
+    );
+  }
+
+  Widget _jobSection(AppLocalizations t) {
+    return GroupedSection(
+      footer: t.jobScamWarning,
+      dividerIndent: 58,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+          child: TextField(controller: _employerCtrl, maxLength: 100, textCapitalization: TextCapitalization.words, decoration: InputDecoration(labelText: t.jobEmployer)),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: TextField(controller: _contactCtrl, maxLength: 200, decoration: InputDecoration(labelText: t.jobContact)),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: TextField(controller: _payCtrl, maxLength: 100, decoration: InputDecoration(labelText: t.jobPay)),
+        ),
+        GroupedRow(
+          icon: Icons.event_busy_rounded,
+          iconColor: AppColors.danger,
+          title: t.jobClosing,
+          value: _endsAt == null ? t.pickDate : _formatDateTime(_endsAt!),
+          chevron: true,
+          onTap: _pickEnds,
+        ),
+      ],
     );
   }
 

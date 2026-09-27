@@ -57,6 +57,16 @@ extension L10nContext on BuildContext {
       case 'education': return t.ncEducation;
       case 'community': return t.ncCommunity;
       case 'other': return t.ncOther;
+      case 'cultural': return t.ecCultural;
+      case 'sports': return t.ecSports;
+      case 'religious': return t.ecReligious;
+      case 'government': return t.ecGovernment;
+      case 'business': return t.ecBusiness;
+      case 'full_time': return t.jcFullTime;
+      case 'part_time': return t.jcPartTime;
+      case 'contract': return t.jcContract;
+      case 'internship': return t.jcInternship;
+      case 'daily_wage': return t.jcDailyWage;
       default: return category;
     }
   }

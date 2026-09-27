@@ -3043,6 +3043,504 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not now'**
   String get notifPromptNo;
+
+  /// No description provided for @ecCultural.
+  ///
+  /// In en, this message translates to:
+  /// **'Cultural'**
+  String get ecCultural;
+
+  /// No description provided for @ecSports.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports'**
+  String get ecSports;
+
+  /// No description provided for @ecReligious.
+  ///
+  /// In en, this message translates to:
+  /// **'Religious'**
+  String get ecReligious;
+
+  /// No description provided for @ecGovernment.
+  ///
+  /// In en, this message translates to:
+  /// **'Government'**
+  String get ecGovernment;
+
+  /// No description provided for @ecBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get ecBusiness;
+
+  /// No description provided for @jcFullTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-time'**
+  String get jcFullTime;
+
+  /// No description provided for @jcPartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Part-time'**
+  String get jcPartTime;
+
+  /// No description provided for @jcContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get jcContract;
+
+  /// No description provided for @jcInternship.
+  ///
+  /// In en, this message translates to:
+  /// **'Internship'**
+  String get jcInternship;
+
+  /// No description provided for @jcDailyWage.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily wage'**
+  String get jcDailyWage;
+
+  /// No description provided for @tabEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get tabEvents;
+
+  /// No description provided for @tabJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs'**
+  String get tabJobs;
+
+  /// No description provided for @railEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming events'**
+  String get railEvents;
+
+  /// No description provided for @railJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest jobs'**
+  String get railJobs;
+
+  /// No description provided for @eventsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming events'**
+  String get eventsEmptyTitle;
+
+  /// No description provided for @eventsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to post one for Harur.'**
+  String get eventsEmptyBody;
+
+  /// No description provided for @jobsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No jobs posted yet'**
+  String get jobsEmptyTitle;
+
+  /// No description provided for @jobsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to post an opening.'**
+  String get jobsEmptyBody;
+
+  /// No description provided for @addEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event'**
+  String get addEvent;
+
+  /// No description provided for @postJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a job'**
+  String get postJob;
+
+  /// No description provided for @tagEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get tagEvent;
+
+  /// No description provided for @tagJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Job'**
+  String get tagJob;
+
+  /// No description provided for @submitEventTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post an event'**
+  String get submitEventTitle;
+
+  /// No description provided for @submitEventBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit event'**
+  String get submitEventBtn;
+
+  /// No description provided for @eventStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get eventStarts;
+
+  /// No description provided for @eventEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends (optional)'**
+  String get eventEnds;
+
+  /// No description provided for @eventAllDay.
+  ///
+  /// In en, this message translates to:
+  /// **'All day'**
+  String get eventAllDay;
+
+  /// No description provided for @eventPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticketed (not free)'**
+  String get eventPaid;
+
+  /// No description provided for @eventVenueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue'**
+  String get eventVenueLabel;
+
+  /// No description provided for @eventVenueRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a venue: pin it on the map, type it, or both.'**
+  String get eventVenueRequired;
+
+  /// No description provided for @eventRegLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration link (optional)'**
+  String get eventRegLink;
+
+  /// No description provided for @pickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get pickDate;
+
+  /// No description provided for @pickTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time'**
+  String get pickTime;
+
+  /// No description provided for @errStartsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose when the event starts.'**
+  String get errStartsRequired;
+
+  /// No description provided for @errVenueRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a venue for the event.'**
+  String get errVenueRequired;
+
+  /// No description provided for @submitJobTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a job'**
+  String get submitJobTitle;
+
+  /// No description provided for @submitJobBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit job'**
+  String get submitJobBtn;
+
+  /// No description provided for @jobEmployer.
+  ///
+  /// In en, this message translates to:
+  /// **'Employer'**
+  String get jobEmployer;
+
+  /// No description provided for @jobContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact (phone or e-mail)'**
+  String get jobContact;
+
+  /// No description provided for @jobPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay (optional)'**
+  String get jobPay;
+
+  /// No description provided for @jobClosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing date'**
+  String get jobClosing;
+
+  /// No description provided for @jobApplyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply link (optional)'**
+  String get jobApplyLink;
+
+  /// No description provided for @jobScamWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Never pay to apply for a job. Report any listing that asks for money.'**
+  String get jobScamWarning;
+
+  /// No description provided for @errEmployerContactRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the employer and a way to contact them.'**
+  String get errEmployerContactRequired;
+
+  /// No description provided for @errClosingRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a closing date in the future.'**
+  String get errClosingRequired;
+
+  /// No description provided for @eventDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Event details'**
+  String get eventDetails;
+
+  /// No description provided for @jobDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Job details'**
+  String get jobDetails;
+
+  /// No description provided for @closesOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Closes'**
+  String get closesOn;
+
+  /// No description provided for @featureFlags.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature flags'**
+  String get featureFlags;
+
+  /// No description provided for @featureFlagsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn modules on or off for everyone'**
+  String get featureFlagsSub;
+
+  /// No description provided for @flagEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get flagEvents;
+
+  /// No description provided for @flagEventsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'The Events tab, submitting and browsing events'**
+  String get flagEventsSub;
+
+  /// No description provided for @flagJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs'**
+  String get flagJobs;
+
+  /// No description provided for @flagJobsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'The Jobs tab, submitting and browsing jobs'**
+  String get flagJobsSub;
+
+  /// No description provided for @flagOtherNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Other modules listed here are not built into the app yet, so they are left out until they are.'**
+  String get flagOtherNote;
+
+  /// No description provided for @flagChangeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t change that. Try again.'**
+  String get flagChangeFailed;
+
+  /// No description provided for @adsAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Ads'**
+  String get adsAdmin;
+
+  /// No description provided for @adsAdminSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsored cards shown in the app'**
+  String get adsAdminSub;
+
+  /// No description provided for @adCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'New ad'**
+  String get adCreate;
+
+  /// No description provided for @adTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get adTitleLabel;
+
+  /// No description provided for @adBodyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get adBodyLabel;
+
+  /// No description provided for @adLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Link (https)'**
+  String get adLinkLabel;
+
+  /// No description provided for @adPlacementLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it shows'**
+  String get adPlacementLabel;
+
+  /// No description provided for @adPriorityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority (higher shows first)'**
+  String get adPriorityLabel;
+
+  /// No description provided for @adStartsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get adStartsLabel;
+
+  /// No description provided for @adEndsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends (optional)'**
+  String get adEndsLabel;
+
+  /// No description provided for @adImageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Image (optional)'**
+  String get adImageOptional;
+
+  /// No description provided for @adPlacementHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get adPlacementHome;
+
+  /// No description provided for @adPlacementNews.
+  ///
+  /// In en, this message translates to:
+  /// **'News'**
+  String get adPlacementNews;
+
+  /// No description provided for @adPlacementReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get adPlacementReports;
+
+  /// No description provided for @adStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get adStatusDraft;
+
+  /// No description provided for @adStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get adStatusActive;
+
+  /// No description provided for @adStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get adStatusPaused;
+
+  /// No description provided for @adActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get adActivate;
+
+  /// No description provided for @adPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get adPause;
+
+  /// No description provided for @adDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete ad'**
+  String get adDelete;
+
+  /// No description provided for @adDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this ad? This can\'t be undone.'**
+  String get adDeleteConfirm;
+
+  /// No description provided for @adNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads yet.'**
+  String get adNone;
+
+  /// No description provided for @adStats.
+  ///
+  /// In en, this message translates to:
+  /// **'{impressions} views · {clicks} taps'**
+  String adStats(int impressions, int clicks);
+
+  /// No description provided for @sponsored.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsored'**
+  String get sponsored;
+
+  /// No description provided for @adCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the ad. Check the details and try again.'**
+  String get adCreateFailed;
+
+  /// No description provided for @submittedEventMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. Your event was sent for review and will appear once approved.'**
+  String get submittedEventMsg;
+
+  /// No description provided for @submittedJobMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. Your job post was sent for review and will appear once approved.'**
+  String get submittedJobMsg;
 }
 
 class _AppLocalizationsDelegate

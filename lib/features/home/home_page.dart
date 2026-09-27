@@ -6,11 +6,13 @@ import '../../core/models/news_article.dart';
 import '../../core/models/weather.dart';
 import '../../core/services/alerts_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/feature_flag_service.dart';
 import '../../core/services/news_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/util/safe_launch.dart';
 import '../../core/widgets/ui.dart';
 import '../../main.dart' show AppTab, TownShell;
+import '../ads/sponsored_card.dart';
 import '../alerts/submit_alert_page.dart';
 import '../news/news_page.dart' show categoryColor, newsCategoryName;
 import '../reports/alert_widgets.dart';
@@ -30,10 +32,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Alert>? _alerts;
   List<NewsArticle>? _news;
+  List<Alert>? _events;
+  List<Alert>? _jobs;
   bool _alertsLoading = true;
   bool _newsLoading = true;
-  int _pending = 0;
   Timer? _timer;
+  int _pending = 0;
 
   @override
   void initState() {
@@ -57,14 +61,20 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _load() async {
     if (!mounted) return;
+    final wantEvents = FeatureFlagService.isEnabled('events');
+    final wantJobs = FeatureFlagService.isEnabled('jobs');
     final results = await Future.wait([
       AlertsService.fetchFeedAlerts(limit: 6),
       NewsService.fetch(limit: 6),
+      wantEvents ? AlertsService.fetchFeedAlerts(kind: 'event', limit: 6) : Future.value(null),
+      wantJobs ? AlertsService.fetchFeedAlerts(kind: 'job', limit: 6) : Future.value(null),
     ]);
     if (!mounted) return;
     setState(() {
       _alerts = (results[0] as List<Alert>?) ?? _alerts; // a failed refresh keeps what is on screen
       _news = (results[1] as List<NewsArticle>?) ?? _news;
+      if (wantEvents) _events = (results[2] as List<Alert>?) ?? _events;
+      if (wantJobs) _jobs = (results[3] as List<Alert>?) ?? _jobs;
       _alertsLoading = false;
       _newsLoading = false;
     });
@@ -151,6 +161,38 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+
+        const SliverToBoxAdapter(child: SponsoredCard(placement: 'home')),
+
+        // ── Events rail (only once a super admin turns the module on) ───────────
+        if (FeatureFlagService.isEnabled('events'))
+          SliverToBoxAdapter(
+            child: Rail(
+              title: t.railEvents,
+              height: 168,
+              onSeeAll: () => TownShell.goTo(context, AppTab.reports),
+              emptyIcon: Icons.event_rounded,
+              emptyText: t.eventsEmptyTitle,
+              children: [
+                for (final a in _events ?? const <Alert>[]) AlertCard(alert: a, compact: true, onTap: () => showAlertDetail(context, a)),
+              ],
+            ),
+          ),
+
+        // ── Jobs rail (only once a super admin turns the module on) ─────────────
+        if (FeatureFlagService.isEnabled('jobs'))
+          SliverToBoxAdapter(
+            child: Rail(
+              title: t.railJobs,
+              height: 168,
+              onSeeAll: () => TownShell.goTo(context, AppTab.reports),
+              emptyIcon: Icons.work_outline_rounded,
+              emptyText: t.jobsEmptyTitle,
+              children: [
+                for (final a in _jobs ?? const <Alert>[]) AlertCard(alert: a, compact: true, onTap: () => showAlertDetail(context, a)),
+              ],
+            ),
+          ),
 
         // ── News rail ──────────────────────────────────────────────────────────
         SliverToBoxAdapter(

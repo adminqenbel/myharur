@@ -7,6 +7,7 @@ import '../../core/services/alerts_service.dart';
 import '../../core/services/news_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
+import '../ads/sponsored_card.dart';
 import '../alerts/submit_alert_page.dart';
 import '../reports/alert_widgets.dart';
 
@@ -95,6 +96,7 @@ class _NewsPageState extends State<NewsPage> {
           ),
         ),
         if (!community) ...[
+          const SliverToBoxAdapter(child: SponsoredCard(placement: 'news')),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, 0, AppSpacing.gutter, 12),

@@ -1595,4 +1595,262 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifPromptNo => 'Not now';
+
+  @override
+  String get ecCultural => 'Cultural';
+
+  @override
+  String get ecSports => 'Sports';
+
+  @override
+  String get ecReligious => 'Religious';
+
+  @override
+  String get ecGovernment => 'Government';
+
+  @override
+  String get ecBusiness => 'Business';
+
+  @override
+  String get jcFullTime => 'Full-time';
+
+  @override
+  String get jcPartTime => 'Part-time';
+
+  @override
+  String get jcContract => 'Contract';
+
+  @override
+  String get jcInternship => 'Internship';
+
+  @override
+  String get jcDailyWage => 'Daily wage';
+
+  @override
+  String get tabEvents => 'Events';
+
+  @override
+  String get tabJobs => 'Jobs';
+
+  @override
+  String get railEvents => 'Upcoming events';
+
+  @override
+  String get railJobs => 'Latest jobs';
+
+  @override
+  String get eventsEmptyTitle => 'No upcoming events';
+
+  @override
+  String get eventsEmptyBody => 'Be the first to post one for Harur.';
+
+  @override
+  String get jobsEmptyTitle => 'No jobs posted yet';
+
+  @override
+  String get jobsEmptyBody => 'Be the first to post an opening.';
+
+  @override
+  String get addEvent => 'Add event';
+
+  @override
+  String get postJob => 'Post a job';
+
+  @override
+  String get tagEvent => 'Event';
+
+  @override
+  String get tagJob => 'Job';
+
+  @override
+  String get submitEventTitle => 'Post an event';
+
+  @override
+  String get submitEventBtn => 'Submit event';
+
+  @override
+  String get eventStarts => 'Starts';
+
+  @override
+  String get eventEnds => 'Ends (optional)';
+
+  @override
+  String get eventAllDay => 'All day';
+
+  @override
+  String get eventPaid => 'Ticketed (not free)';
+
+  @override
+  String get eventVenueLabel => 'Venue';
+
+  @override
+  String get eventVenueRequired =>
+      'Add a venue: pin it on the map, type it, or both.';
+
+  @override
+  String get eventRegLink => 'Registration link (optional)';
+
+  @override
+  String get pickDate => 'Pick a date';
+
+  @override
+  String get pickTime => 'Pick a time';
+
+  @override
+  String get errStartsRequired => 'Choose when the event starts.';
+
+  @override
+  String get errVenueRequired => 'Add a venue for the event.';
+
+  @override
+  String get submitJobTitle => 'Post a job';
+
+  @override
+  String get submitJobBtn => 'Submit job';
+
+  @override
+  String get jobEmployer => 'Employer';
+
+  @override
+  String get jobContact => 'Contact (phone or e-mail)';
+
+  @override
+  String get jobPay => 'Pay (optional)';
+
+  @override
+  String get jobClosing => 'Closing date';
+
+  @override
+  String get jobApplyLink => 'Apply link (optional)';
+
+  @override
+  String get jobScamWarning =>
+      'Never pay to apply for a job. Report any listing that asks for money.';
+
+  @override
+  String get errEmployerContactRequired =>
+      'Add the employer and a way to contact them.';
+
+  @override
+  String get errClosingRequired => 'Choose a closing date in the future.';
+
+  @override
+  String get eventDetails => 'Event details';
+
+  @override
+  String get jobDetails => 'Job details';
+
+  @override
+  String get closesOn => 'Closes';
+
+  @override
+  String get featureFlags => 'Feature flags';
+
+  @override
+  String get featureFlagsSub => 'Turn modules on or off for everyone';
+
+  @override
+  String get flagEvents => 'Events';
+
+  @override
+  String get flagEventsSub => 'The Events tab, submitting and browsing events';
+
+  @override
+  String get flagJobs => 'Jobs';
+
+  @override
+  String get flagJobsSub => 'The Jobs tab, submitting and browsing jobs';
+
+  @override
+  String get flagOtherNote =>
+      'Other modules listed here are not built into the app yet, so they are left out until they are.';
+
+  @override
+  String get flagChangeFailed => 'Couldn\'t change that. Try again.';
+
+  @override
+  String get adsAdmin => 'Ads';
+
+  @override
+  String get adsAdminSub => 'Sponsored cards shown in the app';
+
+  @override
+  String get adCreate => 'New ad';
+
+  @override
+  String get adTitleLabel => 'Title';
+
+  @override
+  String get adBodyLabel => 'Text';
+
+  @override
+  String get adLinkLabel => 'Link (https)';
+
+  @override
+  String get adPlacementLabel => 'Where it shows';
+
+  @override
+  String get adPriorityLabel => 'Priority (higher shows first)';
+
+  @override
+  String get adStartsLabel => 'Starts';
+
+  @override
+  String get adEndsLabel => 'Ends (optional)';
+
+  @override
+  String get adImageOptional => 'Image (optional)';
+
+  @override
+  String get adPlacementHome => 'Home';
+
+  @override
+  String get adPlacementNews => 'News';
+
+  @override
+  String get adPlacementReports => 'Reports';
+
+  @override
+  String get adStatusDraft => 'Draft';
+
+  @override
+  String get adStatusActive => 'Active';
+
+  @override
+  String get adStatusPaused => 'Paused';
+
+  @override
+  String get adActivate => 'Activate';
+
+  @override
+  String get adPause => 'Pause';
+
+  @override
+  String get adDelete => 'Delete ad';
+
+  @override
+  String get adDeleteConfirm => 'Delete this ad? This can\'t be undone.';
+
+  @override
+  String get adNone => 'No ads yet.';
+
+  @override
+  String adStats(int impressions, int clicks) {
+    return '$impressions views · $clicks taps';
+  }
+
+  @override
+  String get sponsored => 'Sponsored';
+
+  @override
+  String get adCreateFailed =>
+      'Couldn\'t create the ad. Check the details and try again.';
+
+  @override
+  String get submittedEventMsg =>
+      'Thanks. Your event was sent for review and will appear once approved.';
+
+  @override
+  String get submittedJobMsg =>
+      'Thanks. Your job post was sent for review and will appear once approved.';
 }

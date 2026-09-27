@@ -30,6 +30,7 @@ const _selectFields = """
   id, kind, category, title, body, source, status, link_url, image_paths,
   published_as_role, created_by_uid, expires_at,
   emergency_tagged, created_at,
+  starts_at, ends_at, all_day, is_paid, employer, pay_text, contact_text,
   location_text, location_lat, location_lng, location_source,
   moderation_flags, flagged_by_system, moderation_reason
 """;
@@ -78,6 +79,13 @@ class AlertsService {
     List<String> imagePaths = const [],
     PickedLocation? location,
     bool emergencyTagged = false,
+    DateTime? startsAt,
+    DateTime? endsAt,
+    bool allDay = false,
+    bool isPaid = false,
+    String? employer,
+    String? payText,
+    String? contactText,
   }) async {
     final client = SupabaseConfig.client;
     if (client == null || client.auth.currentUser == null) {
@@ -96,6 +104,13 @@ class AlertsService {
             "body": body.trim(),
             if (location != null && !location.isEmpty) ...location.toColumns("location"),
             "emergency_tagged": emergencyTagged,
+            if (startsAt != null) "starts_at": startsAt.toUtc().toIso8601String(),
+            if (endsAt != null) "ends_at": endsAt.toUtc().toIso8601String(),
+            "all_day": allDay,
+            "is_paid": isPaid,
+            if (employer != null && employer.trim().isNotEmpty) "employer": employer.trim(),
+            if (payText != null && payText.trim().isNotEmpty) "pay_text": payText.trim(),
+            if (contactText != null && contactText.trim().isNotEmpty) "contact_text": contactText.trim(),
           })
           .select("status")
           .single();
@@ -109,7 +124,13 @@ class AlertsService {
       if (m.contains("cooldown")) return SubmitOutcome.cooldown;
       if (m.contains("account_restricted")) return SubmitOutcome.restricted;
       if (m.contains("invalid_image")) return SubmitOutcome.invalidImage;
-      if (m.contains("invalid_length")) return SubmitOutcome.invalid;
+      if (m.contains("invalid_length") ||
+          m.contains("starts_at_required") ||
+          m.contains("venue_required") ||
+          m.contains("employer_and_contact_required") ||
+          m.contains("closing_date_required")) {
+        return SubmitOutcome.invalid;
+      }
       if (m.contains("profile_missing") ||
           m.contains("account_disabled") ||
           m.contains("authentication_required")) {

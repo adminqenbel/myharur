@@ -194,6 +194,18 @@ extension AlertCategoryTheme on String {
       case 'education': return AppColors.weatherBlue;
       case 'community': return AppColors.primary;
       case 'other': return AppColors.tertiaryLabel;
+      // event categories
+      case 'cultural': return AppColors.weatherViolet;
+      case 'sports': return AppColors.success;
+      case 'religious': return AppColors.weatherRed;
+      case 'government': return AppColors.govt;
+      case 'business': return AppColors.primary;
+      // job categories
+      case 'full_time': return AppColors.primary;
+      case 'part_time': return AppColors.weatherBlue;
+      case 'contract': return AppColors.weatherViolet;
+      case 'internship': return AppColors.success;
+      case 'daily_wage': return AppColors.warning;
       default: return AppColors.primary;
     }
   }
@@ -210,6 +222,16 @@ extension AlertCategoryTheme on String {
       case 'education': return Icons.school_rounded;
       case 'community': return Icons.groups_rounded;
       case 'other': return Icons.article_rounded;
+      case 'cultural': return Icons.celebration_rounded;
+      case 'sports': return Icons.sports_cricket_rounded;
+      case 'religious': return Icons.temple_hindu_rounded;
+      case 'government': return Icons.account_balance_rounded;
+      case 'business': return Icons.storefront_rounded;
+      case 'full_time': return Icons.work_rounded;
+      case 'part_time': return Icons.schedule_rounded;
+      case 'contract': return Icons.assignment_rounded;
+      case 'internship': return Icons.school_rounded;
+      case 'daily_wage': return Icons.construction_rounded;
       default: return Icons.campaign_rounded;
     }
   }

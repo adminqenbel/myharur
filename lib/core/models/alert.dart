@@ -17,9 +17,21 @@ class Alert {
   final bool emergencyTagged;
   final DateTime createdAt;
 
-  /// Optional https link (news only) and up to three private photos (paths in the content-images bucket).
+  /// Optional https link (news/event registration/job apply link) and up to three private photos
+  /// (paths in the content-images bucket).
   final String? linkUrl;
   final List<String> imagePaths;
+
+  /// Events: when it starts, and optionally ends; whether it runs all day; ticketed vs free.
+  final DateTime? startsAt;
+  final DateTime? endsAt; // events: optional end; jobs: closing date/time
+  final bool allDay;
+  final bool isPaid;
+
+  /// Jobs.
+  final String? employer;
+  final String? payText;
+  final String? contactText;
 
   /// Where it happened: a pinned point and/or typed text. Optional.
   final PickedLocation? location;
@@ -44,6 +56,13 @@ class Alert {
     required this.createdAt,
     this.linkUrl,
     this.imagePaths = const [],
+    this.startsAt,
+    this.endsAt,
+    this.allDay = false,
+    this.isPaid = false,
+    this.employer,
+    this.payText,
+    this.contactText,
     this.location,
     this.moderationFlags = const [],
     this.flaggedBySystem = false,
@@ -66,6 +85,13 @@ class Alert {
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
       linkUrl: json['link_url'] as String?,
       imagePaths: (json['image_paths'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      startsAt: json['starts_at'] != null ? DateTime.tryParse(json['starts_at'] as String) : null,
+      endsAt: json['ends_at'] != null ? DateTime.tryParse(json['ends_at'] as String) : null,
+      allDay: json['all_day'] as bool? ?? false,
+      isPaid: json['is_paid'] as bool? ?? false,
+      employer: json['employer'] as String?,
+      payText: json['pay_text'] as String?,
+      contactText: json['contact_text'] as String?,
       location: PickedLocation.fromColumns(
         text: json['location_text'] as String?,
         lat: (json['location_lat'] as num?)?.toDouble(),
@@ -79,6 +105,8 @@ class Alert {
   }
 
   bool get isNews => kind == 'news';
+  bool get isEvent => kind == 'event';
+  bool get isJob => kind == 'job';
   bool get isOfficial => source == 'official';
   bool get isPending => status == 'pending';
   bool get isPublished => status == 'published';

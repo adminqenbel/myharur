@@ -5,6 +5,8 @@ import '../../core/services/admin_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
+import 'ads_admin_page.dart';
+import 'feature_flags_page.dart';
 import 'locked_logins_page.dart';
 import 'moderation_tools_pages.dart';
 
@@ -132,6 +134,28 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
                   ),
               ],
             ),
+            if (isSuper)
+              GroupedSection(
+                dividerIndent: 58,
+                children: [
+                  GroupedRow(
+                    icon: Icons.toggle_on_rounded,
+                    iconColor: AppColors.primary,
+                    title: t.featureFlags,
+                    subtitle: t.featureFlagsSub,
+                    chevron: true,
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FeatureFlagsPage())),
+                  ),
+                  GroupedRow(
+                    icon: Icons.campaign_rounded,
+                    iconColor: AppColors.weatherViolet,
+                    title: t.adsAdmin,
+                    subtitle: t.adsAdminSub,
+                    chevron: true,
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdsAdminPage())),
+                  ),
+                ],
+              ),
             const SizedBox(height: 24),
           ]),
         ],
