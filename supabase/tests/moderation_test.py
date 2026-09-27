@@ -737,6 +737,17 @@ _, err = run(D1, "authenticated", "select public.delete_content(%s)", (str(pn[0]
 cur.execute("select status from public.moderation_queue where alert_id=%s", (str(pn[0][0]),))
 check("deleting a pending post removes it from the review queue", err is None and cur.fetchone()[0] == "expired", err)
 
+# A staff member's OWN deleted post: alerts_staff_read (is_staff(), no deleted_at check) exists so staff can
+# moderate everything, including expired/rejected rows. That RLS row is therefore still visible to them here,
+# which is why the app's "My posts" query adds its own `deleted_at is null` filter (fetchMine in
+# alerts_service.dart) rather than trusting RLS alone to hide a deleted post from its own author.
+sp = publish(M, "Staff member's own report", "A report published by a moderator, later deleted by them")
+run(M, "authenticated", "select public.delete_content(%s)", (sp,))
+rows, _ = run(M, "authenticated", "select count(*) from public.alerts where id=%s", (sp,))
+check("RLS alone still surfaces a staff member's own deleted post to them (via alerts_staff_read)", rows[0][0] == 1, rows)
+rows, _ = run(M, "authenticated", "select count(*) from public.alerts where id=%s and deleted_at is null", (sp,))
+check("filtering deleted_at explicitly hides it, as the app's My-posts query does", rows[0][0] == 0, rows)
+
 print("\n[28] report a post, auto-restrict, staff decision")
 AU = aged("author@x")
 post = publish(AU, "Road repair on main street", "Road repair work is going on along the main street")

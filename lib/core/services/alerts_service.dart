@@ -132,6 +132,9 @@ class AlertsService {
           .from("alerts")
           .select(_selectFields)
           .eq("created_by_uid", uid)
+          // Staff can read every alert (moderation), including ones this same person deleted; filter
+          // deleted rows out explicitly so "My posts" agrees with what deleting a post promises everyone.
+          .isFilter("deleted_at", null)
           .order("created_at", ascending: false)
           .limit(limit);
       return _parse(response);

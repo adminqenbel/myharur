@@ -76,37 +76,47 @@ async function askGemini(message: string, history: { role: string; text: string 
     ...history.map((h) => ({ role: h.role === 'model' ? 'model' : 'user', parts: [{ text: h.text }] })),
     { role: 'user', parts: [{ text: `lang=${lang}\nQuestion: ${message}` }] },
   ];
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
-      }),
-      signal: ctrl.signal,
-    });
-    if (!res.ok) {
-      if (probe) {
-        probe.status = res.status;
-        // Google's error text describes the problem and never contains the key
-        probe.detail = String((await res.json().catch(() => ({})))?.error?.message ?? '').slice(0, 200);
+
+  // The free tier occasionally answers "model overloaded" (503) for a moment; one quick retry clears most
+  // of those without spending an extra day-quota call (it is still the same logical question).
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents,
+          generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
+        }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) {
+        if (probe) {
+          probe.status = res.status;
+          // Google's error text describes the problem and never contains the key
+          probe.detail = String((await res.json().catch(() => ({})))?.error?.message ?? '').slice(0, 200);
+        }
+        if (res.status === 503 && attempt === 0) {
+          await new Promise((r) => setTimeout(r, 900));
+          continue;
+        }
+        return null;
       }
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? '';
+      const clean = String(text).replace(/[*_`#>]/g, '').trim().slice(0, 1200);
+      return clean.length > 0 ? clean : null;
+    } catch (e) {
+      if (probe) probe.detail = `request failed: ${(e as Error).name}`;
       return null;
+    } finally {
+      clearTimeout(timer);
     }
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? '';
-    const clean = String(text).replace(/[*_`#>]/g, '').trim().slice(0, 1200);
-    return clean.length > 0 ? clean : null;
-  } catch (e) {
-    if (probe) probe.detail = `request failed: ${(e as Error).name}`;
-    return null;
-  } finally {
-    clearTimeout(timer);
   }
+  return null;
 }
 
 Deno.serve(async (req) => {

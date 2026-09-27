@@ -256,8 +256,13 @@ class _BugSheet extends StatelessWidget {
     final t = context.t;
     Future<void> mark(String status) async {
       final nav = Navigator.of(context);
-      await AdminService.setBugStatus(report.id, status);
-      nav.pop();
+      final messenger = ScaffoldMessenger.of(context);
+      final ok = await AdminService.setBugStatus(report.id, status);
+      if (ok) {
+        nav.pop();
+      } else {
+        messenger.showSnackBar(SnackBar(content: Text(t.saveFailed)));
+      }
     }
 
     return SafeArea(

@@ -234,11 +234,16 @@ class AdminService {
     }
   }
 
+  /// Returns false when the client is offline, on any error, or when RLS silently matched no row
+  /// (checked by asking Postgrest to return the updated row rather than trusting a 2xx with no body).
   static Future<bool> setBugStatus(String id, String status) async {
+    final client = _c;
+    if (client == null) return false;
     try {
-      await _c?.from('client_errors').update({'status': status}).eq('id', id);
-      return true;
-    } catch (_) {
+      final rows = await client.from('client_errors').update({'status': status}).eq('id', id).select('id');
+      return (rows as List).isNotEmpty;
+    } catch (e) {
+      secureLog('[ADMIN] setBugStatus error: $e');
       return false;
     }
   }
