@@ -247,24 +247,36 @@ String _statusName(AppLocalizations t, String s) => switch (s) {
       _ => t.bugNew,
     };
 
-class _BugSheet extends StatelessWidget {
+class _BugSheet extends StatefulWidget {
   final BugReport report;
   const _BugSheet({required this.report});
 
   @override
+  State<_BugSheet> createState() => _BugSheetState();
+}
+
+class _BugSheetState extends State<_BugSheet> {
+  late String _status = widget.report.status;
+  String? _busy;
+
+  Future<void> _mark(String status) async {
+    if (status == _status) return; // already in that state, nothing to save
+    final t = context.t;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = status);
+    final ok = await AdminService.setBugStatus(widget.report.id, status);
+    if (!mounted) return;
+    setState(() {
+      _busy = null;
+      if (ok) _status = status;
+    });
+    if (!ok) messenger.showSnackBar(SnackBar(content: Text(t.saveFailed)));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = context.t;
-    Future<void> mark(String status) async {
-      final nav = Navigator.of(context);
-      final messenger = ScaffoldMessenger.of(context);
-      final ok = await AdminService.setBugStatus(report.id, status);
-      if (ok) {
-        nav.pop();
-      } else {
-        messenger.showSnackBar(SnackBar(content: Text(t.saveFailed)));
-      }
-    }
-
+    final report = widget.report;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -272,7 +284,10 @@ class _BugSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(report.message, style: AppTextStyles.title3),
+            Row(children: [
+              Expanded(child: Text(report.message, style: AppTextStyles.title3)),
+              Tag(label: _statusName(t, _status), color: _status == 'fixed' ? AppColors.success : (_status == 'seen' ? AppColors.tertiaryLabel : AppColors.warning)),
+            ]),
             const SizedBox(height: 4),
             Text('${report.kind} · ${report.appVersion} · ${report.os}', style: AppTextStyles.footnote),
             if (report.details.isNotEmpty) ...[
@@ -281,9 +296,22 @@ class _BugSheet extends StatelessWidget {
             ],
             const SizedBox(height: 16),
             Row(children: [
-              Expanded(child: PrimaryButton(label: t.bugSeen, tinted: true, onPressed: () => mark('seen'))),
+              Expanded(
+                child: PrimaryButton(
+                  label: t.bugSeen,
+                  tinted: true,
+                  loading: _busy == 'seen',
+                  onPressed: _status == 'seen' || _busy != null ? null : () => _mark('seen'),
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: PrimaryButton(label: t.bugFixed, onPressed: () => mark('fixed'))),
+              Expanded(
+                child: PrimaryButton(
+                  label: t.bugFixed,
+                  loading: _busy == 'fixed',
+                  onPressed: _status == 'fixed' || _busy != null ? null : () => _mark('fixed'),
+                ),
+              ),
             ]),
           ],
         ),
