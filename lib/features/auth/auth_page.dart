@@ -8,6 +8,7 @@ import '../../core/services/supabase_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ui.dart';
 import '../common/language_switch.dart';
+import 'otp_signin_page.dart';
 
 // ==============================================================================
 // AUTH PAGE: two clearly separate paths.
@@ -110,6 +111,10 @@ class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
     Future<void>.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _googleBusy = false);
     });
+  }
+
+  void _openOtp(bool isPhone) {
+    Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => OtpSignInPage(isPhone: isPhone)));
   }
 
   Future<void> _usernameSignIn() async {
@@ -240,14 +245,9 @@ class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
         Text(t.signInExplain, textAlign: TextAlign.center, style: AppTextStyles.subheadline.copyWith(color: AppColors.secondaryLabel)),
         const SizedBox(height: 14),
         _GoogleButton(label: t.continueWithGoogle, loading: _googleBusy, onTap: configured ? _google : null),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Row(children: [
-            const Expanded(child: Divider()),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(t.orDivider, style: AppTextStyles.caption1)),
-            const Expanded(child: Divider()),
-          ]),
-        ),
+        _orDivider(t.orMoreWays),
+        _OtpChoiceRow(enabled: configured, onEmail: () => _openOtp(false), onPhone: () => _openOtp(true)),
+        _orDivider(t.orDivider),
         TextField(
           controller: _username,
           autocorrect: false,
@@ -290,8 +290,36 @@ class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
         Text(t.registerExplain, textAlign: TextAlign.center, style: AppTextStyles.subheadline.copyWith(color: AppColors.secondaryLabel)),
         const SizedBox(height: 18),
         _GoogleButton(label: t.registerWithGoogle, loading: _googleBusy, onTap: configured ? _google : null),
+        _orDivider(t.orMoreWays),
+        _OtpChoiceRow(enabled: configured, onEmail: () => _openOtp(false), onPhone: () => _openOtp(true)),
       ],
     );
+  }
+
+  Widget _orDivider(String label) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(children: [
+          const Expanded(child: Divider()),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(label, style: AppTextStyles.caption1)),
+          const Expanded(child: Divider()),
+        ]),
+      );
+}
+
+class _OtpChoiceRow extends StatelessWidget {
+  final bool enabled;
+  final VoidCallback onEmail;
+  final VoidCallback onPhone;
+  const _OtpChoiceRow({required this.enabled, required this.onEmail, required this.onPhone});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.t;
+    return Row(children: [
+      Expanded(child: PrimaryButton(label: t.continueWithEmail, tinted: true, icon: Icons.mail_outline_rounded, onPressed: enabled ? onEmail : null)),
+      const SizedBox(width: 10),
+      Expanded(child: PrimaryButton(label: t.continueWithPhone, tinted: true, icon: Icons.sms_outlined, onPressed: enabled ? onPhone : null)),
+    ]);
   }
 }
 

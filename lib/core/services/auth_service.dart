@@ -322,6 +322,124 @@ class AuthService {
     return true;
   }
 
+  // ── E-mail / phone sign-in (Brevo-delivered one-time codes) ─────────────────
+  // Uses Supabase Auth's own OTP flow (it generates, hashes, expires and rate-limits the code
+  // itself); only the DELIVERY is swapped to Brevo, via Auth Hooks configured in the Supabase
+  // dashboard (see docs/BREVO.md). Works for both a brand-new resident (the account is created on
+  // successful verification, same as today's Google sign-up) and someone signing back in.
+
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  static final _e164Pattern = RegExp(r'^\+[1-9]\d{7,14}$');
+
+  static Future<OtpSendResult> sendEmailOtp(String email) async {
+    final trimmed = email.trim().toLowerCase();
+    if (!_emailPattern.hasMatch(trimmed)) return OtpSendResult.invalidInput;
+    final client = SupabaseConfig.client;
+    if (client == null) return OtpSendResult.error;
+    try {
+      await client.auth.signInWithOtp(email: trimmed, shouldCreateUser: true);
+      return OtpSendResult.ok;
+    } on AuthException catch (e) {
+      secureLog('[AUTH] sendEmailOtp error: ${e.statusCode} ${e.message}');
+      return _isRateLimited(e) ? OtpSendResult.rateLimited : OtpSendResult.error;
+    } catch (e) {
+      secureLog('[AUTH] sendEmailOtp error: $e');
+      return OtpSendResult.network;
+    }
+  }
+
+  static Future<OtpVerifyResult> verifyEmailOtp(String email, String code) async {
+    final client = SupabaseConfig.client;
+    if (client == null) return OtpVerifyResult.error;
+    try {
+      final res = await client.auth.verifyOTP(email: email.trim().toLowerCase(), token: code.trim(), type: OtpType.email);
+      if (res.session == null || res.user == null) return OtpVerifyResult.invalidCode;
+      _loggedIn = true;
+      await _fetchProfile(res.user!.id);
+      AuthNotifier.instance.notify();
+      return OtpVerifyResult.ok;
+    } on AuthException catch (e) {
+      secureLog('[AUTH] verifyEmailOtp error: ${e.statusCode} ${e.message}');
+      return OtpVerifyResult.invalidCode;
+    } catch (e) {
+      secureLog('[AUTH] verifyEmailOtp error: $e');
+      return OtpVerifyResult.network;
+    }
+  }
+
+  /// [phone] must be E.164 (+countrycode…), e.g. +919597368066.
+  static Future<OtpSendResult> sendPhoneOtp(String phone) async {
+    final trimmed = phone.trim();
+    if (!_e164Pattern.hasMatch(trimmed)) return OtpSendResult.invalidInput;
+    final client = SupabaseConfig.client;
+    if (client == null) return OtpSendResult.error;
+    try {
+      await client.auth.signInWithOtp(phone: trimmed, shouldCreateUser: true);
+      return OtpSendResult.ok;
+    } on AuthException catch (e) {
+      secureLog('[AUTH] sendPhoneOtp error: ${e.statusCode} ${e.message}');
+      return _isRateLimited(e) ? OtpSendResult.rateLimited : OtpSendResult.error;
+    } catch (e) {
+      secureLog('[AUTH] sendPhoneOtp error: $e');
+      return OtpSendResult.network;
+    }
+  }
+
+  static Future<OtpVerifyResult> verifyPhoneOtp(String phone, String code) async {
+    final client = SupabaseConfig.client;
+    if (client == null) return OtpVerifyResult.error;
+    try {
+      final res = await client.auth.verifyOTP(phone: phone.trim(), token: code.trim(), type: OtpType.sms);
+      if (res.session == null || res.user == null) return OtpVerifyResult.invalidCode;
+      _loggedIn = true;
+      await _fetchProfile(res.user!.id);
+      AuthNotifier.instance.notify();
+      return OtpVerifyResult.ok;
+    } on AuthException catch (e) {
+      secureLog('[AUTH] verifyPhoneOtp error: ${e.statusCode} ${e.message}');
+      return OtpVerifyResult.invalidCode;
+    } catch (e) {
+      secureLog('[AUTH] verifyPhoneOtp error: $e');
+      return OtpVerifyResult.network;
+    }
+  }
+
+  /// Attaches a phone number to the CURRENTLY signed-in account so it can also be used to sign in
+  /// later (Account > "Add phone sign-in"). Never creates a new account or session by itself —
+  /// [confirmPhoneVerification] finishes the change on the existing one.
+  static Future<OtpSendResult> startPhoneVerification(String phone) async {
+    final trimmed = phone.trim();
+    if (!_e164Pattern.hasMatch(trimmed)) return OtpSendResult.invalidInput;
+    final client = SupabaseConfig.client;
+    if (client == null || client.auth.currentUser == null) return OtpSendResult.error;
+    try {
+      await client.auth.updateUser(UserAttributes(phone: trimmed));
+      return OtpSendResult.ok;
+    } on AuthException catch (e) {
+      secureLog('[AUTH] startPhoneVerification error: ${e.statusCode} ${e.message}');
+      return _isRateLimited(e) ? OtpSendResult.rateLimited : OtpSendResult.error;
+    } catch (e) {
+      secureLog('[AUTH] startPhoneVerification error: $e');
+      return OtpSendResult.network;
+    }
+  }
+
+  static Future<bool> confirmPhoneVerification(String phone, String code) async {
+    final client = SupabaseConfig.client;
+    if (client == null) return false;
+    try {
+      await client.auth.verifyOTP(phone: phone.trim(), token: code.trim(), type: OtpType.phoneChange);
+      await client.rpc('mark_phone_verified'); // trusts auth.users.phone, not the client's say-so
+      await refreshProfile();
+      return true;
+    } catch (e) {
+      secureLog('[AUTH] confirmPhoneVerification error: $e');
+      return false;
+    }
+  }
+
+  static bool _isRateLimited(AuthException e) => e.statusCode == '429' || e.message.toLowerCase().contains('rate');
+
   // ── Two-factor (TOTP authenticator app) ─────────────────────────────────────
 
   /// Where the signed-in user stands with two-factor.
@@ -576,6 +694,10 @@ class AuthService {
 enum AuthFailureReason { cancelled, failed, timeout, network }
 
 enum UsernameLoginResult { ok, invalid, tooManyAttempts, locked, network, error }
+
+enum OtpSendResult { ok, invalidInput, rateLimited, network, error }
+
+enum OtpVerifyResult { ok, invalidCode, network, error }
 
 enum MfaStatus { unknown, notEnrolled, needsChallenge, satisfied }
 

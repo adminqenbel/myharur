@@ -12,6 +12,7 @@ import '../help/help_page.dart';
 import '../support/support_bot_page.dart';
 import '../map/address_picker.dart';
 import '../security/mfa_pages.dart';
+import '../security/phone_signin_sheet.dart';
 import 'bug_report_sheet.dart';
 import 'my_posts_page.dart';
 import 'notifications_page.dart';
@@ -212,6 +213,15 @@ class _AccountPageState extends State<AccountPage> {
                     value: AuthService.hasPasswordLogin ? '✓' : null,
                     chevron: true,
                     onTap: _setPassword,
+                  ),
+                  GroupedRow(
+                    icon: Icons.sms_outlined,
+                    iconColor: p.phoneVerified ? AppColors.success : AppColors.tertiaryLabel,
+                    title: t.addPhoneSignIn,
+                    subtitle: t.addPhoneSignInSub,
+                    value: p.phoneVerified ? '✓' : null,
+                    chevron: !p.phoneVerified,
+                    onTap: p.phoneVerified ? null : () => showPhoneSignInSheet(context),
                   ),
                   GroupedRow(
                     icon: Icons.shield_rounded,

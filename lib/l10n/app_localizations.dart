@@ -1670,6 +1670,132 @@ abstract class AppLocalizations {
   /// **'or'**
   String get orDivider;
 
+  /// No description provided for @orMoreWays.
+  ///
+  /// In en, this message translates to:
+  /// **'or continue with'**
+  String get orMoreWays;
+
+  /// No description provided for @continueWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with email'**
+  String get continueWithEmail;
+
+  /// No description provided for @continueWithPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with phone'**
+  String get continueWithPhone;
+
+  /// No description provided for @emailField.
+  ///
+  /// In en, this message translates to:
+  /// **'E-mail address'**
+  String get emailField;
+
+  /// No description provided for @phoneField.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get phoneField;
+
+  /// No description provided for @phoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'+91XXXXXXXXXX'**
+  String get phoneHint;
+
+  /// No description provided for @otpInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid e-mail address.'**
+  String get otpInvalidEmail;
+
+  /// No description provided for @otpInvalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your number with the country code, e.g. +91XXXXXXXXXX.'**
+  String get otpInvalidPhone;
+
+  /// No description provided for @otpSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send the code. Please try again.'**
+  String get otpSendFailed;
+
+  /// No description provided for @otpRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many codes requested. Please wait a bit and try again.'**
+  String get otpRateLimited;
+
+  /// No description provided for @otpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your code'**
+  String get otpTitle;
+
+  /// No description provided for @otpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to {target}.'**
+  String otpSubtitle(String target);
+
+  /// No description provided for @otpCodeField.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get otpCodeField;
+
+  /// No description provided for @otpVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify and continue'**
+  String get otpVerify;
+
+  /// No description provided for @otpInvalidCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That code isn\'t right or has expired.'**
+  String get otpInvalidCode;
+
+  /// No description provided for @otpResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get otpResend;
+
+  /// No description provided for @otpResendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend in {seconds}s'**
+  String otpResendIn(int seconds);
+
+  /// No description provided for @otpSentAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent again.'**
+  String get otpSentAgain;
+
+  /// No description provided for @addPhoneSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add phone sign-in'**
+  String get addPhoneSignIn;
+
+  /// No description provided for @addPhoneSignInSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify a number so you can also sign in with it.'**
+  String get addPhoneSignInSub;
+
+  /// No description provided for @phoneSignInAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone sign-in added.'**
+  String get phoneSignInAdded;
+
   /// No description provided for @obPasswordTitle.
   ///
   /// In en, this message translates to:

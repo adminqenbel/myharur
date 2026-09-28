@@ -366,6 +366,41 @@
   },
   "noPasswordYet": "No password yet? Sign in with Google, then add one in Account.",
   "orDivider": "or",
+  "orMoreWays": "or continue with",
+  "continueWithEmail": "Continue with email",
+  "continueWithPhone": "Continue with phone",
+  "emailField": "E-mail address",
+  "phoneField": "Phone number",
+  "phoneHint": "+91XXXXXXXXXX",
+  "otpInvalidEmail": "Enter a valid e-mail address.",
+  "otpInvalidPhone": "Enter your number with the country code, e.g. +91XXXXXXXXXX.",
+  "otpSendFailed": "Couldn't send the code. Please try again.",
+  "otpRateLimited": "Too many codes requested. Please wait a bit and try again.",
+  "otpTitle": "Enter your code",
+  "otpSubtitle": "We sent a 6-digit code to {target}.",
+  "@otpSubtitle": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "otpCodeField": "6-digit code",
+  "otpVerify": "Verify and continue",
+  "otpInvalidCode": "That code isn't right or has expired.",
+  "otpResend": "Resend code",
+  "otpResendIn": "Resend in {seconds}s",
+  "@otpResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "otpSentAgain": "Sent again.",
+  "addPhoneSignIn": "Add phone sign-in",
+  "addPhoneSignInSub": "Verify a number so you can also sign in with it.",
+  "phoneSignInAdded": "Phone sign-in added.",
   "obPasswordTitle": "Add a password?",
   "obPasswordSub": "Optional. With a password you can sign in with your username as well as Google.",
   "passwordForUsername": "Username password",

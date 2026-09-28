@@ -855,6 +855,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orDivider => 'or';
 
   @override
+  String get orMoreWays => 'or continue with';
+
+  @override
+  String get continueWithEmail => 'Continue with email';
+
+  @override
+  String get continueWithPhone => 'Continue with phone';
+
+  @override
+  String get emailField => 'E-mail address';
+
+  @override
+  String get phoneField => 'Phone number';
+
+  @override
+  String get phoneHint => '+91XXXXXXXXXX';
+
+  @override
+  String get otpInvalidEmail => 'Enter a valid e-mail address.';
+
+  @override
+  String get otpInvalidPhone =>
+      'Enter your number with the country code, e.g. +91XXXXXXXXXX.';
+
+  @override
+  String get otpSendFailed => 'Couldn\'t send the code. Please try again.';
+
+  @override
+  String get otpRateLimited =>
+      'Too many codes requested. Please wait a bit and try again.';
+
+  @override
+  String get otpTitle => 'Enter your code';
+
+  @override
+  String otpSubtitle(String target) {
+    return 'We sent a 6-digit code to $target.';
+  }
+
+  @override
+  String get otpCodeField => '6-digit code';
+
+  @override
+  String get otpVerify => 'Verify and continue';
+
+  @override
+  String get otpInvalidCode => 'That code isn\'t right or has expired.';
+
+  @override
+  String get otpResend => 'Resend code';
+
+  @override
+  String otpResendIn(int seconds) {
+    return 'Resend in ${seconds}s';
+  }
+
+  @override
+  String get otpSentAgain => 'Sent again.';
+
+  @override
+  String get addPhoneSignIn => 'Add phone sign-in';
+
+  @override
+  String get addPhoneSignInSub =>
+      'Verify a number so you can also sign in with it.';
+
+  @override
+  String get phoneSignInAdded => 'Phone sign-in added.';
+
+  @override
   String get obPasswordTitle => 'Add a password?';
 
   @override

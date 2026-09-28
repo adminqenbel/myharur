@@ -29,7 +29,7 @@ create table storage.buckets(id text primary key, name text, public boolean, fil
 create table storage.objects(id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid, created_at timestamptz default now());
 alter table storage.objects enable row level security;
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name,'/'))[1:greatest(cardinality(string_to_array(name,'/'))-1,0)] $$;
-create table auth.users(id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb default '{}', raw_app_meta_data jsonb default '{}');
+create table auth.users(id uuid primary key default gen_random_uuid(), email text, phone text, phone_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}', raw_app_meta_data jsonb default '{}');
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true),'')::uuid $$;
 create function auth.role() returns text language sql stable as $$ select nullif(current_setting('request.jwt.claim.role', true),'') $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true),''), '{}')::jsonb $$;
@@ -57,8 +57,14 @@ for f in later:                          # each migration twice in a row, to pro
     cur.execute(sql)
 print("migrations applied twice OK:", later)
 
-def mkuser(email, role=None):
-    cur.execute("insert into auth.users(email) values (%s) returning id", (email,))
+def mkuser(email, role=None, phone=None, phone_confirmed=False):
+    # phone_confirmed_at must be set in the SAME insert as phone: handle_new_myharur_user() is an
+    # AFTER INSERT trigger, so setting it in a later UPDATE would seed phone_verified=false (the
+    # row it sees mid-insert would still look unconfirmed) — this mirrors what Auth itself does.
+    cur.execute(
+        "insert into auth.users(email, phone, phone_confirmed_at) values (%s,%s, case when %s then now() else null end) returning id",
+        (email, phone, phone_confirmed),
+    )
     uid = str(cur.fetchone()[0])
     if role:
         cur.execute("insert into public.user_roles(uid, role, scope) values (%s,%s,'global')", (uid, role))
@@ -350,9 +356,9 @@ row = cur.fetchone()
 check("falls back to name/picture claims", row == ("Picture Only", "https://lh3.googleusercontent.com/a/y"), row)
 try:
     cur.execute("""insert into auth.users(email, raw_app_meta_data) values ('spam@x', '{"provider":"email"}')""")
-    check("email sign-up blocked", False, "insert succeeded")
+    check("the old block_email_signup trigger is gone (dropped in 20261009000100, see its comment)", True)
 except Exception as e:
-    check("email sign-up blocked", "email_signup_disabled" in str(e), e)
+    check("the old block_email_signup trigger is gone (dropped in 20261009000100, see its comment)", False, e)
 try:
     cur.execute("insert into auth.users(email) values ('nometa@x')")
     check("users without provider metadata still allowed", True)
@@ -1245,6 +1251,45 @@ check("super admin deletes an ad", err is None, err)
 print("\n[39] the legacy jobs/events tables from the original baseline are gone")
 cur.execute("select to_regclass('public.jobs'), to_regclass('public.events')")
 check("public.jobs and public.events no longer exist (replaced by alerts.kind)", cur.fetchone() == (None, None))
+
+print("\n[40] Brevo OTP: dispatch caps and phone-verification linking")
+def reset_otp():
+    cur.execute("delete from public.otp_dispatch; delete from public.otp_dispatch_daily")
+
+reset_otp()
+h1 = "otp-hash-" + uuid.uuid4().hex
+takes = [svc("select public.internal_otp_take('email',%s,3,'0 seconds'::interval,1000)", (h1,))[0][0][0] for _ in range(4)]
+check("a per-identifier cap of 3 allows exactly 3 sends", takes == [True, True, True, False], takes)
+
+reset_otp()
+h2 = "otp-hash-" + uuid.uuid4().hex
+r1, _ = svc("select public.internal_otp_take('email',%s,10,'0 seconds'::interval,1)", (h2,))
+r2, _ = svc("select public.internal_otp_take('email','some-other-identifier',10,'0 seconds'::interval,1)")
+check("the whole-app daily cap blocks a second identifier once it is used up", r1[0][0] is True and r2[0][0] is False, (r1, r2))
+
+reset_otp()
+h3 = "otp-hash-" + uuid.uuid4().hex
+r1, _ = svc("select public.internal_otp_take('sms',%s,10,'1 minute'::interval,1000)", (h3,))
+r2, _ = svc("select public.internal_otp_take('sms',%s,10,'1 minute'::interval,1000)", (h3,))
+check("a cooldown blocks a second send to the same identifier right away", r1[0][0] is True and r2[0][0] is False, (r1, r2))
+
+for who, role in ((R1, "authenticated"), (None, "anon")):
+    _, err = run(who, role, "select public.internal_otp_take('email','x',10,'0 seconds'::interval,1000)")
+    check(f"{role} cannot call internal_otp_take directly", err is not None)
+
+PH = mkuser("phone-signin@x")
+_, err = run(PH, "authenticated", "select public.mark_phone_verified()")
+check("mark_phone_verified refuses when auth.users has no verified phone yet", err is not None and "phone_not_verified" in str(err), err)
+cur.execute("update auth.users set phone='+919000000001', phone_confirmed_at=now() where id=%s", (PH,))
+_, err = run(PH, "authenticated", "select public.mark_phone_verified()")
+cur.execute("select phone, phone_verified from public.profiles where id=%s", (PH,))
+check("once auth.users.phone is verified, mark_phone_verified attaches it to the profile", err is None and cur.fetchone() == ("+919000000001", True), err)
+_, err = run(None, "anon", "select public.mark_phone_verified()")
+check("anon cannot call mark_phone_verified", err is not None)
+
+PH2 = mkuser("phone-signup@x", phone="+919000000002", phone_confirmed=True)
+cur.execute("select phone, phone_verified from public.profiles where id=%s", (PH2,))
+check("a brand-new phone-OTP sign-up is seeded with a verified phone already (same trigger as e-mail)", cur.fetchone() == ("+919000000002", True))
 
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

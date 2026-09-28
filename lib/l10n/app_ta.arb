@@ -262,6 +262,41 @@
   "tooManyAttempts": "பல முயற்சிகள். {minutes} நிமிடம் கழித்து முயலவும்.",
   "noPasswordYet": "இன்னும் கடவுச்சொல் இல்லையா? Google மூலம் உள்நுழைந்து, கணக்கு பக்கத்தில் சேர்க்கவும்.",
   "orDivider": "அல்லது",
+  "orMoreWays": "அல்லது இதன் மூலம் தொடரவும்",
+  "continueWithEmail": "மின்னஞ்சல் மூலம் தொடரவும்",
+  "continueWithPhone": "தொலைபேசி மூலம் தொடரவும்",
+  "emailField": "மின்னஞ்சல் முகவரி",
+  "phoneField": "தொலைபேசி எண்",
+  "phoneHint": "+91XXXXXXXXXX",
+  "otpInvalidEmail": "சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+  "otpInvalidPhone": "நாட்டுக் குறியீட்டுடன் உங்கள் எண்ணை உள்ளிடவும், எ.கா. +91XXXXXXXXXX.",
+  "otpSendFailed": "குறியீட்டை அனுப்ப முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+  "otpRateLimited": "அதிக முறை குறியீடு கோரப்பட்டது. கொஞ்சம் பொறுத்து மீண்டும் முயற்சிக்கவும்.",
+  "otpTitle": "உங்கள் குறியீட்டை உள்ளிடவும்",
+  "otpSubtitle": "{target} க்கு 6-இலக்க குறியீடு அனுப்பப்பட்டது.",
+  "@otpSubtitle": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "otpCodeField": "6-இலக்க குறியீடு",
+  "otpVerify": "சரிபார்த்து தொடரவும்",
+  "otpInvalidCode": "அந்த குறியீடு தவறானது அல்லது காலாவதியானது.",
+  "otpResend": "குறியீட்டை மீண்டும் அனுப்பு",
+  "otpResendIn": "{seconds} வி இல் மீண்டும் அனுப்பு",
+  "@otpResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "otpSentAgain": "மீண்டும் அனுப்பப்பட்டது.",
+  "addPhoneSignIn": "தொலைபேசி உள்நுழைவைச் சேர்",
+  "addPhoneSignInSub": "ஒரு எண்ணைச் சரிபார்த்து அதன் மூலமும் உள்நுழையலாம்.",
+  "phoneSignInAdded": "தொலைபேசி உள்நுழைவு சேர்க்கப்பட்டது.",
   "obPasswordTitle": "கடவுச்சொல் சேர்க்கவா?",
   "obPasswordSub": "விருப்பம். கடவுச்சொல் இருந்தால் Google உடன் பயனர்பெயர் மூலமும் உள்நுழையலாம்.",
   "passwordForUsername": "பயனர்பெயர் கடவுச்சொல்",

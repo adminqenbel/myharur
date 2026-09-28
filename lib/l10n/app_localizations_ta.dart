@@ -862,6 +862,77 @@ class AppLocalizationsTa extends AppLocalizations {
   String get orDivider => 'அல்லது';
 
   @override
+  String get orMoreWays => 'அல்லது இதன் மூலம் தொடரவும்';
+
+  @override
+  String get continueWithEmail => 'மின்னஞ்சல் மூலம் தொடரவும்';
+
+  @override
+  String get continueWithPhone => 'தொலைபேசி மூலம் தொடரவும்';
+
+  @override
+  String get emailField => 'மின்னஞ்சல் முகவரி';
+
+  @override
+  String get phoneField => 'தொலைபேசி எண்';
+
+  @override
+  String get phoneHint => '+91XXXXXXXXXX';
+
+  @override
+  String get otpInvalidEmail => 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.';
+
+  @override
+  String get otpInvalidPhone =>
+      'நாட்டுக் குறியீட்டுடன் உங்கள் எண்ணை உள்ளிடவும், எ.கா. +91XXXXXXXXXX.';
+
+  @override
+  String get otpSendFailed =>
+      'குறியீட்டை அனுப்ப முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get otpRateLimited =>
+      'அதிக முறை குறியீடு கோரப்பட்டது. கொஞ்சம் பொறுத்து மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get otpTitle => 'உங்கள் குறியீட்டை உள்ளிடவும்';
+
+  @override
+  String otpSubtitle(String target) {
+    return '$target க்கு 6-இலக்க குறியீடு அனுப்பப்பட்டது.';
+  }
+
+  @override
+  String get otpCodeField => '6-இலக்க குறியீடு';
+
+  @override
+  String get otpVerify => 'சரிபார்த்து தொடரவும்';
+
+  @override
+  String get otpInvalidCode => 'அந்த குறியீடு தவறானது அல்லது காலாவதியானது.';
+
+  @override
+  String get otpResend => 'குறியீட்டை மீண்டும் அனுப்பு';
+
+  @override
+  String otpResendIn(int seconds) {
+    return '$seconds வி இல் மீண்டும் அனுப்பு';
+  }
+
+  @override
+  String get otpSentAgain => 'மீண்டும் அனுப்பப்பட்டது.';
+
+  @override
+  String get addPhoneSignIn => 'தொலைபேசி உள்நுழைவைச் சேர்';
+
+  @override
+  String get addPhoneSignInSub =>
+      'ஒரு எண்ணைச் சரிபார்த்து அதன் மூலமும் உள்நுழையலாம்.';
+
+  @override
+  String get phoneSignInAdded => 'தொலைபேசி உள்நுழைவு சேர்க்கப்பட்டது.';
+
+  @override
   String get obPasswordTitle => 'கடவுச்சொல் சேர்க்கவா?';
 
   @override

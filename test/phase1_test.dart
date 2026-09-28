@@ -9,6 +9,7 @@ import 'package:myharur/core/theme/app_theme.dart';
 import 'package:myharur/core/util/safe_launch.dart';
 import 'package:myharur/core/widgets/ui.dart';
 import 'package:myharur/features/auth/auth_page.dart';
+import 'package:myharur/features/auth/otp_signin_page.dart';
 import 'package:myharur/features/errors/error_pages.dart';
 import 'package:myharur/features/home/home_page.dart' show Rail;
 import 'package:myharur/features/map/location_preview.dart';
@@ -159,6 +160,53 @@ void main() {
       expect(find.text('Register with Google'), findsOneWidget);
       expect(find.byType(TextField), findsNothing, reason: 'there is no email/username sign-up form');
       expect(find.text('Sign in with username'), findsNothing);
+    });
+
+    testWidgets('both tabs also offer e-mail/phone codes', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        supportedLocales: LocaleController.supported,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: const AuthPage(),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Continue with email'), findsOneWidget);
+      expect(find.text('Continue with phone'), findsOneWidget);
+
+      await tester.tap(find.text('Register').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Continue with email'), findsOneWidget);
+      expect(find.text('Continue with phone'), findsOneWidget);
+    });
+
+    testWidgets('the OTP code screen catches an invalid e-mail/phone before ever trying to send one', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        supportedLocales: LocaleController.supported,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: const OtpSignInPage(isPhone: false),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Continue with email'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'not-an-email');
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      expect(find.text('Enter a valid e-mail address.'), findsOneWidget);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        supportedLocales: LocaleController.supported,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: const OtpSignInPage(isPhone: true),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Continue with phone'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), '9876543210'); // missing the country code
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      expect(find.text('Enter your number with the country code, e.g. +91XXXXXXXXXX.'), findsOneWidget);
     });
 
     testWidgets('the failure page explains each reason and offers a way forward', (tester) async {
