@@ -877,14 +877,14 @@ class AppLocalizationsTa extends AppLocalizations {
   String get phoneField => 'தொலைபேசி எண்';
 
   @override
-  String get phoneHint => '+91XXXXXXXXXX';
+  String get phoneHint => '9876543210';
 
   @override
   String get otpInvalidEmail => 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.';
 
   @override
   String get otpInvalidPhone =>
-      'நாட்டுக் குறியீட்டுடன் உங்கள் எண்ணை உள்ளிடவும், எ.கா. +91XXXXXXXXXX.';
+      'சரியான 10-இலக்க இந்திய மொபைல் எண்ணை உள்ளிடவும்.';
 
   @override
   String get otpSendFailed =>

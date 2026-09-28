@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -36,9 +37,12 @@ class _PhoneSignInSheetState extends State<_PhoneSignInSheet> {
     super.dispose();
   }
 
+  /// India only: the field only ever collects the local 10-digit number, "+91" is fixed.
+  String get _phoneValue => '+91${_phone.text.trim()}';
+
   Future<void> _send() async {
     final t = context.t;
-    final raw = _phone.text.trim();
+    final raw = _phoneValue;
     setState(() {
       _busy = true;
       _error = null;
@@ -104,7 +108,8 @@ class _PhoneSignInSheetState extends State<_PhoneSignInSheet> {
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _send(),
-                      decoration: InputDecoration(labelText: t.phoneField, hintText: t.phoneHint),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+                      decoration: InputDecoration(labelText: t.phoneField, hintText: t.phoneHint, prefixText: '+91 '),
                     ),
                     if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, textAlign: TextAlign.center, style: AppTextStyles.footnote.copyWith(color: AppColors.danger))),
                     const SizedBox(height: 18),

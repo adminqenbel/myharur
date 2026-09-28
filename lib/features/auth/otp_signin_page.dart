@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -58,8 +59,11 @@ class _OtpSignInPageState extends State<OtpSignInPage> {
     };
   }
 
+  /// India only: the field only ever collects the local 10-digit number, "+91" is fixed.
+  String get _identifierValue => widget.isPhone ? '+91${_identifier.text.trim()}' : _identifier.text.trim();
+
   Future<void> _send() async {
-    final raw = _identifier.text.trim();
+    final raw = _identifierValue;
     setState(() {
       _busy = true;
       _error = null;
@@ -147,7 +151,12 @@ class _OtpSignInPageState extends State<OtpSignInPage> {
           enableSuggestions: false,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _send(),
-          decoration: InputDecoration(labelText: widget.isPhone ? t.phoneField : t.emailField, hintText: widget.isPhone ? t.phoneHint : null),
+          inputFormatters: widget.isPhone ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)] : null,
+          decoration: InputDecoration(
+            labelText: widget.isPhone ? t.phoneField : t.emailField,
+            hintText: widget.isPhone ? t.phoneHint : null,
+            prefixText: widget.isPhone ? '+91 ' : null,
+          ),
         ),
         if (_error != null)
           Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, textAlign: TextAlign.center, style: AppTextStyles.footnote.copyWith(color: AppColors.danger))),

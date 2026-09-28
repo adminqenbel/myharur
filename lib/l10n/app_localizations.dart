@@ -1703,7 +1703,7 @@ abstract class AppLocalizations {
   /// No description provided for @phoneHint.
   ///
   /// In en, this message translates to:
-  /// **'+91XXXXXXXXXX'**
+  /// **'9876543210'**
   String get phoneHint;
 
   /// No description provided for @otpInvalidEmail.
@@ -1715,7 +1715,7 @@ abstract class AppLocalizations {
   /// No description provided for @otpInvalidPhone.
   ///
   /// In en, this message translates to:
-  /// **'Enter your number with the country code, e.g. +91XXXXXXXXXX.'**
+  /// **'Enter a valid 10-digit Indian mobile number.'**
   String get otpInvalidPhone;
 
   /// No description provided for @otpSendFailed.

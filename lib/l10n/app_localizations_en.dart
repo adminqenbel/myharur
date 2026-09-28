@@ -870,14 +870,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneField => 'Phone number';
 
   @override
-  String get phoneHint => '+91XXXXXXXXXX';
+  String get phoneHint => '9876543210';
 
   @override
   String get otpInvalidEmail => 'Enter a valid e-mail address.';
 
   @override
-  String get otpInvalidPhone =>
-      'Enter your number with the country code, e.g. +91XXXXXXXXXX.';
+  String get otpInvalidPhone => 'Enter a valid 10-digit Indian mobile number.';
 
   @override
   String get otpSendFailed => 'Couldn\'t send the code. Please try again.';

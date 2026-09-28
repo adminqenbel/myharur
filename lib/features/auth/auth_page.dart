@@ -315,11 +315,50 @@ class _OtpChoiceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.t;
-    return Row(children: [
-      Expanded(child: PrimaryButton(label: t.continueWithEmail, tinted: true, icon: Icons.mail_outline_rounded, onPressed: enabled ? onEmail : null)),
-      const SizedBox(width: 10),
-      Expanded(child: PrimaryButton(label: t.continueWithPhone, tinted: true, icon: Icons.sms_outlined, onPressed: enabled ? onPhone : null)),
+    return Column(children: [
+      _OtpButton(label: t.continueWithEmail, icon: Icons.mail_outline_rounded, onTap: enabled ? onEmail : null),
+      const SizedBox(height: 10),
+      _OtpButton(label: t.continueWithPhone, icon: Icons.sms_outlined, onTap: enabled ? onPhone : null),
     ]);
+  }
+}
+
+/// Same visual language as [_GoogleButton] (full width, white, one line) so every sign-in option
+/// reads as a single family of choices rather than Google getting special treatment.
+class _OtpButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _OtpButton({required this.label, required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      haptic: true,
+      scale: 0.98,
+      child: Opacity(
+        opacity: onTap == null ? 0.5 : 1,
+        child: SoftShadow(
+          radius: 17,
+          shadows: const [BoxShadow(color: Color(0x14000000), blurRadius: 16, offset: Offset(0, 4))],
+          child: Container(
+            height: 54,
+            decoration: ShapeDecoration(color: Colors.white, shape: squircle(17)),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 22, color: AppColors.secondaryLabel),
+                  const SizedBox(width: 12),
+                  Text(label, style: AppTextStyles.headline),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

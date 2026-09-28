@@ -329,7 +329,9 @@ class AuthService {
   // successful verification, same as today's Google sign-up) and someone signing back in.
 
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-  static final _e164Pattern = RegExp(r'^\+[1-9]\d{7,14}$');
+  /// India only for now (this is a Harur/Dharmapuri app; other countries would need their own SMS
+  /// pricing/verification on the Brevo side before it made sense to open this up further).
+  static final _e164Pattern = RegExp(r'^\+91[6-9]\d{9}$');
 
   static Future<OtpSendResult> sendEmailOtp(String email) async {
     final trimmed = email.trim().toLowerCase();

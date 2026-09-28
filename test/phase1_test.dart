@@ -203,10 +203,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Continue with phone'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), '9876543210'); // missing the country code
+      await tester.enterText(find.byType(TextField), '1234567890'); // Indian mobiles never start 0-5
       await tester.tap(find.text('Continue'));
       await tester.pump();
-      expect(find.text('Enter your number with the country code, e.g. +91XXXXXXXXXX.'), findsOneWidget);
+      expect(find.text('Enter a valid 10-digit Indian mobile number.'), findsOneWidget);
     });
 
     testWidgets('the failure page explains each reason and offers a way forward', (tester) async {
