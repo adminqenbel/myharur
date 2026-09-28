@@ -6,7 +6,7 @@ The app's News tab reads that table.
 ## How it works
 
 - **Source:** Google News RSS search feeds (English and Tamil), listed in `FEEDS` at the top of `index.ts`.
-- **Schedule:** pg_cron job `myharur-news-crawl` runs every 30 minutes and calls the function through pg_net.
+- **Schedule:** pg_cron job `myharur-news-crawl` runs every 5 hours (`0 */5 * * *`) and calls the function through pg_net.
   Old stories are pruned after 30 days (`myharur-prune-news`, daily).
 - **What is stored:** headline, publisher name, link, a short plain-text summary, category, region, language, time.
   Never the article body. The app opens the publisher's own site.

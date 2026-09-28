@@ -548,9 +548,17 @@ class PrimaryButton extends StatelessWidget {
               ? CupertinoActivityIndicator(color: fg)
               : Row(
                   mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (icon != null) ...[Icon(icon, size: 20, color: fg), const SizedBox(width: 8)],
-                    Text(label, style: AppTextStyles.headline.copyWith(color: fg)),
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: AppTextStyles.headline.copyWith(color: fg),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
         ),
