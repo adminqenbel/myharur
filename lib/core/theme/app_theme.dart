@@ -37,7 +37,8 @@ class AppColors {
   static const separator = Color(0xFFD9D9DE);
   static const hairline = Color(0x1F3C3C43);
 
-  // Weather hero: blue -> violet -> red
+  // Weather hero: blue -> violet -> red (the "normal" palette; see weatherPalette() for
+  // the hot/rainy/cool variants used once real conditions and temperature are known).
   static const weatherBlue = Color(0xFF0A6CFF);
   static const weatherViolet = Color(0xFF6B4DE6);
   static const weatherRed = Color(0xFFF0384A);

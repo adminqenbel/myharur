@@ -967,7 +967,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goHome => 'Go to Home';
 
   @override
-  String get tabReports => 'Service';
+  String get tabReports => 'Services';
 
   @override
   String get tabReview => 'Review';

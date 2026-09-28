@@ -1877,7 +1877,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabReports.
   ///
   /// In en, this message translates to:
-  /// **'Service'**
+  /// **'Services'**
   String get tabReports;
 
   /// No description provided for @tabReview.

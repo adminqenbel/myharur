@@ -8,8 +8,10 @@ import '../../core/widgets/ui.dart';
 import 'weather_visuals.dart';
 
 // ==============================================================================
-// WEATHER — Harur and Dharmapuri. The blue -> red gradient hero is the one
-// expressive element in the app; everything below it stays quiet and readable.
+// WEATHER — Harur and Dharmapuri. The hero card's colour reacts to the live report
+// (see weatherPalette() in weather_visuals.dart): hot days go yellow-orange, rain
+// goes dark blue with raindrops, cool days go light blue, everything else keeps the
+// app's usual blue-violet-red gradient. Everything below the hero stays quiet and readable.
 // ==============================================================================
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
@@ -130,19 +132,21 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.t;
     final c = report.current;
-    final white70 = Colors.white.withValues(alpha: 0.82);
+    final palette = weatherPalette(c.condition, c.temp);
+    final muted = palette.mutedTextColor;
 
     return SoftShadow(
       radius: 30,
-      shadows: [BoxShadow(color: AppColors.weatherViolet.withValues(alpha: 0.28), blurRadius: 30, offset: const Offset(0, 14))],
+      shadows: [BoxShadow(color: palette.shadowColor.withValues(alpha: 0.28), blurRadius: 30, offset: const Offset(0, 14))],
       child: Container(
       clipBehavior: Clip.antiAlias,
-      decoration: ShapeDecoration(gradient: AppColors.weatherGradient, shape: squircle(30)),
+      decoration: ShapeDecoration(gradient: palette.gradient, shape: squircle(30)),
       child: Stack(
         children: [
           // soft depth: two translucent discs
-          Positioned(right: -60, top: -70, child: _disc(230, 0.10)),
-          Positioned(left: -80, bottom: -110, child: _disc(260, 0.08)),
+          Positioned(right: -60, top: -70, child: _disc(230, 0.10, palette.textColor)),
+          Positioned(left: -80, bottom: -110, child: _disc(260, 0.08, palette.textColor)),
+          if (palette.rainy) Positioned.fill(child: RainOverlay(color: palette.textColor)),
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
             child: Column(
@@ -150,27 +154,27 @@ class _Hero extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.place_rounded, size: 16, color: white70),
+                    Icon(Icons.place_rounded, size: 16, color: muted),
                     const SizedBox(width: 4),
-                    Text(place, style: AppTextStyles.headline.copyWith(color: Colors.white)),
+                    Text(place, style: AppTextStyles.headline.copyWith(color: palette.textColor)),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text('${c.temp.round()}°', style: const TextStyle(fontFamily: 'Inter', fontSize: 96, height: 1.05, letterSpacing: -4, fontWeight: FontWeight.w400, color: Colors.white)),
+                Text('${c.temp.round()}°', style: TextStyle(fontFamily: 'Inter', fontSize: 96, height: 1.05, letterSpacing: -4, fontWeight: FontWeight.w400, color: palette.textColor)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(weatherIcon(c.condition, c.isDay), color: Colors.white, size: 24),
+                    Icon(weatherIcon(c.condition, c.isDay), color: palette.textColor, size: 24),
                     const SizedBox(width: 8),
-                    Text(conditionLabel(t, c.condition), style: AppTextStyles.title3.copyWith(color: Colors.white)),
+                    Text(conditionLabel(t, c.condition), style: AppTextStyles.title3.copyWith(color: palette.textColor)),
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text(t.highLow(report.today.max.round(), report.today.min.round()), style: AppTextStyles.callout.copyWith(color: white70)),
+                Text(t.highLow(report.today.max.round(), report.today.min.round()), style: AppTextStyles.callout.copyWith(color: muted)),
                 const SizedBox(height: 2),
-                Text(t.feelsLike(c.feelsLike.round()), style: AppTextStyles.footnote.copyWith(color: white70)),
+                Text(t.feelsLike(c.feelsLike.round()), style: AppTextStyles.footnote.copyWith(color: muted)),
                 const SizedBox(height: 14),
-                Text(t.updatedAt(_clock(report.fetchedAt)), style: AppTextStyles.caption2.copyWith(color: Colors.white.withValues(alpha: 0.65))),
+                Text(t.updatedAt(_clock(report.fetchedAt)), style: AppTextStyles.caption2.copyWith(color: palette.textColor.withValues(alpha: 0.65))),
               ],
             ),
           ),
@@ -179,8 +183,8 @@ class _Hero extends StatelessWidget {
     ));
   }
 
-  Widget _disc(double size, double alpha) =>
-      Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: alpha)));
+  Widget _disc(double size, double alpha, Color color) =>
+      Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: alpha)));
 }
 
 // ── Hourly ─────────────────────────────────────────────────────────────────────

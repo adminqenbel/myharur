@@ -974,7 +974,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get goHome => 'முகப்புக்குச் செல்';
 
   @override
-  String get tabReports => 'சேவை';
+  String get tabReports => 'சேவைகள்';
 
   @override
   String get tabReview => 'மதிப்பாய்வு';

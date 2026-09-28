@@ -148,7 +148,7 @@ void main() {
     testWidgets('with both modules off, there is no segmented control, just Reports', (tester) async {
       await tester.pumpWidget(_app(const Scaffold(body: ReportsPage())));
       await tester.pump();
-      expect(find.text('Service'), findsWidgets); // large title (bottom-nav tab was renamed to "Service")
+      expect(find.text('Services'), findsWidgets); // large title (bottom-nav tab was renamed to "Services")
       expect(find.text('Events'), findsNothing);
       expect(find.text('Jobs'), findsNothing);
     });

@@ -40,10 +40,13 @@ class _WeatherTeaserState extends State<WeatherTeaser> {
   Widget build(BuildContext context) {
     final t = context.t;
     final r = _report;
+    final palette = r == null ? null : weatherPalette(r.current.condition, r.current.temp);
+    final textColor = palette?.textColor ?? Colors.white;
+    final mutedColor = palette?.mutedTextColor ?? Colors.white.withValues(alpha: 0.85);
 
     return AppCard(
       onTap: widget.onTap,
-      gradient: AppColors.weatherGradient,
+      gradient: palette?.gradient ?? AppColors.weatherGradient,
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: r == null
           ? SizedBox(
@@ -61,25 +64,30 @@ class _WeatherTeaserState extends State<WeatherTeaser> {
                 ],
               ),
             )
-          : Row(
+          : Stack(
               children: [
-                Icon(weatherIcon(r.current.condition, r.current.isDay), color: Colors.white, size: 40),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.location.id == 'harur' ? t.locHarur : t.locDharmapuri, style: AppTextStyles.footnote.copyWith(color: Colors.white.withValues(alpha: 0.85))),
-                      const SizedBox(height: 2),
-                      Text(conditionLabel(t, r.current.condition), style: AppTextStyles.headline.copyWith(color: Colors.white)),
-                      Text(
-                        t.highLow(r.today.max.round(), r.today.min.round()),
-                        style: AppTextStyles.footnote.copyWith(color: Colors.white.withValues(alpha: 0.85)),
+                if (palette!.rainy) Positioned.fill(child: RainOverlay(color: textColor)),
+                Row(
+                  children: [
+                    Icon(weatherIcon(r.current.condition, r.current.isDay), color: textColor, size: 40),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(widget.location.id == 'harur' ? t.locHarur : t.locDharmapuri, style: AppTextStyles.footnote.copyWith(color: mutedColor)),
+                          const SizedBox(height: 2),
+                          Text(conditionLabel(t, r.current.condition), style: AppTextStyles.headline.copyWith(color: textColor)),
+                          Text(
+                            t.highLow(r.today.max.round(), r.today.min.round()),
+                            style: AppTextStyles.footnote.copyWith(color: mutedColor),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Text('${r.current.temp.round()}°', style: AppTextStyles.largeTitle.copyWith(color: textColor, fontSize: 44, fontWeight: FontWeight.w400)),
+                  ],
                 ),
-                Text('${r.current.temp.round()}°', style: AppTextStyles.largeTitle.copyWith(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w400)),
               ],
             ),
     );
