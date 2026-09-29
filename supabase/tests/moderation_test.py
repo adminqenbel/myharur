@@ -1015,9 +1015,12 @@ check("07:00 IST is not quiet", quiet("2026-09-27 01:30:00+00") is False)
 check("18:00 IST is not quiet", quiet("2026-09-27 12:30:00+00") is False)
 
 # the digest plan: silent unless something new is live, once a day, never in quiet hours
+# reviewed_at is set relative to DAY (not real now()) so this stays deterministic regardless of
+# what today's real date is when the suite happens to run — mixing the two caused this to start
+# failing on its own days after it was written, as real time drifted past the hardcoded DAY.
 DAY = "2026-09-27 12:30:00+00"
 cur.execute("delete from public.notification_log")
-cur.execute("update public.alerts set reviewed_at = now() - interval '3 days' where status='published'")
+cur.execute("update public.alerts set reviewed_at = %s::timestamptz - interval '3 days' where status='published'", (DAY,))
 plan = svc("select * from public.internal_digest_plan(now())")[0][0]
 day_plan = svc("select * from public.internal_digest_plan(%s::timestamptz)", (DAY,))[0][0]
 check("nothing new -> no digest", day_plan[0] is False and day_plan[1] == "nothing_new", day_plan)

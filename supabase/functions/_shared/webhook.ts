@@ -18,7 +18,13 @@ export async function verifyAuthHook(req: Request, rawBody: string, secretEnvVal
   if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) return false;
 
   try {
-    const secret = secretEnvValue.startsWith('whsec_') ? secretEnvValue.slice(6) : secretEnvValue;
+    // The dashboard gives the secret as "v1,whsec_<base64>" — both the version prefix and the
+    // whsec_ prefix need stripping, not just the latter, or the base64 decode below is garbage
+    // and every real, correctly-signed request gets rejected.
+    let secret = secretEnvValue.trim();
+    const comma = secret.indexOf(',');
+    if (comma !== -1) secret = secret.slice(comma + 1);
+    if (secret.startsWith('whsec_')) secret = secret.slice(6);
     const keyBytes = Uint8Array.from(atob(secret), (c) => c.charCodeAt(0));
     const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const signedContent = `${id}.${timestamp}.${rawBody}`;
