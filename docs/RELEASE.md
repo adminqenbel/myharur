@@ -16,14 +16,22 @@
   or reuse a build number** — Play Console rejects an upload whose build number isn't strictly
   higher than every build number it has already seen for that app, even in closed testing.
 
-Bump the version before building, in one commit, matching what's about to be released:
+Bump the version before pushing, in its own commit, matching what's about to ship:
 
 ```yaml
 version: 1.2.0+7   # MAJOR=1, PRODUCTION=2, always-0, BUILD=7
 ```
 
-Tag GitHub Releases as `v1.2.0` (the MAJOR.PRODUCTION.0 part only — the build number is an
-implementation detail, not part of the public-facing tag).
+**GitHub Releases are fully automated — don't create them by hand.** `.github/workflows/ci.yml`
+already runs `flutter analyze` + `flutter test`, builds an obfuscated release APK, and publishes a
+GitHub Release on every push to `main`, tagged `v{pubspec version}-{run number}` (e.g.
+`v1.2.0+7-21`) with `make_latest: true` and the APK attached as both `myharur.apk` and
+`app-release.apk`. Every CI run gets its own release and keeps its own APK downloadable — this is
+deliberate, so a bad build can be rolled back to a specific prior run rather than only ever having
+"the latest." `web/index.html`'s download button points at
+`.../releases/latest/download/myharur.apk`, which always resolves to whatever CI most recently
+published, regardless of that release's exact tag name. Bumping the `version:` number is still
+what you do by hand — the tag and the release itself are the workflow's job, not yours.
 
 ## 1. Backend
 
