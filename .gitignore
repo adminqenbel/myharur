@@ -36,8 +36,7 @@ android/*.log
 .kotlin/
 android/.kotlin/
 
-# Large binary artifacts
+# Large binary artifacts — distributed via GitHub Releases instead (see docs/RELEASE.md),
+# never committed. If you find an APK tracked in git despite this rule, `git rm` it.
 *.apk
-!web/*.apk
-!web/downloads/*.apk
-!myharur.apk
+*.aab

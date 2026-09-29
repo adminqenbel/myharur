@@ -1,5 +1,30 @@
 # Release & Google Play checklist
 
+## 0. Versioning policy
+
+`pubspec.yaml`'s `version:` field is `MAJOR.PRODUCTION.0+BUILD`:
+
+- **MAJOR** — bumped only for a major rework (a rewrite-scale change to the app, like the
+  2026-09 security-first rebuild). Expected to change rarely.
+- **PRODUCTION** (the middle number) — bumped for each release cycle that ships a meaningful,
+  production-ready set of features (e.g. "Phase 3: events/jobs/ads", "Phase 4: Brevo sign-in").
+  This is the number people see as "the version" (`v1.2.0`).
+- **third number** — always `0`. It exists only so the version string has the conventional
+  three parts; day-to-day iteration is tracked by `+BUILD` instead (see below), not by this digit.
+- **+BUILD** (the "internal id") — increments by exactly 1 for every build that gets installed on
+  a device or uploaded anywhere (a GitHub Release, Play Console, a tester's phone). **Never reset
+  or reuse a build number** — Play Console rejects an upload whose build number isn't strictly
+  higher than every build number it has already seen for that app, even in closed testing.
+
+Bump the version before building, in one commit, matching what's about to be released:
+
+```yaml
+version: 1.2.0+7   # MAJOR=1, PRODUCTION=2, always-0, BUILD=7
+```
+
+Tag GitHub Releases as `v1.2.0` (the MAJOR.PRODUCTION.0 part only — the build number is an
+implementation detail, not part of the public-facing tag).
+
 ## 1. Backend
 
 **Production (`qpuvhhvzygdbvlichbqs`) is migrated** — baseline + moderation pipeline + function hardening are applied and tracked

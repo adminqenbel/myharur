@@ -1,7 +1,7 @@
 name: myharur
 description: MyHarur — digital town platform for Harur & Dharmapuri, Tamil Nadu. A QenBel product.
 publish_to: none
-version: 1.1.0+6
+version: 1.2.0+7
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
