@@ -421,6 +421,49 @@
       transition: all 0.2s ease;
     }
 
+    /* About / Data Use Card */
+    .about-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      background: var(--surface);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--surface-border);
+      border-radius: 28px;
+      padding: 28px 26px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .about-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 10px;
+    }
+
+    .about-subtitle {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin: 18px 0 8px 0;
+    }
+
+    .about-text {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .about-container .btn-secondary {
+      width: auto;
+      display: inline-flex;
+      margin-top: 18px;
+      padding: 0 20px;
+    }
+
     /* Features Grid */
     .features-container {
       width: 100%;
@@ -660,6 +703,26 @@
 
   </div>
 
+  <!-- About / Functionality / Data Use (required for Google sign-in review: what the app does,
+       and why it asks for Google account access) -->
+  <div class="about-container">
+    <h2 class="about-title">What MyHarur Does</h2>
+    <p class="about-text">
+      MyHarur is a community app for the residents of Harur and Dharmapuri, Tamil Nadu, built and
+      maintained by QenBel. It brings together moderated local news, live weather, civic issue
+      reports (road, electricity, water, government), community events, local job postings, and
+      emergency helpline numbers — every post is reviewed by a human moderator before it goes live.
+    </p>
+    <h3 class="about-subtitle">Why we ask for your Google account</h3>
+    <p class="about-text">
+      Signing in with Google lets us verify you are a real person before you can post to a shared
+      community feed, which keeps the app free of spam and fake accounts. We only receive your
+      name, e-mail address and profile photo from Google — we never post, message or take any
+      action on Google's platforms on your behalf, and we never see your Google password.
+    </p>
+    <a href="/privacy.html" class="btn-secondary">Read our Privacy Policy →</a>
+  </div>
+
   <!-- Key App Feature Cards -->
   <div class="features-container">
     <div class="feature-card">
@@ -686,6 +749,11 @@
 
   <div class="footer">
     <p>MyHarur Digital Town • Built for Harur, Dharmapuri, Theerthamalai & Morappur</p>
+    <p style="margin-top: 10px;">
+      <a href="/privacy.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">Privacy Policy</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:adminqenbel@gmail.com" style="color: var(--primary); text-decoration: none; font-weight: 700;">Contact</a>
+    </p>
   </div>
 
   <script>
